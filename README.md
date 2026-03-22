@@ -20,12 +20,15 @@ Current scaffold highlights:
 
 - [`infer/`](./infer) is the stable public API layer
 - [`backends/bionet/`](./backends/bionet) is the first implementation path
+- [`backends/bionet/runtime/`](./backends/bionet/runtime) now contains the first extracted BIOnet runtime core
 - [`backends/torchscript/`](./backends/torchscript) is reserved for a narrow, parity-tested backend path
 - [`docs/parity-spike-01.md`](./docs/parity-spike-01.md) defines the first concrete parity spike
+- [`cmd/infergo-parity/`](./cmd/infergo-parity) runs the current parity harness
+- [`testdata/parity/text-classification/`](./testdata/parity/text-classification) contains the first public-safe artifact fixture
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 
 Next milestone:
 
-1. extract the BIOnet-safe runtime packages under `backends/bionet/runtime`
-2. define the first public-safe example artifact set
-3. build the parity harness for the first small text-classification model
+1. extract the BIOnet-safe embeddings and tokenizer-adjacent pieces that are still worth keeping
+2. strengthen the BIOnet example path beyond dense feature vectors
+3. add a Python reference runner for the first public Hugging Face / Transformers parity spike

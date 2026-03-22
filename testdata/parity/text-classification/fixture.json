@@ -1,0 +1,72 @@
+{
+  "name": "Synthetic Text Classification",
+  "backend": "bionet",
+  "artifact": "model.gob",
+  "labels": [
+    "positive",
+    "negative"
+  ],
+  "tolerance": 1e-9,
+  "cases": [
+    {
+      "id": "positive-review",
+      "text": "this product is excellent",
+      "features": [
+        2,
+        0,
+        1,
+        1
+      ],
+      "expected_probabilities": [
+        0.9999724643088856,
+        0.000027535691114583453
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "negative-review",
+      "text": "this was a terrible experience",
+      "features": [
+        0,
+        2,
+        1,
+        0
+      ],
+      "expected_probabilities": [
+        0.05732417589886875,
+        0.9426758241011313
+      ],
+      "expected_label": "negative"
+    },
+    {
+      "id": "mixed-review",
+      "text": "the service was okay",
+      "features": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "expected_probabilities": [
+        0.7502601055951177,
+        0.24973989440488245
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "support-praise",
+      "text": "fast reliable helpful team",
+      "features": [
+        1,
+        0,
+        2,
+        1
+      ],
+      "expected_probabilities": [
+        0.9998636296729202,
+        0.00013637032707949725
+      ],
+      "expected_label": "positive"
+    }
+  ]
+}

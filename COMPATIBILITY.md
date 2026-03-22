@@ -12,10 +12,11 @@ without a documented export path, backend, and parity test story.
 
 ## v1 launch path
 
-- Artifact type: BIOnet `.gob` artifacts with public-safe vocab/assets
+- Artifact type: BIOnet `.gob` artifacts with public-safe assets
 - Backend: `bionet`
 - Runtime posture: CPU-first
 - Primary task shape: small classification-style inference in Go services
+- Current validated example: synthetic text classification on dense feature vectors via `cmd/infergo-parity`
 
 ## v1 stretch path
 
