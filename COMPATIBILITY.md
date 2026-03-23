@@ -29,7 +29,7 @@ without a documented export path, backend, and parity test story.
 
 ## Native backend note
 
-- The native `torchscript` backend currently requires `CGO_ENABLED=1`, the `torchscript_native` build tag, and `libtorch` installed under `/opt/libtorch`.
+- The native `torchscript` backend currently requires `CGO_ENABLED=1`, the `torchscript_native` build tag, and a libtorch install exposed through `CGO_CXXFLAGS` and `CGO_LDFLAGS`.
 - On machines without that setup, InferGo builds cleanly but returns a descriptive runtime error if the native backend path is invoked.
 
 ## Not supported in v1

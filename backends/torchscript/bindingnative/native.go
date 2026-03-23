@@ -3,8 +3,8 @@
 package bindingnative
 
 /*
-#cgo CXXFLAGS: -std=c++17 -I/opt/libtorch/include -I/opt/libtorch/include/torch/csrc/api/include
-#cgo LDFLAGS: -L/opt/libtorch/lib -Wl,-rpath,/opt/libtorch/lib -ltorch -lc10 -ltorch_cpu
+#cgo CXXFLAGS: -std=c++17
+#cgo LDFLAGS: -ltorch -lc10 -ltorch_cpu
 #include <stdlib.h>
 #include "torchscript.hpp"
 */
@@ -29,7 +29,7 @@ func LoadModule(path string) (*Module, error) {
 	modulePtr := C.TorchJitLoadModel(cPath, &cErr)
 	if cErr.message != nil {
 		defer C.TorchFreeCString(cErr.message)
-		return nil, fmt.Errorf(C.GoString(cErr.message))
+		return nil, fmt.Errorf("%s", C.GoString(cErr.message))
 	}
 
 	return &Module{ptr: modulePtr}, nil
@@ -79,7 +79,7 @@ func (m *Module) ForwardTextClassification(inputIDs, attentionMasks [][]int64) (
 	)
 	if cErr.message != nil {
 		defer C.TorchFreeCString(cErr.message)
-		return nil, fmt.Errorf(C.GoString(cErr.message))
+		return nil, fmt.Errorf("%s", C.GoString(cErr.message))
 	}
 	defer C.TorchFreeFloatArray(result)
 
