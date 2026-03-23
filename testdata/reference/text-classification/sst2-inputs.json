@@ -1,0 +1,21 @@
+{
+  "name": "Public Text Classification Inputs",
+  "cases": [
+    {
+      "id": "positive-review",
+      "text": "This product is excellent and reliable."
+    },
+    {
+      "id": "negative-review",
+      "text": "This was a terrible experience."
+    },
+    {
+      "id": "mixed-review",
+      "text": "The service was okay overall."
+    },
+    {
+      "id": "support-praise",
+      "text": "Fast helpful support team."
+    }
+  ]
+}

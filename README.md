@@ -25,10 +25,11 @@ Current scaffold highlights:
 - [`docs/parity-spike-01.md`](./docs/parity-spike-01.md) defines the first concrete parity spike
 - [`cmd/infergo-parity/`](./cmd/infergo-parity) runs the current parity harness
 - [`testdata/parity/text-classification/`](./testdata/parity/text-classification) contains the first public-safe artifact fixture
+- [`scripts/transformers_text_classification_reference.py`](./scripts/transformers_text_classification_reference.py) generates the first external Transformers reference file
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 
 Next milestone:
 
-1. extract the BIOnet-safe embeddings and tokenizer-adjacent pieces that are still worth keeping
-2. strengthen the BIOnet example path beyond dense feature vectors
-3. add a Python reference runner for the first public Hugging Face / Transformers parity spike
+1. turn the Transformers reference output into an InferGo-consumable comparison path
+2. define the first TorchScript or exported-model artifact flow that can target that reference
+3. compare InferGo outputs against the reference file case by case

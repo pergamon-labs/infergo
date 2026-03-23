@@ -24,6 +24,7 @@ without a documented export path, backend, and parity test story.
 - Backend: `torchscript`
 - Runtime posture: CPU-first initially
 - Support bar: parity-tested on fixed public inputs against a Python reference implementation
+- Current external reference path: Hugging Face Transformers text-classification runner for `distilbert/distilbert-base-uncased-finetuned-sst-2-english`
 
 ## Not supported in v1
 
