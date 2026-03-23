@@ -26,10 +26,11 @@ Current scaffold highlights:
 - [`cmd/infergo-parity/`](./cmd/infergo-parity) runs the current parity harness
 - [`testdata/parity/text-classification/`](./testdata/parity/text-classification) contains the first public-safe artifact fixture
 - [`scripts/transformers_text_classification_reference.py`](./scripts/transformers_text_classification_reference.py) generates the first external Transformers reference file
+- [`scripts/export_transformers_torchscript.py`](./scripts/export_transformers_torchscript.py) and [`scripts/run_torchscript_text_classification.py`](./scripts/run_torchscript_text_classification.py) define the first TorchScript export/run path
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 
 Next milestone:
 
-1. turn the Transformers reference output into an InferGo-consumable comparison path
-2. define the first TorchScript or exported-model artifact flow that can target that reference
-3. compare InferGo outputs against the reference file case by case
+1. replace the Python TorchScript local-run bridge with a native InferGo backend path
+2. widen the reference input set and tolerance coverage beyond four fixed cases
+3. decide whether the first public backend story stays TorchScript-first or shifts toward an InferGo-native artifact format

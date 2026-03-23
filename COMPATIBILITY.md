@@ -25,6 +25,7 @@ without a documented export path, backend, and parity test story.
 - Runtime posture: CPU-first initially
 - Support bar: parity-tested on fixed public inputs against a Python reference implementation
 - Current external reference path: Hugging Face Transformers text-classification runner for `distilbert/distilbert-base-uncased-finetuned-sst-2-english`
+- Current local comparison path: TorchScript export plus candidate-run JSON diffed through `cmd/infergo-parity`
 
 ## Not supported in v1
 
