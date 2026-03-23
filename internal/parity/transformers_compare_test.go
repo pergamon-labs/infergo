@@ -6,6 +6,24 @@ import (
 	"testing"
 )
 
+type fakeTorchScriptPredictor struct {
+	logits         [][]float64
+	labels         []string
+	modelID        string
+	sequenceLength int
+	padTokenID     int
+}
+
+func (f fakeTorchScriptPredictor) PredictBatch(inputIDs, attentionMasks [][]int64) ([][]float64, error) {
+	return f.logits, nil
+}
+
+func (f fakeTorchScriptPredictor) Labels() []string    { return f.labels }
+func (f fakeTorchScriptPredictor) ModelID() string     { return f.modelID }
+func (f fakeTorchScriptPredictor) SequenceLength() int { return f.sequenceLength }
+func (f fakeTorchScriptPredictor) PadTokenID() int     { return f.padTokenID }
+func (f fakeTorchScriptPredictor) Close() error        { return nil }
+
 func TestCompareTransformersTextClassification(t *testing.T) {
 	t.Parallel()
 
@@ -71,5 +89,40 @@ func TestCompareTransformersTextClassification(t *testing.T) {
 
 	if !report.Passed() {
 		t.Fatalf("expected comparison to pass, got report:\n%s", report.String())
+	}
+}
+
+func TestBuildTorchScriptCandidate(t *testing.T) {
+	t.Parallel()
+
+	reference, err := LoadTransformersTextClassificationReference("../../testdata/reference/text-classification/distilbert-sst2-reference.json")
+	if err != nil {
+		t.Fatalf("LoadTransformersTextClassificationReference() error = %v", err)
+	}
+
+	predictor := fakeTorchScriptPredictor{
+		logits: [][]float64{
+			{-4.337915420532227, 4.705198764801025},
+			{3.716874599456787, -3.1733884811401367},
+			{-4.009629726409912, 4.371831893920898},
+			{-4.13802433013916, 4.479250431060791},
+		},
+		labels:         []string{"NEGATIVE", "POSITIVE"},
+		modelID:        "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+		sequenceLength: 9,
+		padTokenID:     0,
+	}
+
+	candidate, err := BuildTorchScriptCandidate(reference, predictor, "dist/torchscript/distilbert-sst2/model.torchscript.pt")
+	if err != nil {
+		t.Fatalf("BuildTorchScriptCandidate() error = %v", err)
+	}
+
+	if len(candidate.Cases) != 4 {
+		t.Fatalf("expected 4 candidate cases, got %d", len(candidate.Cases))
+	}
+
+	if candidate.Cases[0].ObservedLabel != "POSITIVE" {
+		t.Fatalf("unexpected observed label %q", candidate.Cases[0].ObservedLabel)
 	}
 }

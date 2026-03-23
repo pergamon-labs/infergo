@@ -25,7 +25,12 @@ without a documented export path, backend, and parity test story.
 - Runtime posture: CPU-first initially
 - Support bar: parity-tested on fixed public inputs against a Python reference implementation
 - Current external reference path: Hugging Face Transformers text-classification runner for `distilbert/distilbert-base-uncased-finetuned-sst-2-english`
-- Current local comparison path: TorchScript export plus candidate-run JSON diffed through `cmd/infergo-parity`
+- Current local comparison path: TorchScript export plus native Go candidate generation through `cmd/infergo-parity -torchscript-bundle-dir ...`
+
+## Native backend note
+
+- The native `torchscript` backend currently requires `CGO_ENABLED=1`, the `torchscript_native` build tag, and `libtorch` installed under `/opt/libtorch`.
+- On machines without that setup, InferGo builds cleanly but returns a descriptive runtime error if the native backend path is invoked.
 
 ## Not supported in v1
 

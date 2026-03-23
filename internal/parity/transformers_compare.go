@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"time"
+
+	"github.com/minervaai/infergo/backends/torchscript"
 )
 
 // TorchScriptTextClassificationCandidate stores the outputs produced by a
@@ -145,6 +148,88 @@ func CompareTransformersTextClassification(referencePath, candidatePath string, 
 	return report, nil
 }
 
+// RunTorchScriptTextClassificationBundle loads a TorchScript bundle through the
+// native InferGo backend path and produces the same candidate JSON shape used by
+// file-based comparisons.
+func RunTorchScriptTextClassificationBundle(referencePath, bundleDir string) (TorchScriptTextClassificationCandidate, error) {
+	reference, err := LoadTransformersTextClassificationReference(referencePath)
+	if err != nil {
+		return TorchScriptTextClassificationCandidate{}, err
+	}
+
+	model, err := torchscript.LoadBundle(bundleDir)
+	if err != nil {
+		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("run torchscript bundle: %w", err)
+	}
+	defer model.Close()
+
+	return BuildTorchScriptCandidate(reference, model, bundleDir)
+}
+
+// BuildTorchScriptCandidate builds a candidate payload using any predictor that
+// satisfies the native TorchScript batch surface.
+func BuildTorchScriptCandidate(reference TransformersTextClassificationReference, predictor torchscript.Predictor, artifact string) (TorchScriptTextClassificationCandidate, error) {
+	inputIDs := make([][]int64, len(reference.Cases))
+	attentionMasks := make([][]int64, len(reference.Cases))
+
+	for i, item := range reference.Cases {
+		inputIDs[i] = padIntSlice(item.InputIDs, predictor.SequenceLength(), predictor.PadTokenID())
+		attentionMasks[i] = padIntSlice(item.AttentionMask, predictor.SequenceLength(), 0)
+	}
+
+	logitsBatch, err := predictor.PredictBatch(inputIDs, attentionMasks)
+	if err != nil {
+		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("build torchscript candidate: %w", err)
+	}
+
+	if len(logitsBatch) != len(reference.Cases) {
+		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("build torchscript candidate: output batch size mismatch (%d != %d)", len(logitsBatch), len(reference.Cases))
+	}
+
+	candidate := TorchScriptTextClassificationCandidate{
+		Name:        fmt.Sprintf("%s TorchScript candidate", reference.Name),
+		Source:      "infergo-torchscript",
+		ModelID:     predictor.ModelID(),
+		Task:        reference.Task,
+		Artifact:    artifact,
+		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
+		Labels:      predictor.Labels(),
+		Cases:       make([]TorchScriptTextClassificationCandidateCase, 0, len(reference.Cases)),
+	}
+
+	for i, item := range reference.Cases {
+		logits := logitsBatch[i]
+		probabilities := softmax(logits)
+		labelIdx := argMax(probabilities)
+
+		candidate.Cases = append(candidate.Cases, TorchScriptTextClassificationCandidateCase{
+			ID:                    item.ID,
+			Text:                  item.Text,
+			InputIDs:              intsToInt(item.InputIDs, predictor.SequenceLength(), predictor.PadTokenID()),
+			AttentionMask:         intsToInt(item.AttentionMask, predictor.SequenceLength(), 0),
+			ObservedLogits:        logits,
+			ObservedProbabilities: probabilities,
+			ObservedLabel:         labelAt(candidate.Labels, labelIdx),
+		})
+	}
+
+	return candidate, nil
+}
+
+// SaveTorchScriptTextClassificationCandidate writes a candidate payload to disk.
+func SaveTorchScriptTextClassificationCandidate(candidate TorchScriptTextClassificationCandidate, path string) error {
+	raw, err := json.MarshalIndent(candidate, "", "  ")
+	if err != nil {
+		return fmt.Errorf("save torchscript candidate: %w", err)
+	}
+
+	if err := os.WriteFile(path, append(raw, '\n'), 0o644); err != nil {
+		return fmt.Errorf("save torchscript candidate: %w", err)
+	}
+
+	return nil
+}
+
 // Passed returns true when every comparison case is within tolerance.
 func (r TransformersTextClassificationComparisonReport) Passed() bool {
 	for _, result := range r.CaseResults {
@@ -191,4 +276,58 @@ func sliceMaxAbsDiff(reference, observed []float64) float64 {
 	}
 
 	return maxDiff
+}
+
+func padIntSlice(values []int, targetLen int, padValue int) []int64 {
+	output := make([]int64, targetLen)
+	for i := 0; i < targetLen; i++ {
+		if i < len(values) {
+			output[i] = int64(values[i])
+			continue
+		}
+
+		output[i] = int64(padValue)
+	}
+
+	return output
+}
+
+func intsToInt(values []int, targetLen int, padValue int) []int {
+	output := make([]int, targetLen)
+	for i := 0; i < targetLen; i++ {
+		if i < len(values) {
+			output[i] = values[i]
+			continue
+		}
+
+		output[i] = padValue
+	}
+
+	return output
+}
+
+func softmax(logits []float64) []float64 {
+	if len(logits) == 0 {
+		return nil
+	}
+
+	maxValue := logits[0]
+	for _, value := range logits[1:] {
+		if value > maxValue {
+			maxValue = value
+		}
+	}
+
+	expValues := make([]float64, len(logits))
+	var sum float64
+	for i, value := range logits {
+		expValues[i] = math.Exp(value - maxValue)
+		sum += expValues[i]
+	}
+
+	for i := range expValues {
+		expValues[i] /= sum
+	}
+
+	return expValues
 }
