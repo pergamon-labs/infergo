@@ -26,17 +26,26 @@ go run -tags torchscript_native ./cmd/infergo-parity \
   -tolerance 1e-4
 ```
 
-Generate or refresh the first InferGo-native bundle and run the Go-only native
-candidate path with:
+Generate or refresh the default InferGo-native `embedding-avg-pool` bundle and
+run the Go-only native candidate path with:
 
 ```bash
 go run ./internal/tools/nativebundlegen \
   -reference ./testdata/reference/text-classification/distilbert-sst2-reference.json \
-  -output-dir ./testdata/native/text-classification/distilbert-sst2-token-id-bag
+  -output-dir ./testdata/native/text-classification/distilbert-sst2-embedding-avg-pool
 
 go run ./cmd/infergo-parity \
   -reference ./testdata/reference/text-classification/distilbert-sst2-reference.json \
-  -infergo-bundle-dir ./testdata/native/text-classification/distilbert-sst2-token-id-bag \
-  -candidate-output ./testdata/native/text-classification/distilbert-sst2-token-id-bag/candidate.json \
+  -infergo-bundle-dir ./testdata/native/text-classification/distilbert-sst2-embedding-avg-pool \
+  -candidate-output ./testdata/native/text-classification/distilbert-sst2-embedding-avg-pool/candidate.json \
   -tolerance 1e-4
+```
+
+Regenerate the earlier `token-id-bag` baseline explicitly with:
+
+```bash
+go run ./internal/tools/nativebundlegen \
+  -mode token-id-bag \
+  -reference ./testdata/reference/text-classification/distilbert-sst2-reference.json \
+  -output-dir ./testdata/native/text-classification/distilbert-sst2-token-id-bag
 ```

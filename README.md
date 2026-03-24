@@ -21,20 +21,20 @@ Current scaffold highlights:
 - [`infer/`](./infer) is the stable public API layer
 - [`backends/bionet/`](./backends/bionet) is the first implementation path
 - [`backends/bionet/runtime/`](./backends/bionet/runtime) now contains the first extracted BIOnet runtime core
-- [`backends/bionet/text_classification_bundle.go`](./backends/bionet/text_classification_bundle.go) defines the first InferGo-native bundle format for text classification
+- [`backends/bionet/text_classification_bundle.go`](./backends/bionet/text_classification_bundle.go) defines the first InferGo-native bundle formats for text classification
 - [`backends/torchscript/`](./backends/torchscript) is reserved for a narrow, parity-tested backend path
 - [`docs/parity-spike-01.md`](./docs/parity-spike-01.md) defines the first concrete parity spike
 - [`cmd/infergo-parity/`](./cmd/infergo-parity) runs the current parity harness
 - [`testdata/parity/text-classification/`](./testdata/parity/text-classification) contains the first public-safe artifact fixture
 - [`scripts/transformers_text_classification_reference.py`](./scripts/transformers_text_classification_reference.py) generates the first external Transformers reference file
 - [`scripts/export_transformers_torchscript.py`](./scripts/export_transformers_torchscript.py) plus the native `torchscript` backend define the first TorchScript export/run path
-- [`internal/tools/nativebundlegen/`](./internal/tools/nativebundlegen) generates the first InferGo-native text-classification bundle from the public reference set
-- [`testdata/native/text-classification/`](./testdata/native/text-classification) contains the first checked-in native bundle used by the Go-only parity path
+- [`internal/tools/nativebundlegen/`](./internal/tools/nativebundlegen) generates InferGo-native text-classification bundles from the public reference set
+- [`testdata/native/text-classification/`](./testdata/native/text-classification) contains checked-in native bundles used by the Go-only parity path
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 
 Next milestone:
 
 1. widen the native bundle beyond the current token-id-bag spike and prove it on a larger public reference set
-2. decide which additional runtime primitives are worth adding next for a more expressive native artifact path
+2. move from the current `embedding -> avg pool -> linear` native shape toward a less hand-fit and more reusable exported-model path
 3. keep the optional TorchScript bridge working without letting it define the core product story

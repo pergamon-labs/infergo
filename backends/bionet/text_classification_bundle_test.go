@@ -15,11 +15,6 @@ func TestLoadTextClassificationBundle(t *testing.T) {
 		t.Fatalf("LoadTransformersTextClassificationReference() error = %v", err)
 	}
 
-	bundle, err := bionet.LoadTextClassificationBundle("../../testdata/native/text-classification/distilbert-sst2-token-id-bag")
-	if err != nil {
-		t.Fatalf("LoadTextClassificationBundle() error = %v", err)
-	}
-
 	inputIDs := make([][]int64, len(reference.Cases))
 	attentionMasks := make([][]int64, len(reference.Cases))
 	for i, item := range reference.Cases {
@@ -27,19 +22,29 @@ func TestLoadTextClassificationBundle(t *testing.T) {
 		attentionMasks[i] = intsToInt64(item.AttentionMask)
 	}
 
-	logitsBatch, err := bundle.PredictBatch(inputIDs, attentionMasks)
-	if err != nil {
-		t.Fatalf("PredictBatch() error = %v", err)
-	}
+	for _, bundleDir := range []string{
+		"../../testdata/native/text-classification/distilbert-sst2-token-id-bag",
+		"../../testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
+	} {
+		bundle, err := bionet.LoadTextClassificationBundle(bundleDir)
+		if err != nil {
+			t.Fatalf("LoadTextClassificationBundle(%q) error = %v", bundleDir, err)
+		}
 
-	if len(logitsBatch) != len(reference.Cases) {
-		t.Fatalf("PredictBatch() batch size = %d, want %d", len(logitsBatch), len(reference.Cases))
-	}
+		logitsBatch, err := bundle.PredictBatch(inputIDs, attentionMasks)
+		if err != nil {
+			t.Fatalf("PredictBatch(%q) error = %v", bundleDir, err)
+		}
 
-	for i, logits := range logitsBatch {
-		labelIdx := argMax(logits)
-		if got, want := bundle.Labels()[labelIdx], reference.Cases[i].ExpectedLabel; got != want {
-			t.Fatalf("case %q label = %q, want %q", reference.Cases[i].ID, got, want)
+		if len(logitsBatch) != len(reference.Cases) {
+			t.Fatalf("PredictBatch(%q) batch size = %d, want %d", bundleDir, len(logitsBatch), len(reference.Cases))
+		}
+
+		for i, logits := range logitsBatch {
+			labelIdx := argMax(logits)
+			if got, want := bundle.Labels()[labelIdx], reference.Cases[i].ExpectedLabel; got != want {
+				t.Fatalf("bundle %q case %q label = %q, want %q", bundleDir, reference.Cases[i].ID, got, want)
+			}
 		}
 	}
 }

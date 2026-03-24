@@ -124,24 +124,28 @@ func TestRunBionetTextClassificationBundle(t *testing.T) {
 	t.Parallel()
 
 	referencePath := "../../testdata/reference/text-classification/distilbert-sst2-reference.json"
-	bundleDir := "../../testdata/native/text-classification/distilbert-sst2-token-id-bag"
-	candidatePath := filepath.Join(t.TempDir(), "candidate.json")
+	for _, bundleDir := range []string{
+		"../../testdata/native/text-classification/distilbert-sst2-token-id-bag",
+		"../../testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
+	} {
+		candidatePath := filepath.Join(t.TempDir(), filepath.Base(bundleDir)+".json")
 
-	candidate, err := RunBionetTextClassificationBundle(referencePath, bundleDir)
-	if err != nil {
-		t.Fatalf("RunBionetTextClassificationBundle() error = %v", err)
-	}
+		candidate, err := RunBionetTextClassificationBundle(referencePath, bundleDir)
+		if err != nil {
+			t.Fatalf("RunBionetTextClassificationBundle(%q) error = %v", bundleDir, err)
+		}
 
-	if err := SaveTextClassificationCandidate(candidate, candidatePath); err != nil {
-		t.Fatalf("SaveTextClassificationCandidate() error = %v", err)
-	}
+		if err := SaveTextClassificationCandidate(candidate, candidatePath); err != nil {
+			t.Fatalf("SaveTextClassificationCandidate(%q) error = %v", bundleDir, err)
+		}
 
-	report, err := CompareTransformersTextClassification(referencePath, candidatePath, 1e-4)
-	if err != nil {
-		t.Fatalf("CompareTransformersTextClassification() error = %v", err)
-	}
+		report, err := CompareTransformersTextClassification(referencePath, candidatePath, 1e-4)
+		if err != nil {
+			t.Fatalf("CompareTransformersTextClassification(%q) error = %v", bundleDir, err)
+		}
 
-	if !report.Passed() {
-		t.Fatalf("expected bionet native comparison to pass, got report:\n%s", report.String())
+		if !report.Passed() {
+			t.Fatalf("expected bionet native comparison for %q to pass, got report:\n%s", bundleDir, report.String())
+		}
 	}
 }

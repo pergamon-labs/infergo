@@ -1,0 +1,37 @@
+{
+  "name": "Public Text Classification Inputs (distilbert/distilbert-base-uncased-finetuned-sst-2-english) InferGo-native bundle",
+  "source": "infergo-native-bundlegen",
+  "model_id": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+  "task": "text-classification",
+  "generated_at": "2026-03-24T04:53:14Z",
+  "artifact": "model.gob",
+  "embedding_artifact": "embeddings.gob",
+  "labels": [
+    "NEGATIVE",
+    "POSITIVE"
+  ],
+  "feature_mode": "embedding-avg-pool",
+  "feature_token_ids": [
+    101,
+    102,
+    1012,
+    1037,
+    1996,
+    1998,
+    2001,
+    2003,
+    2023,
+    2136,
+    2326,
+    2490,
+    3100,
+    3325,
+    3435,
+    3452,
+    4031,
+    6581,
+    6659,
+    10539,
+    14044
+  ]
+}

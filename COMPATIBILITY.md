@@ -19,6 +19,9 @@ without a documented export path, backend, and parity test story.
 - Current validated examples:
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
   - native text classification over public DistilBERT reference inputs via `cmd/infergo-parity -infergo-bundle-dir ...`
+  - checked-in native bundle shapes:
+    - `token-id-bag`
+    - `embedding-avg-pool -> linear`
 
 ## v1 stretch path
 
@@ -39,6 +42,7 @@ without a documented export path, backend, and parity test story.
 - arbitrary `.pt` files without a documented export path
 - direct Hugging Face repository loading
 - general transformer execution in the native `bionet` backend
+- native attention blocks or full encoder stacks
 - ONNX runtime support
 - training, autograd, or optimizer APIs
 - generative text serving
