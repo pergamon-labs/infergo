@@ -21,8 +21,8 @@ without a documented export path, backend, and parity test story.
   - native text classification over public DistilBERT reference inputs via `cmd/infergo-parity -infergo-bundle-dir ...`
   - checked-in native bundle shapes:
     - `token-id-bag`
-    - `embedding-avg-pool -> linear`
-    - `embedding-masked-avg-pool -> linear`
+    - `embedding-avg-pool -> linear` with compact dense token embeddings
+    - `embedding-masked-avg-pool -> linear` with compact dense token embeddings
 
 ## v1 stretch path
 

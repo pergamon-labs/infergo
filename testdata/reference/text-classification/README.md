@@ -5,6 +5,7 @@ This directory holds the first external reference path for InferGo parity work.
 - `sst2-inputs.json` is the public-safe text input set.
 - `distilbert-sst2-reference.json` is generated from a Hugging Face Transformers model.
 - `../../native/text-classification/distilbert-sst2-token-id-bag/` contains the first InferGo-native bundle generated from the same reference set.
+- the default native embedding bundles now use compact dense token embeddings derived from the fitted pooled classifier instead of identity-sized embedding tables.
 - TorchScript export bundles are generated under `dist/torchscript/distilbert-sst2/` and are intentionally not committed.
 - The native Go candidate path requires `CGO_ENABLED=1`, `-tags torchscript_native`, and a libtorch install exposed through `CGO_CXXFLAGS` and `CGO_LDFLAGS`.
 

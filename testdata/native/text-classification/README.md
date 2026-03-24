@@ -9,10 +9,11 @@ Current bundles:
   token ids into a fixed bag-of-token feature vector, then runs a BIOnet linear
   classifier in pure Go.
 - `distilbert-sst2-embedding-avg-pool/` is the next native step. It maps
-  active token ids into a compact embedding table, average-pools across the
-  sequence, and then runs a BIOnet linear head.
+  active token ids into a compact dense embedding table derived from the fitted
+  pooled classifier, average-pools across the sequence, and then runs a BIOnet
+  linear head.
 - `distilbert-sst2-embedding-masked-avg-pool/` is the current default path. It
-  keeps the original sequence length, applies compact embedding lookup,
+  keeps the original sequence length, applies compact dense embedding lookup,
   respects the reference attention mask during pooling, and then runs a BIOnet
   linear head.
 
