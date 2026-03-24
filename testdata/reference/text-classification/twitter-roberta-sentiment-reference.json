@@ -1,0 +1,1132 @@
+{
+  "name": "Public Text Classification Inputs (cardiffnlp/twitter-roberta-base-sentiment-latest)",
+  "source": "huggingface-transformers",
+  "model_id": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+  "task": "text-classification",
+  "generated_at": "2026-03-24T05:48:58.295243+00:00",
+  "transformers_version": "5.3.0",
+  "torch_version": "2.10.0",
+  "labels": [
+    "negative",
+    "neutral",
+    "positive"
+  ],
+  "cases": [
+    {
+      "id": "positive-review",
+      "text": "This product is excellent and reliable.",
+      "tokens": [
+        "<s>",
+        "This",
+        "\u0120product",
+        "\u0120is",
+        "\u0120excellent",
+        "\u0120and",
+        "\u0120reliable",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        713,
+        1152,
+        16,
+        4206,
+        8,
+        7058,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.419513702392578,
+        -0.8560153245925903,
+        3.1055259704589844
+      ],
+      "expected_probabilities": [
+        0.003896026173606515,
+        0.018605470657348633,
+        0.9774985313415527
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "negative-review",
+      "text": "This was a terrible experience.",
+      "tokens": [
+        "<s>",
+        "This",
+        "\u0120was",
+        "\u0120a",
+        "\u0120terrible",
+        "\u0120experience",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        713,
+        21,
+        10,
+        6587,
+        676,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        2.3614156246185303,
+        -0.4564889967441559,
+        -2.1759231090545654
+      ],
+      "expected_probabilities": [
+        0.9342014789581299,
+        0.05580075830221176,
+        0.009997683577239513
+      ],
+      "expected_label": "negative"
+    },
+    {
+      "id": "mixed-review",
+      "text": "The service was okay overall.",
+      "tokens": [
+        "<s>",
+        "The",
+        "\u0120service",
+        "\u0120was",
+        "\u0120okay",
+        "\u0120overall",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        133,
+        544,
+        21,
+        8578,
+        1374,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.1750354766845703,
+        -0.1671401411294937,
+        1.9948794841766357
+      ],
+      "expected_probabilities": [
+        0.013669122010469437,
+        0.1018025204539299,
+        0.884528398513794
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "support-praise",
+      "text": "Fast helpful support team.",
+      "tokens": [
+        "<s>",
+        "Fast",
+        "\u0120helpful",
+        "\u0120support",
+        "\u0120team",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        35515,
+        7163,
+        323,
+        165,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -1.975116491317749,
+        -0.8123347163200378,
+        2.3414604663848877
+      ],
+      "expected_probabilities": [
+        0.012637349776923656,
+        0.04042459651827812,
+        0.9469380378723145
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "great-update",
+      "text": "The latest update made the app faster and easier to use.",
+      "tokens": [
+        "<s>",
+        "The",
+        "\u0120latest",
+        "\u0120update",
+        "\u0120made",
+        "\u0120the",
+        "\u0120app",
+        "\u0120faster",
+        "\u0120and",
+        "\u0120easier",
+        "\u0120to",
+        "\u0120use",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        133,
+        665,
+        2935,
+        156,
+        5,
+        1553,
+        3845,
+        8,
+        3013,
+        7,
+        304,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.8854215145111084,
+        -0.03761114925146103,
+        2.906859874725342
+      ],
+      "expected_probabilities": [
+        0.002890091622248292,
+        0.04985397681593895,
+        0.9472559690475464
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "refund-friction",
+      "text": "Getting a refund was frustrating and took far too long.",
+      "tokens": [
+        "<s>",
+        "Getting",
+        "\u0120a",
+        "\u0120refund",
+        "\u0120was",
+        "\u0120frustrating",
+        "\u0120and",
+        "\u0120took",
+        "\u0120far",
+        "\u0120too",
+        "\u0120long",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        28750,
+        10,
+        12173,
+        21,
+        10314,
+        8,
+        362,
+        444,
+        350,
+        251,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        2.3568310737609863,
+        -0.11459052562713623,
+        -2.5020041465759277
+      ],
+      "expected_probabilities": [
+        0.9155629277229309,
+        0.0773327425122261,
+        0.007104325573891401
+      ],
+      "expected_label": "negative"
+    },
+    {
+      "id": "easy-setup",
+      "text": "Setup was simple and everything worked on the first try.",
+      "tokens": [
+        "<s>",
+        "Setup",
+        "\u0120was",
+        "\u0120simple",
+        "\u0120and",
+        "\u0120everything",
+        "\u0120worked",
+        "\u0120on",
+        "\u0120the",
+        "\u0120first",
+        "\u0120try",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        49398,
+        21,
+        2007,
+        8,
+        960,
+        1006,
+        15,
+        5,
+        78,
+        860,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.3599603176116943,
+        -0.19546106457710266,
+        2.3530478477478027
+      ],
+      "expected_probabilities": [
+        0.008257846347987652,
+        0.07192780077457428,
+        0.9198142886161804
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "buggy-release",
+      "text": "The new release feels buggy, unstable, and unfinished.",
+      "tokens": [
+        "<s>",
+        "The",
+        "\u0120new",
+        "\u0120release",
+        "\u0120feels",
+        "\u0120buggy",
+        ",",
+        "\u0120unstable",
+        ",",
+        "\u0120and",
+        "\u0120unfinished",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        133,
+        92,
+        800,
+        2653,
+        40399,
+        6,
+        21541,
+        6,
+        8,
+        28402,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        2.286191940307617,
+        -0.3710007071495056,
+        -2.385254383087158
+      ],
+      "expected_probabilities": [
+        0.9263516664505005,
+        0.06497880816459656,
+        0.008669469505548477
+      ],
+      "expected_label": "negative"
+    },
+    {
+      "id": "lovely-staff",
+      "text": "The staff were friendly, patient, and genuinely helpful.",
+      "tokens": [
+        "<s>",
+        "The",
+        "\u0120staff",
+        "\u0120were",
+        "\u0120friendly",
+        ",",
+        "\u0120patient",
+        ",",
+        "\u0120and",
+        "\u0120genuinely",
+        "\u0120helpful",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        133,
+        813,
+        58,
+        5192,
+        6,
+        3186,
+        6,
+        8,
+        14528,
+        7163,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.0117976665496826,
+        -0.8998790979385376,
+        2.64829158782959
+      ],
+      "expected_probabilities": [
+        0.00911695696413517,
+        0.02771725133061409,
+        0.963165819644928
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "battery-drain",
+      "text": "This update drained my battery and slowed down my phone.",
+      "tokens": [
+        "<s>",
+        "This",
+        "\u0120update",
+        "\u0120drained",
+        "\u0120my",
+        "\u0120battery",
+        "\u0120and",
+        "\u0120slowed",
+        "\u0120down",
+        "\u0120my",
+        "\u0120phone",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        713,
+        2935,
+        23544,
+        127,
+        3822,
+        8,
+        9546,
+        159,
+        127,
+        1028,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        2.109299659729004,
+        -0.20364399254322052,
+        -2.1723835468292236
+      ],
+      "expected_probabilities": [
+        0.8986431360244751,
+        0.08893825113773346,
+        0.012418695725500584
+      ],
+      "expected_label": "negative"
+    },
+    {
+      "id": "clear-instructions",
+      "text": "The instructions were clear and saved me a lot of time.",
+      "tokens": [
+        "<s>",
+        "The",
+        "\u0120instructions",
+        "\u0120were",
+        "\u0120clear",
+        "\u0120and",
+        "\u0120saved",
+        "\u0120me",
+        "\u0120a",
+        "\u0120lot",
+        "\u0120of",
+        "\u0120time",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        133,
+        9223,
+        58,
+        699,
+        8,
+        5305,
+        162,
+        10,
+        319,
+        9,
+        86,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.164220094680786,
+        -0.045919932425022125,
+        1.9411224126815796
+      ],
+      "expected_probabilities": [
+        0.014289694838225842,
+        0.11884720623493195,
+        0.8668630719184875
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "wasted-time",
+      "text": "I spent hours on this and still got nowhere.",
+      "tokens": [
+        "<s>",
+        "I",
+        "\u0120spent",
+        "\u0120hours",
+        "\u0120on",
+        "\u0120this",
+        "\u0120and",
+        "\u0120still",
+        "\u0120got",
+        "\u0120nowhere",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        100,
+        1240,
+        722,
+        15,
+        42,
+        8,
+        202,
+        300,
+        9261,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        2.1883721351623535,
+        -0.26320597529411316,
+        -2.304612398147583
+      ],
+      "expected_probabilities": [
+        0.9112906455993652,
+        0.07851453125476837,
+        0.010194793343544006
+      ],
+      "expected_label": "negative"
+    },
+    {
+      "id": "sturdy-design",
+      "text": "The design feels sturdy and well thought out.",
+      "tokens": [
+        "<s>",
+        "The",
+        "\u0120design",
+        "\u0120feels",
+        "\u0120sturdy",
+        "\u0120and",
+        "\u0120well",
+        "\u0120thought",
+        "\u0120out",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        133,
+        1521,
+        2653,
+        28685,
+        8,
+        157,
+        802,
+        66,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.241832971572876,
+        -0.31010353565216064,
+        2.3623175621032715
+      ],
+      "expected_probabilities": [
+        0.009276476688683033,
+        0.0640210285782814,
+        0.9267024397850037
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "cold-food",
+      "text": "The meal arrived cold and tasted bland.",
+      "tokens": [
+        "<s>",
+        "The",
+        "\u0120meal",
+        "\u0120arrived",
+        "\u0120cold",
+        "\u0120and",
+        "\u0120tasted",
+        "\u0120bland",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        133,
+        5820,
+        2035,
+        2569,
+        8,
+        29143,
+        35063,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        1.914217233657837,
+        0.21486125886440277,
+        -2.414522647857666
+      ],
+      "expected_probabilities": [
+        0.8361305594444275,
+        0.15284568071365356,
+        0.011023668572306633
+      ],
+      "expected_label": "negative"
+    },
+    {
+      "id": "smooth-onboarding",
+      "text": "Onboarding was smooth and made the product easy to trust.",
+      "tokens": [
+        "<s>",
+        "On",
+        "boarding",
+        "\u0120was",
+        "\u0120smooth",
+        "\u0120and",
+        "\u0120made",
+        "\u0120the",
+        "\u0120product",
+        "\u0120easy",
+        "\u0120to",
+        "\u0120trust",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        4148,
+        20592,
+        21,
+        6921,
+        8,
+        156,
+        5,
+        1152,
+        1365,
+        7,
+        2416,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.6089138984680176,
+        -0.10293398052453995,
+        2.2670016288757324
+      ],
+      "expected_probabilities": [
+        0.006927622016519308,
+        0.08490191400051117,
+        0.9081704616546631
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "broken-login",
+      "text": "The login flow kept breaking and locked me out twice.",
+      "tokens": [
+        "<s>",
+        "The",
+        "\u0120login",
+        "\u0120flow",
+        "\u0120kept",
+        "\u0120breaking",
+        "\u0120and",
+        "\u0120locked",
+        "\u0120me",
+        "\u0120out",
+        "\u0120twice",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        133,
+        27754,
+        3041,
+        1682,
+        3433,
+        8,
+        5930,
+        162,
+        66,
+        2330,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        2.0263113975524902,
+        0.2859794497489929,
+        -2.6987977027893066
+      ],
+      "expected_probabilities": [
+        0.8443579077720642,
+        0.14815285801887512,
+        0.007489239796996117
+      ],
+      "expected_label": "negative"
+    },
+    {
+      "id": "exceeded-expectations",
+      "text": "It exceeded my expectations in almost every way.",
+      "tokens": [
+        "<s>",
+        "It",
+        "\u0120exceeded",
+        "\u0120my",
+        "\u0120expectations",
+        "\u0120in",
+        "\u0120almost",
+        "\u0120every",
+        "\u0120way",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        243,
+        13009,
+        127,
+        2113,
+        11,
+        818,
+        358,
+        169,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.3056349754333496,
+        -0.936926007270813,
+        3.1156134605407715
+      ],
+      "expected_probabilities": [
+        0.004327288828790188,
+        0.017007431015372276,
+        0.978665292263031
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "poor-documentation",
+      "text": "The documentation was confusing and missed key steps.",
+      "tokens": [
+        "<s>",
+        "The",
+        "\u0120documentation",
+        "\u0120was",
+        "\u0120confusing",
+        "\u0120and",
+        "\u0120missed",
+        "\u0120key",
+        "\u0120steps",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        133,
+        14877,
+        21,
+        15868,
+        8,
+        2039,
+        762,
+        2402,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        2.120056390762329,
+        0.13718625903129578,
+        -2.591505289077759
+      ],
+      "expected_probabilities": [
+        0.8720948696136475,
+        0.120064377784729,
+        0.00784076564013958
+      ],
+      "expected_label": "negative"
+    },
+    {
+      "id": "quick-resolution",
+      "text": "Support resolved the issue quickly and followed up afterward.",
+      "tokens": [
+        "<s>",
+        "Support",
+        "\u0120resolved",
+        "\u0120the",
+        "\u0120issue",
+        "\u0120quickly",
+        "\u0120and",
+        "\u0120followed",
+        "\u0120up",
+        "\u0120afterward",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        38873,
+        8179,
+        5,
+        696,
+        1335,
+        8,
+        1432,
+        62,
+        14723,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -1.975714921951294,
+        0.6956350803375244,
+        0.8760780692100525
+      ],
+      "expected_probabilities": [
+        0.030508002266287804,
+        0.44112974405288696,
+        0.5283622145652771
+      ],
+      "expected_label": "positive"
+    },
+    {
+      "id": "cheap-materials",
+      "text": "The materials felt cheap and wore out after a week.",
+      "tokens": [
+        "<s>",
+        "The",
+        "\u0120materials",
+        "\u0120felt",
+        "\u0120cheap",
+        "\u0120and",
+        "\u0120wore",
+        "\u0120out",
+        "\u0120after",
+        "\u0120a",
+        "\u0120week",
+        ".",
+        "</s>"
+      ],
+      "input_ids": [
+        0,
+        133,
+        3183,
+        1299,
+        6162,
+        8,
+        5328,
+        66,
+        71,
+        10,
+        186,
+        4,
+        2
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        2.047835111618042,
+        0.19246116280555725,
+        -2.5267176628112793
+      ],
+      "expected_probabilities": [
+        0.8571144342422485,
+        0.13404794037342072,
+        0.008837631903588772
+      ],
+      "expected_label": "negative"
+    }
+  ]
+}

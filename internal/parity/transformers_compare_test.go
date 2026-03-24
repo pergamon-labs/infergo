@@ -197,30 +197,47 @@ func TestBuildTextClassificationCandidate(t *testing.T) {
 func TestRunBionetTextClassificationBundle(t *testing.T) {
 	t.Parallel()
 
-	referencePath := "../../testdata/reference/text-classification/distilbert-sst2-reference.json"
-	for _, bundleDir := range []string{
-		"../../testdata/native/text-classification/distilbert-sst2-token-id-bag",
-		"../../testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
-		"../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool",
-	} {
-		candidatePath := filepath.Join(t.TempDir(), filepath.Base(bundleDir)+".json")
+	testCases := []struct {
+		referencePath string
+		bundleDirs    []string
+	}{
+		{
+			referencePath: "../../testdata/reference/text-classification/distilbert-sst2-reference.json",
+			bundleDirs: []string{
+				"../../testdata/native/text-classification/distilbert-sst2-token-id-bag",
+				"../../testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
+				"../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool",
+			},
+		},
+		{
+			referencePath: "../../testdata/reference/text-classification/twitter-roberta-sentiment-reference.json",
+			bundleDirs: []string{
+				"../../testdata/native/text-classification/twitter-roberta-sentiment-embedding-masked-avg-pool",
+			},
+		},
+	}
 
-		candidate, err := RunBionetTextClassificationBundle(referencePath, bundleDir)
-		if err != nil {
-			t.Fatalf("RunBionetTextClassificationBundle(%q) error = %v", bundleDir, err)
-		}
+	for _, tt := range testCases {
+		for _, bundleDir := range tt.bundleDirs {
+			candidatePath := filepath.Join(t.TempDir(), filepath.Base(bundleDir)+".json")
 
-		if err := SaveTextClassificationCandidate(candidate, candidatePath); err != nil {
-			t.Fatalf("SaveTextClassificationCandidate(%q) error = %v", bundleDir, err)
-		}
+			candidate, err := RunBionetTextClassificationBundle(tt.referencePath, bundleDir)
+			if err != nil {
+				t.Fatalf("RunBionetTextClassificationBundle(%q) error = %v", bundleDir, err)
+			}
 
-		report, err := CompareTransformersTextClassification(referencePath, candidatePath, 1e-4)
-		if err != nil {
-			t.Fatalf("CompareTransformersTextClassification(%q) error = %v", bundleDir, err)
-		}
+			if err := SaveTextClassificationCandidate(candidate, candidatePath); err != nil {
+				t.Fatalf("SaveTextClassificationCandidate(%q) error = %v", bundleDir, err)
+			}
 
-		if !report.Passed() {
-			t.Fatalf("expected bionet native comparison for %q to pass, got report:\n%s", bundleDir, report.String())
+			report, err := CompareTransformersTextClassification(tt.referencePath, candidatePath, 1e-4)
+			if err != nil {
+				t.Fatalf("CompareTransformersTextClassification(%q) error = %v", bundleDir, err)
+			}
+
+			if !report.Passed() {
+				t.Fatalf("expected bionet native comparison for %q to pass, got report:\n%s", bundleDir, report.String())
+			}
 		}
 	}
 }

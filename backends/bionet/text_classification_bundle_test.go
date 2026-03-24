@@ -10,41 +10,59 @@ import (
 func TestLoadTextClassificationBundle(t *testing.T) {
 	t.Parallel()
 
-	reference, err := parity.LoadTransformersTextClassificationReference("../../testdata/reference/text-classification/distilbert-sst2-reference.json")
-	if err != nil {
-		t.Fatalf("LoadTransformersTextClassificationReference() error = %v", err)
+	testCases := []struct {
+		referencePath string
+		bundleDirs    []string
+	}{
+		{
+			referencePath: "../../testdata/reference/text-classification/distilbert-sst2-reference.json",
+			bundleDirs: []string{
+				"../../testdata/native/text-classification/distilbert-sst2-token-id-bag",
+				"../../testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
+				"../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool",
+			},
+		},
+		{
+			referencePath: "../../testdata/reference/text-classification/twitter-roberta-sentiment-reference.json",
+			bundleDirs: []string{
+				"../../testdata/native/text-classification/twitter-roberta-sentiment-embedding-masked-avg-pool",
+			},
+		},
 	}
 
-	inputIDs := make([][]int64, len(reference.Cases))
-	attentionMasks := make([][]int64, len(reference.Cases))
-	for i, item := range reference.Cases {
-		inputIDs[i] = intsToInt64(item.InputIDs)
-		attentionMasks[i] = intsToInt64(item.AttentionMask)
-	}
-
-	for _, bundleDir := range []string{
-		"../../testdata/native/text-classification/distilbert-sst2-token-id-bag",
-		"../../testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
-		"../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool",
-	} {
-		bundle, err := bionet.LoadTextClassificationBundle(bundleDir)
+	for _, tt := range testCases {
+		reference, err := parity.LoadTransformersTextClassificationReference(tt.referencePath)
 		if err != nil {
-			t.Fatalf("LoadTextClassificationBundle(%q) error = %v", bundleDir, err)
+			t.Fatalf("LoadTransformersTextClassificationReference(%q) error = %v", tt.referencePath, err)
 		}
 
-		logitsBatch, err := bundle.PredictBatch(inputIDs, attentionMasks)
-		if err != nil {
-			t.Fatalf("PredictBatch(%q) error = %v", bundleDir, err)
+		inputIDs := make([][]int64, len(reference.Cases))
+		attentionMasks := make([][]int64, len(reference.Cases))
+		for i, item := range reference.Cases {
+			inputIDs[i] = intsToInt64(item.InputIDs)
+			attentionMasks[i] = intsToInt64(item.AttentionMask)
 		}
 
-		if len(logitsBatch) != len(reference.Cases) {
-			t.Fatalf("PredictBatch(%q) batch size = %d, want %d", bundleDir, len(logitsBatch), len(reference.Cases))
-		}
+		for _, bundleDir := range tt.bundleDirs {
+			bundle, err := bionet.LoadTextClassificationBundle(bundleDir)
+			if err != nil {
+				t.Fatalf("LoadTextClassificationBundle(%q) error = %v", bundleDir, err)
+			}
 
-		for i, logits := range logitsBatch {
-			labelIdx := argMax(logits)
-			if got, want := bundle.Labels()[labelIdx], reference.Cases[i].ExpectedLabel; got != want {
-				t.Fatalf("bundle %q case %q label = %q, want %q", bundleDir, reference.Cases[i].ID, got, want)
+			logitsBatch, err := bundle.PredictBatch(inputIDs, attentionMasks)
+			if err != nil {
+				t.Fatalf("PredictBatch(%q) error = %v", bundleDir, err)
+			}
+
+			if len(logitsBatch) != len(reference.Cases) {
+				t.Fatalf("PredictBatch(%q) batch size = %d, want %d", bundleDir, len(logitsBatch), len(reference.Cases))
+			}
+
+			for i, logits := range logitsBatch {
+				labelIdx := argMax(logits)
+				if got, want := bundle.Labels()[labelIdx], reference.Cases[i].ExpectedLabel; got != want {
+					t.Fatalf("bundle %q case %q label = %q, want %q", bundleDir, reference.Cases[i].ID, got, want)
+				}
 			}
 		}
 	}

@@ -16,6 +16,9 @@ Current bundles:
   keeps the original sequence length, applies compact dense embedding lookup,
   respects the reference attention mask during pooling, and then runs a BIOnet
   linear head.
+- `twitter-roberta-sentiment-embedding-masked-avg-pool/` applies the same
+  compact masked-pooling export path to a second public sentiment model with a
+  different tokenizer family and three output labels.
 
 This is intentionally narrower than general transformer execution. Its purpose
 is to prove three things:
@@ -31,6 +34,14 @@ with:
 go run ./internal/tools/nativebundlegen \
   -reference ./testdata/reference/text-classification/distilbert-sst2-reference.json \
   -output-dir ./testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool
+```
+
+Generate the second-model masked bundle explicitly with:
+
+```bash
+go run ./internal/tools/nativebundlegen \
+  -reference ./testdata/reference/text-classification/twitter-roberta-sentiment-reference.json \
+  -output-dir ./testdata/native/text-classification/twitter-roberta-sentiment-embedding-masked-avg-pool
 ```
 
 Regenerate the earlier `embedding-avg-pool` bundle explicitly with:

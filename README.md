@@ -32,10 +32,10 @@ Current scaffold highlights:
 - [`testdata/native/text-classification/`](./testdata/native/text-classification) contains checked-in native bundles used by the Go-only parity path
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
-- the public DistilBERT reference set is now intentionally broader than the initial 4-case spike so native bundle changes are tested against a less hand-fit baseline
+- the public reference set is now validated against both a DistilBERT SST-2 path and a RoBERTa-based 3-label sentiment path, so native bundle changes are tested against more than one tokenizer/model family
 
 Next milestone:
 
-1. validate the compact dense native export path on a second public reference model
-2. decide whether the next native primitive after masked pooling should be layer normalization or a small attention-style block
+1. decide whether the next native primitive after masked pooling should be layer normalization or a small attention-style block
+2. test the compact native export path on a sequence-labeling or token-classification reference task
 3. keep the optional TorchScript bridge working without letting it define the core product story

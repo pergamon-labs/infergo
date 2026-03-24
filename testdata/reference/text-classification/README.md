@@ -4,6 +4,7 @@ This directory holds the first external reference path for InferGo parity work.
 
 - `sst2-inputs.json` is the public-safe text input set.
 - `distilbert-sst2-reference.json` is generated from a Hugging Face Transformers model.
+- `twitter-roberta-sentiment-reference.json` is generated from a second public Hugging Face sentiment model.
 - `../../native/text-classification/distilbert-sst2-token-id-bag/` contains the first InferGo-native bundle generated from the same reference set.
 - the default native embedding bundles now use compact dense token embeddings derived from the fitted pooled classifier instead of identity-sized embedding tables.
 - TorchScript export bundles are generated under `dist/torchscript/distilbert-sst2/` and are intentionally not committed.
@@ -13,6 +14,14 @@ Generate or refresh the reference file from the repo root with:
 
 ```bash
 uv run --with torch==2.10.0 --with transformers==5.3.0 python ./scripts/transformers_text_classification_reference.py
+```
+
+Generate the RoBERTa sentiment reference explicitly with:
+
+```bash
+uv run --with torch==2.10.0 --with transformers==5.3.0 python ./scripts/transformers_text_classification_reference.py \
+  --model-id cardiffnlp/twitter-roberta-base-sentiment-latest \
+  --output ./testdata/reference/text-classification/twitter-roberta-sentiment-reference.json
 ```
 
 Export the reference model to TorchScript and run the local candidate path with:
