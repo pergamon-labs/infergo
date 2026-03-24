@@ -10,7 +10,7 @@
     "NEGATIVE",
     "POSITIVE"
   ],
-  "feature_mode": "embedding-avg-pool",
+  "feature_mode": "embedding-masked-avg-pool",
   "feature_token_ids": [
     101,
     102,

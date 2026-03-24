@@ -22,6 +22,7 @@ without a documented export path, backend, and parity test story.
   - checked-in native bundle shapes:
     - `token-id-bag`
     - `embedding-avg-pool -> linear`
+    - `embedding-masked-avg-pool -> linear`
 
 ## v1 stretch path
 

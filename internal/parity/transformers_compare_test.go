@@ -1,6 +1,7 @@
 package parity
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,60 +23,66 @@ func (f fakeTorchScriptPredictor) ModelID() string  { return f.modelID }
 func TestCompareTransformersTextClassification(t *testing.T) {
 	t.Parallel()
 
-	referencePath := "../../testdata/reference/text-classification/distilbert-sst2-reference.json"
-	candidatePath := filepath.Join(t.TempDir(), "candidate.json")
-
-	payload := `{
-  "name": "candidate",
-  "source": "torchscript",
-  "model_id": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
-  "task": "text-classification",
-  "artifact": "dist/model.torchscript.pt",
-  "generated_at": "2026-03-23T00:00:00Z",
-  "labels": ["NEGATIVE", "POSITIVE"],
-  "cases": [
-    {
-      "id": "positive-review",
-      "text": "This product is excellent and reliable.",
-      "input_ids": [101,2023,4031,2003,6581,1998,10539,1012,102],
-      "attention_mask": [1,1,1,1,1,1,1,1,1],
-      "observed_logits": [-4.337915420532227,4.705198764801025],
-      "observed_probabilities": [0.00011818823986686766,0.9998817443847656],
-      "observed_label": "POSITIVE"
-    },
-    {
-      "id": "negative-review",
-      "text": "This was a terrible experience.",
-      "input_ids": [101,2023,2001,1037,6659,3325,1012,102],
-      "attention_mask": [1,1,1,1,1,1,1,1],
-      "observed_logits": [3.716874599456787,-3.1733884811401367],
-      "observed_probabilities": [0.9989833235740662,0.0010166114661842585],
-      "observed_label": "NEGATIVE"
-    },
-    {
-      "id": "mixed-review",
-      "text": "The service was okay overall.",
-      "input_ids": [101,1996,2326,2001,3100,3452,1012,102],
-      "attention_mask": [1,1,1,1,1,1,1,1],
-      "observed_logits": [-4.009629726409912,4.371831893920898],
-      "observed_probabilities": [0.0002290222910232842,0.9997709393501282],
-      "observed_label": "POSITIVE"
-    },
-    {
-      "id": "support-praise",
-      "text": "Fast helpful support team.",
-      "input_ids": [101,3435,14044,2490,2136,1012,102],
-      "attention_mask": [1,1,1,1,1,1,1],
-      "observed_logits": [-4.13802433013916,4.479250431060791],
-      "observed_probabilities": [0.00018091990204993635,0.9998190999031067],
-      "observed_label": "POSITIVE"
-    }
-  ]
-}`
-
-	if err := os.WriteFile(candidatePath, []byte(payload), 0o644); err != nil {
-		t.Fatalf("WriteFile() error = %v", err)
+	reference := TransformersTextClassificationReference{
+		Name:        "synthetic reference",
+		Source:      "test",
+		ModelID:     "example/model",
+		Task:        "text-classification",
+		GeneratedAt: "2026-03-24T00:00:00Z",
+		Labels:      []string{"NEGATIVE", "POSITIVE"},
+		Cases: []TransformersTextClassificationReferenceCase{
+			{
+				ID:                    "case-a",
+				Text:                  "excellent support",
+				InputIDs:              []int{101, 2001, 102},
+				AttentionMask:         []int{1, 1, 1},
+				ExpectedLogits:        []float64{-1.5, 1.5},
+				ExpectedProbabilities: softmax([]float64{-1.5, 1.5}),
+				ExpectedLabel:         "POSITIVE",
+			},
+			{
+				ID:                    "case-b",
+				Text:                  "terrible experience",
+				InputIDs:              []int{101, 2002, 102},
+				AttentionMask:         []int{1, 1, 1},
+				ExpectedLogits:        []float64{1.8, -1.8},
+				ExpectedProbabilities: softmax([]float64{1.8, -1.8}),
+				ExpectedLabel:         "NEGATIVE",
+			},
+		},
 	}
+	candidate := TextClassificationCandidate{
+		Name:        "candidate",
+		Source:      "test",
+		ModelID:     "example/model",
+		Task:        "text-classification",
+		Artifact:    "dist/model",
+		GeneratedAt: "2026-03-24T00:00:00Z",
+		Labels:      []string{"NEGATIVE", "POSITIVE"},
+		Cases: []TextClassificationCandidateCase{
+			{
+				ID:                    "case-a",
+				Text:                  "excellent support",
+				InputIDs:              []int{101, 2001, 102},
+				AttentionMask:         []int{1, 1, 1},
+				ObservedLogits:        []float64{-1.5, 1.5},
+				ObservedProbabilities: softmax([]float64{-1.5, 1.5}),
+				ObservedLabel:         "POSITIVE",
+			},
+			{
+				ID:                    "case-b",
+				Text:                  "terrible experience",
+				InputIDs:              []int{101, 2002, 102},
+				AttentionMask:         []int{1, 1, 1},
+				ObservedLogits:        []float64{1.8, -1.8},
+				ObservedProbabilities: softmax([]float64{1.8, -1.8}),
+				ObservedLabel:         "NEGATIVE",
+			},
+		},
+	}
+
+	referencePath := writeTempJSON(t, "reference.json", reference)
+	candidatePath := writeTempJSON(t, "candidate.json", candidate)
 
 	report, err := CompareTransformersTextClassification(referencePath, candidatePath, 1e-9)
 	if err != nil {
@@ -87,32 +94,99 @@ func TestCompareTransformersTextClassification(t *testing.T) {
 	}
 }
 
+func TestCompareTransformersTextClassificationRequiresFullCandidateCoverage(t *testing.T) {
+	t.Parallel()
+
+	reference := TransformersTextClassificationReference{
+		Name:        "synthetic reference",
+		Source:      "test",
+		ModelID:     "example/model",
+		Task:        "text-classification",
+		GeneratedAt: "2026-03-24T00:00:00Z",
+		Labels:      []string{"NEGATIVE", "POSITIVE"},
+		Cases: []TransformersTextClassificationReferenceCase{
+			{
+				ID:                    "case-a",
+				Text:                  "excellent support",
+				InputIDs:              []int{101, 2001, 102},
+				AttentionMask:         []int{1, 1, 1},
+				ExpectedLogits:        []float64{-1.5, 1.5},
+				ExpectedProbabilities: softmax([]float64{-1.5, 1.5}),
+				ExpectedLabel:         "POSITIVE",
+			},
+			{
+				ID:                    "case-b",
+				Text:                  "terrible experience",
+				InputIDs:              []int{101, 2002, 102},
+				AttentionMask:         []int{1, 1, 1},
+				ExpectedLogits:        []float64{1.8, -1.8},
+				ExpectedProbabilities: softmax([]float64{1.8, -1.8}),
+				ExpectedLabel:         "NEGATIVE",
+			},
+		},
+	}
+	candidate := TextClassificationCandidate{
+		Name:        "candidate",
+		Source:      "test",
+		ModelID:     "example/model",
+		Task:        "text-classification",
+		Artifact:    "dist/model",
+		GeneratedAt: "2026-03-24T00:00:00Z",
+		Labels:      []string{"NEGATIVE", "POSITIVE"},
+		Cases: []TextClassificationCandidateCase{
+			{
+				ID:                    "case-a",
+				Text:                  "excellent support",
+				InputIDs:              []int{101, 2001, 102},
+				AttentionMask:         []int{1, 1, 1},
+				ObservedLogits:        []float64{-1.5, 1.5},
+				ObservedProbabilities: softmax([]float64{-1.5, 1.5}),
+				ObservedLabel:         "POSITIVE",
+			},
+		},
+	}
+
+	referencePath := writeTempJSON(t, "reference.json", reference)
+	candidatePath := writeTempJSON(t, "candidate.json", candidate)
+
+	_, err := CompareTransformersTextClassification(referencePath, candidatePath, 1e-9)
+	if err == nil {
+		t.Fatal("expected comparison to fail when a reference case is missing from the candidate")
+	}
+}
+
 func TestBuildTextClassificationCandidate(t *testing.T) {
 	t.Parallel()
 
-	reference, err := LoadTransformersTextClassificationReference("../../testdata/reference/text-classification/distilbert-sst2-reference.json")
-	if err != nil {
-		t.Fatalf("LoadTransformersTextClassificationReference() error = %v", err)
+	reference := TransformersTextClassificationReference{
+		Name:        "synthetic reference",
+		Source:      "test",
+		ModelID:     "example/model",
+		Task:        "text-classification",
+		GeneratedAt: "2026-03-24T00:00:00Z",
+		Labels:      []string{"NEGATIVE", "POSITIVE"},
+		Cases: []TransformersTextClassificationReferenceCase{
+			{ID: "case-a", Text: "excellent support", InputIDs: []int{101, 2001, 102}, AttentionMask: []int{1, 1, 1}},
+			{ID: "case-b", Text: "terrible experience", InputIDs: []int{101, 2002, 102}, AttentionMask: []int{1, 1, 1}},
+		},
 	}
 
 	predictor := fakeTorchScriptPredictor{
 		logits: [][]float64{
-			{-4.337915420532227, 4.705198764801025},
-			{3.716874599456787, -3.1733884811401367},
-			{-4.009629726409912, 4.371831893920898},
-			{-4.13802433013916, 4.479250431060791},
+			{-1.5, 1.5},
+			{1.8, -1.8},
 		},
 		labels:  []string{"NEGATIVE", "POSITIVE"},
-		modelID: "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+		modelID: "example/model",
 	}
 
-	candidate, err := BuildTextClassificationCandidate(reference, predictor, "dist/torchscript/distilbert-sst2/model.torchscript.pt", "infergo-test")
+	candidate, err := BuildTextClassificationCandidate(reference, predictor, "dist/model", "infergo-test")
 	if err != nil {
 		t.Fatalf("BuildTextClassificationCandidate() error = %v", err)
 	}
 
-	if len(candidate.Cases) != 4 {
-		t.Fatalf("expected 4 candidate cases, got %d", len(candidate.Cases))
+	if len(candidate.Cases) != len(reference.Cases) {
+		t.Fatalf("expected %d candidate cases, got %d", len(reference.Cases), len(candidate.Cases))
 	}
 
 	if candidate.Cases[0].ObservedLabel != "POSITIVE" {
@@ -127,6 +201,7 @@ func TestRunBionetTextClassificationBundle(t *testing.T) {
 	for _, bundleDir := range []string{
 		"../../testdata/native/text-classification/distilbert-sst2-token-id-bag",
 		"../../testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
+		"../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool",
 	} {
 		candidatePath := filepath.Join(t.TempDir(), filepath.Base(bundleDir)+".json")
 
@@ -148,4 +223,20 @@ func TestRunBionetTextClassificationBundle(t *testing.T) {
 			t.Fatalf("expected bionet native comparison for %q to pass, got report:\n%s", bundleDir, report.String())
 		}
 	}
+}
+
+func writeTempJSON(t *testing.T, name string, value any) string {
+	t.Helper()
+
+	raw, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		t.Fatalf("json.MarshalIndent(%s) error = %v", name, err)
+	}
+
+	path := filepath.Join(t.TempDir(), name)
+	if err := os.WriteFile(path, append(raw, '\n'), 0o644); err != nil {
+		t.Fatalf("WriteFile(%s) error = %v", name, err)
+	}
+
+	return path
 }

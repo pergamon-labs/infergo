@@ -10,8 +10,8 @@ func TestLoadTransformersTextClassificationInputSet(t *testing.T) {
 		t.Fatalf("LoadTransformersTextClassificationInputSet() error = %v", err)
 	}
 
-	if len(inputSet.Cases) != 4 {
-		t.Fatalf("expected 4 input cases, got %d", len(inputSet.Cases))
+	if len(inputSet.Cases) < 12 {
+		t.Fatalf("expected a widened public input set, got %d cases", len(inputSet.Cases))
 	}
 }
 
@@ -27,7 +27,7 @@ func TestLoadTransformersTextClassificationReference(t *testing.T) {
 		t.Fatalf("unexpected model id %q", reference.ModelID)
 	}
 
-	if len(reference.Cases) != 4 {
-		t.Fatalf("expected 4 reference cases, got %d", len(reference.Cases))
+	if len(reference.Cases) < 12 {
+		t.Fatalf("expected a widened public reference set, got %d cases", len(reference.Cases))
 	}
 }

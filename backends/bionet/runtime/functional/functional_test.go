@@ -1223,6 +1223,87 @@ func TestFlatten(t *testing.T) {
 	}
 }
 
+func TestMaskedAveragePool(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    tensor.Tensor
+		mask     tensor.Tensor
+		expected tensor.Tensor
+		wantErr  bool
+	}{
+		{
+			name: "3D mask averages active timesteps",
+			input: tensor.New([]float64{
+				1, 10,
+				2, 20,
+				3, 30,
+				4, 40,
+				5, 50,
+				6, 60,
+			}, []int{3, 2, 2}),
+			mask: tensor.New([]float64{
+				1, 1,
+				1, 0,
+				0, 1,
+			}, []int{3, 2, 1}),
+			expected: tensor.New([]float64{
+				2, 20,
+				4, 40,
+			}, []int{2, 2}),
+			wantErr: false,
+		},
+		{
+			name: "2D mask averages active timesteps",
+			input: tensor.New([]float64{
+				1, 2,
+				3, 4,
+				5, 6,
+			}, []int{3, 1, 2}),
+			mask: tensor.New([]float64{
+				1,
+				0,
+				1,
+			}, []int{3, 1}),
+			expected: tensor.New([]float64{
+				3, 4,
+			}, []int{1, 2}),
+			wantErr: false,
+		},
+		{
+			name:    "invalid input rank",
+			input:   tensor.New([]float64{1, 2, 3, 4}, []int{2, 2}),
+			mask:    tensor.New([]float64{1, 1}, []int{2, 1}),
+			wantErr: true,
+		},
+		{
+			name: "invalid mask shape",
+			input: tensor.New([]float64{
+				1, 2,
+				3, 4,
+				5, 6,
+			}, []int{3, 1, 2}),
+			mask: tensor.New([]float64{
+				1, 1,
+				1, 1,
+			}, []int{2, 2}),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := MaskedAveragePool(tt.input, tt.mask)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.True(t, tensor.InDelta(tt.expected, result, 1e-6), "Expected %v, got %v", tt.expected, result)
+		})
+	}
+}
+
 func TestLayerNormalization(t *testing.T) {
 	tests := []struct {
 		name     string

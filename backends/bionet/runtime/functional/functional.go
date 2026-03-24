@@ -550,6 +550,72 @@ func Flatten(t tensor.Tensor, params *ActivationParams) (tensor.Tensor, error) {
 	return t, nil
 }
 
+// MaskedAveragePool averages a [seq_len, batch_size, feature_dim] tensor across
+// the sequence dimension using a binary mask. The mask may be shaped
+// [seq_len, batch_size] or [seq_len, batch_size, 1]. The result has shape
+// [batch_size, feature_dim].
+func MaskedAveragePool(t tensor.Tensor, mask tensor.Tensor) (tensor.Tensor, error) {
+	inputShape := t.Shape()
+	if len(inputShape) != 3 {
+		return tensor.Tensor{}, fmt.Errorf("input tensor must be 3D, got shape %v", inputShape)
+	}
+
+	maskShape := mask.Shape()
+	switch len(maskShape) {
+	case 2:
+		if maskShape[0] != inputShape[0] || maskShape[1] != inputShape[1] {
+			return tensor.Tensor{}, fmt.Errorf("mask shape %v must match [seq_len, batch_size]", maskShape)
+		}
+	case 3:
+		if maskShape[0] != inputShape[0] || maskShape[1] != inputShape[1] || maskShape[2] != 1 {
+			return tensor.Tensor{}, fmt.Errorf("mask shape %v must match [seq_len, batch_size, 1]", maskShape)
+		}
+	default:
+		return tensor.Tensor{}, fmt.Errorf("mask must be 2D or 3D, got shape %v", maskShape)
+	}
+
+	seqLen := inputShape[0]
+	batchSize := inputShape[1]
+	featureDim := inputShape[2]
+	output := tensor.Zeros([]int{batchSize, featureDim})
+	counts := make([]float64, batchSize)
+
+	values := t.Values()
+	maskValues := mask.Values()
+	for seqIdx := 0; seqIdx < seqLen; seqIdx++ {
+		for batchIdx := 0; batchIdx < batchSize; batchIdx++ {
+			maskIndex := seqIdx*batchSize + batchIdx
+			if len(maskShape) == 3 {
+				maskIndex = (seqIdx*batchSize + batchIdx) * maskShape[2]
+			}
+
+			if maskValues[maskIndex] <= 0 {
+				continue
+			}
+
+			counts[batchIdx]++
+			for featureIdx := 0; featureIdx < featureDim; featureIdx++ {
+				inputIndex := (seqIdx*batchSize+batchIdx)*featureDim + featureIdx
+				outputIndex := batchIdx*featureDim + featureIdx
+				output.Values()[outputIndex] += values[inputIndex]
+			}
+		}
+	}
+
+	for batchIdx := 0; batchIdx < batchSize; batchIdx++ {
+		if counts[batchIdx] == 0 {
+			continue
+		}
+
+		for featureIdx := 0; featureIdx < featureDim; featureIdx++ {
+			outputIndex := batchIdx*featureDim + featureIdx
+			output.Values()[outputIndex] /= counts[batchIdx]
+		}
+	}
+
+	return output, nil
+}
+
 // LayerNormalization normalizes the input tensor along the batch dimension.
 // It applies the batch normalization formula: y = (x - mean) / sqrt(variance + epsilon) * gamma + beta
 // where mean and variance are computed per batch, and gamma and beta are learnable parameters.

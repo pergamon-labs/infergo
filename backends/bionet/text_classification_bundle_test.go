@@ -25,6 +25,7 @@ func TestLoadTextClassificationBundle(t *testing.T) {
 	for _, bundleDir := range []string{
 		"../../testdata/native/text-classification/distilbert-sst2-token-id-bag",
 		"../../testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
+		"../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool",
 	} {
 		bundle, err := bionet.LoadTextClassificationBundle(bundleDir)
 		if err != nil {

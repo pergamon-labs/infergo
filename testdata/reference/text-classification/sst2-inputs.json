@@ -16,6 +16,70 @@
     {
       "id": "support-praise",
       "text": "Fast helpful support team."
+    },
+    {
+      "id": "great-update",
+      "text": "The latest update made the app faster and easier to use."
+    },
+    {
+      "id": "refund-friction",
+      "text": "Getting a refund was frustrating and took far too long."
+    },
+    {
+      "id": "easy-setup",
+      "text": "Setup was simple and everything worked on the first try."
+    },
+    {
+      "id": "buggy-release",
+      "text": "The new release feels buggy, unstable, and unfinished."
+    },
+    {
+      "id": "lovely-staff",
+      "text": "The staff were friendly, patient, and genuinely helpful."
+    },
+    {
+      "id": "battery-drain",
+      "text": "This update drained my battery and slowed down my phone."
+    },
+    {
+      "id": "clear-instructions",
+      "text": "The instructions were clear and saved me a lot of time."
+    },
+    {
+      "id": "wasted-time",
+      "text": "I spent hours on this and still got nowhere."
+    },
+    {
+      "id": "sturdy-design",
+      "text": "The design feels sturdy and well thought out."
+    },
+    {
+      "id": "cold-food",
+      "text": "The meal arrived cold and tasted bland."
+    },
+    {
+      "id": "smooth-onboarding",
+      "text": "Onboarding was smooth and made the product easy to trust."
+    },
+    {
+      "id": "broken-login",
+      "text": "The login flow kept breaking and locked me out twice."
+    },
+    {
+      "id": "exceeded-expectations",
+      "text": "It exceeded my expectations in almost every way."
+    },
+    {
+      "id": "poor-documentation",
+      "text": "The documentation was confusing and missed key steps."
+    },
+    {
+      "id": "quick-resolution",
+      "text": "Support resolved the issue quickly and followed up afterward."
+    },
+    {
+      "id": "cheap-materials",
+      "text": "The materials felt cheap and wore out after a week."
     }
   ]
 }

@@ -19,6 +19,10 @@ const (
 	// compact embedding table, averages those embeddings across the sequence, and
 	// then runs a BIOnet linear head over the pooled representation.
 	TextClassificationFeatureModeEmbeddingAvgPool = "embedding-avg-pool"
+	// TextClassificationFeatureModeEmbeddingMaskedAvgPool keeps the original
+	// sequence length, applies a compact embedding lookup, respects the attention
+	// mask during pooling, and then runs a BIOnet linear head.
+	TextClassificationFeatureModeEmbeddingMaskedAvgPool = "embedding-masked-avg-pool"
 )
 
 // TextClassificationPredictor is the narrow prediction surface used by the
@@ -69,7 +73,7 @@ func LoadTextClassificationBundle(bundleDir string) (*TextClassificationBundle, 
 	}
 
 	var embeddingMatrix tensor.Tensor
-	if metadata.FeatureMode == TextClassificationFeatureModeEmbeddingAvgPool {
+	if usesEmbeddingArtifact(metadata.FeatureMode) {
 		embeddingMatrix, err = LoadTensorFromFile(filepath.Join(bundleDir, metadata.EmbeddingArtifact))
 		if err != nil {
 			return nil, fmt.Errorf("load bionet text classification embeddings: %w", err)
@@ -118,18 +122,16 @@ func LoadTextClassificationBundleMetadata(bundleDir string) (TextClassificationB
 		return TextClassificationBundleMetadata{}, fmt.Errorf("decode bionet text classification metadata: unsupported task %q", metadata.Task)
 	}
 
-	if metadata.FeatureMode != TextClassificationFeatureModeTokenIDBag {
-		if metadata.FeatureMode != TextClassificationFeatureModeEmbeddingAvgPool {
-			return TextClassificationBundleMetadata{}, fmt.Errorf("decode bionet text classification metadata: unsupported feature mode %q", metadata.FeatureMode)
-		}
-	}
-
-	if metadata.FeatureMode == TextClassificationFeatureModeEmbeddingAvgPool && metadata.EmbeddingArtifact == "" {
-		return TextClassificationBundleMetadata{}, fmt.Errorf("decode bionet text classification metadata: missing embedding artifact")
-	}
-
-	if metadata.FeatureMode != TextClassificationFeatureModeTokenIDBag && metadata.FeatureMode != TextClassificationFeatureModeEmbeddingAvgPool {
+	switch metadata.FeatureMode {
+	case TextClassificationFeatureModeTokenIDBag,
+		TextClassificationFeatureModeEmbeddingAvgPool,
+		TextClassificationFeatureModeEmbeddingMaskedAvgPool:
+	default:
 		return TextClassificationBundleMetadata{}, fmt.Errorf("decode bionet text classification metadata: unsupported feature mode %q", metadata.FeatureMode)
+	}
+
+	if usesEmbeddingArtifact(metadata.FeatureMode) && metadata.EmbeddingArtifact == "" {
+		return TextClassificationBundleMetadata{}, fmt.Errorf("decode bionet text classification metadata: missing embedding artifact")
 	}
 
 	if len(metadata.Labels) == 0 {
@@ -205,6 +207,8 @@ func (b *TextClassificationBundle) featuresFor(inputIDs, attentionMask []int64) 
 		return b.tokenIDBagFeaturesFor(inputIDs, attentionMask)
 	case TextClassificationFeatureModeEmbeddingAvgPool:
 		return b.embeddingAvgPoolFeaturesFor(inputIDs, attentionMask)
+	case TextClassificationFeatureModeEmbeddingMaskedAvgPool:
+		return b.embeddingMaskedAvgPoolFeaturesFor(inputIDs, attentionMask)
 	default:
 		return nil, fmt.Errorf("feature extraction: unsupported feature mode %q", b.metadata.FeatureMode)
 	}
@@ -264,6 +268,48 @@ func (b *TextClassificationBundle) embeddingAvgPoolFeaturesFor(inputIDs, attenti
 	}
 
 	return append([]float64(nil), pooled.Values()...), nil
+}
+
+func (b *TextClassificationBundle) embeddingMaskedAvgPoolFeaturesFor(inputIDs, attentionMask []int64) ([]float64, error) {
+	if b.embeddingMatrix.IsEmpty() {
+		return nil, fmt.Errorf("embedding masked avg pool: embedding matrix is empty")
+	}
+
+	indexValues := make([]float64, len(inputIDs))
+	maskValues := make([]float64, len(inputIDs))
+	for idx, tokenID := range inputIDs {
+		indexValues[idx] = -1
+		if attentionMask[idx] == 0 {
+			continue
+		}
+
+		featureIdx, ok := b.featureIndexByID[int(tokenID)]
+		if !ok {
+			continue
+		}
+
+		indexValues[idx] = float64(featureIdx)
+		maskValues[idx] = 1
+	}
+
+	indexTensor := tensor.New(indexValues, []int{len(inputIDs), 1, 1})
+	maskTensor := tensor.New(maskValues, []int{len(inputIDs), 1, 1})
+	embedded, err := functional.Embedding(indexTensor, &functional.ActivationParams{Weights: b.embeddingMatrix})
+	if err != nil {
+		return nil, fmt.Errorf("embedding masked avg pool: %w", err)
+	}
+
+	pooled, err := functional.MaskedAveragePool(embedded, maskTensor)
+	if err != nil {
+		return nil, fmt.Errorf("embedding masked avg pool: %w", err)
+	}
+
+	return append([]float64(nil), pooled.Values()...), nil
+}
+
+func usesEmbeddingArtifact(featureMode string) bool {
+	return featureMode == TextClassificationFeatureModeEmbeddingAvgPool ||
+		featureMode == TextClassificationFeatureModeEmbeddingMaskedAvgPool
 }
 
 // SaveTensorToFile writes a BIOnet tensor artifact to disk.

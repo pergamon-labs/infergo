@@ -124,12 +124,17 @@ func CompareTransformersTextClassification(referencePath, candidatePath string, 
 		ModelID:       reference.ModelID,
 		Tolerance:     tolerance,
 	}
+	seenCandidateIDs := make(map[string]struct{}, len(candidate.Cases))
 
 	for _, candidateCase := range candidate.Cases {
 		referenceCase, ok := referenceByID[candidateCase.ID]
 		if !ok {
 			return TransformersTextClassificationComparisonReport{}, fmt.Errorf("compare transformers text classification: candidate case %q missing in reference", candidateCase.ID)
 		}
+		if _, exists := seenCandidateIDs[candidateCase.ID]; exists {
+			return TransformersTextClassificationComparisonReport{}, fmt.Errorf("compare transformers text classification: duplicate candidate case %q", candidateCase.ID)
+		}
+		seenCandidateIDs[candidateCase.ID] = struct{}{}
 
 		if len(referenceCase.ExpectedLogits) != len(candidateCase.ObservedLogits) {
 			return TransformersTextClassificationComparisonReport{}, fmt.Errorf("compare transformers text classification: logits length mismatch for %q", candidateCase.ID)
@@ -152,6 +157,12 @@ func CompareTransformersTextClassification(referencePath, candidatePath string, 
 			LabelMatch:      labelMatch,
 			Passed:          labelMatch && maxLogitDiff <= tolerance && maxProbDiff <= tolerance,
 		})
+	}
+
+	for _, referenceCase := range reference.Cases {
+		if _, ok := seenCandidateIDs[referenceCase.ID]; !ok {
+			return TransformersTextClassificationComparisonReport{}, fmt.Errorf("compare transformers text classification: reference case %q missing in candidate", referenceCase.ID)
+		}
 	}
 
 	return report, nil

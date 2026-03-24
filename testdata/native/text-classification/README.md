@@ -11,6 +11,10 @@ Current bundles:
 - `distilbert-sst2-embedding-avg-pool/` is the next native step. It maps
   active token ids into a compact embedding table, average-pools across the
   sequence, and then runs a BIOnet linear head.
+- `distilbert-sst2-embedding-masked-avg-pool/` is the current default path. It
+  keeps the original sequence length, applies compact embedding lookup,
+  respects the reference attention mask during pooling, and then runs a BIOnet
+  linear head.
 
 This is intentionally narrower than general transformer execution. Its purpose
 is to prove three things:
@@ -19,10 +23,20 @@ is to prove three things:
 - Go can produce the candidate side of the parity report without libtorch.
 - The parity harness can stay stable while the native artifact format evolves.
 
-Regenerate the default `embedding-avg-pool` bundle from the repo root with:
+Regenerate the default `embedding-masked-avg-pool` bundle from the repo root
+with:
 
 ```bash
 go run ./internal/tools/nativebundlegen \
+  -reference ./testdata/reference/text-classification/distilbert-sst2-reference.json \
+  -output-dir ./testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool
+```
+
+Regenerate the earlier `embedding-avg-pool` bundle explicitly with:
+
+```bash
+go run ./internal/tools/nativebundlegen \
+  -mode embedding-avg-pool \
   -reference ./testdata/reference/text-classification/distilbert-sst2-reference.json \
   -output-dir ./testdata/native/text-classification/distilbert-sst2-embedding-avg-pool
 ```

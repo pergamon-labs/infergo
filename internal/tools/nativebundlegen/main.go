@@ -18,7 +18,7 @@ import (
 
 const (
 	defaultReferencePath = "testdata/reference/text-classification/distilbert-sst2-reference.json"
-	defaultOutputDir     = "testdata/native/text-classification/distilbert-sst2-embedding-avg-pool"
+	defaultOutputDir     = "testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool"
 	defaultArtifactName  = "model.gob"
 	defaultEmbeddingName = "embeddings.gob"
 	ridgeLambda          = 1e-9
@@ -27,7 +27,7 @@ const (
 func main() {
 	referencePath := flag.String("reference", defaultReferencePath, "path to the Transformers reference JSON file")
 	outputDir := flag.String("output-dir", defaultOutputDir, "directory to write the InferGo-native bundle into")
-	mode := flag.String("mode", bionet.TextClassificationFeatureModeEmbeddingAvgPool, "native bundle mode: token-id-bag or embedding-avg-pool")
+	mode := flag.String("mode", bionet.TextClassificationFeatureModeEmbeddingMaskedAvgPool, "native bundle mode: token-id-bag, embedding-avg-pool, or embedding-masked-avg-pool")
 	flag.Parse()
 
 	reference, err := parity.LoadTransformersTextClassificationReference(*referencePath)
@@ -67,6 +67,8 @@ func buildBundle(reference parity.TransformersTextClassificationReference, mode,
 		return buildTokenIDBagBundle(reference, artifactName)
 	case bionet.TextClassificationFeatureModeEmbeddingAvgPool:
 		return buildEmbeddingAvgPoolBundle(reference, artifactName, embeddingArtifactName)
+	case bionet.TextClassificationFeatureModeEmbeddingMaskedAvgPool:
+		return buildEmbeddingMaskedAvgPoolBundle(reference, artifactName, embeddingArtifactName)
 	default:
 		return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("unsupported bundle mode %q", mode)
 	}
@@ -204,6 +206,73 @@ func buildEmbeddingAvgPoolBundle(reference parity.TransformersTextClassification
 	return metadata, classifier, embeddingMatrix, nil
 }
 
+func buildEmbeddingMaskedAvgPoolBundle(reference parity.TransformersTextClassificationReference, artifactName, embeddingArtifactName string) (bionet.TextClassificationBundleMetadata, *module.Module, tensor.Tensor, error) {
+	featureTokenIDs := collectFeatureTokenIDs(reference)
+	if len(featureTokenIDs) == 0 {
+		return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("no feature token ids discovered in reference cases")
+	}
+
+	numLabels := len(reference.Labels)
+	if numLabels == 0 {
+		return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("reference labels are empty")
+	}
+
+	embeddingDim := len(featureTokenIDs)
+	embeddingMatrix := identityEmbeddingMatrix(len(featureTokenIDs))
+
+	featureIndexByID := make(map[int]int, len(featureTokenIDs))
+	for idx, tokenID := range featureTokenIDs {
+		featureIndexByID[tokenID] = idx
+	}
+
+	design := make([][]float64, len(reference.Cases))
+	targets := make([][]float64, len(reference.Cases))
+	for caseIdx, item := range reference.Cases {
+		features, err := maskedAvgPooledFeaturesForCase(item, featureIndexByID, embeddingMatrix)
+		if err != nil {
+			return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("build masked pooled features for %q: %w", item.ID, err)
+		}
+
+		design[caseIdx] = append(features, 1.0)
+		targets[caseIdx] = append([]float64(nil), item.ExpectedLogits...)
+	}
+
+	coefficients, err := solveRidgeRegression(design, targets, ridgeLambda)
+	if err != nil {
+		return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("fit masked pooled linear classifier: %w", err)
+	}
+
+	weights := make([]float64, 0, numLabels*embeddingDim)
+	bias := make([]float64, numLabels)
+	for labelIdx := 0; labelIdx < numLabels; labelIdx++ {
+		for featureIdx := 0; featureIdx < embeddingDim; featureIdx++ {
+			weights = append(weights, coefficients[featureIdx][labelIdx])
+		}
+		bias[labelIdx] = coefficients[embeddingDim][labelIdx]
+	}
+
+	classifier := module.New(functional.ActivationLinear, functional.ActivationParams{
+		Weights: tensor.New(weights, []int{numLabels, embeddingDim}),
+		Bias:    tensor.New(bias, []int{numLabels}),
+	})
+	classifier.ModuleType = module.ModuleTypeFullyConnected
+
+	metadata := bionet.TextClassificationBundleMetadata{
+		Name:              fmt.Sprintf("%s InferGo-native bundle", reference.Name),
+		Source:            "infergo-native-bundlegen",
+		ModelID:           reference.ModelID,
+		Task:              reference.Task,
+		GeneratedAt:       time.Now().UTC().Format(time.RFC3339),
+		Artifact:          artifactName,
+		EmbeddingArtifact: embeddingArtifactName,
+		Labels:            append([]string(nil), reference.Labels...),
+		FeatureMode:       bionet.TextClassificationFeatureModeEmbeddingMaskedAvgPool,
+		FeatureTokenIDs:   featureTokenIDs,
+	}
+
+	return metadata, classifier, embeddingMatrix, nil
+}
+
 func collectFeatureTokenIDs(reference parity.TransformersTextClassificationReference) []int {
 	seen := make(map[int]struct{})
 	for _, item := range reference.Cases {
@@ -276,6 +345,43 @@ func avgPooledFeaturesForCase(item parity.TransformersTextClassificationReferenc
 	}
 
 	pooled, err := tensor.AvgPool(embedded, []int{len(compactIndices), 1, 1}, []int{len(compactIndices), 1, 1})
+	if err != nil {
+		return nil, err
+	}
+
+	return append([]float64(nil), pooled.Values()...), nil
+}
+
+func maskedAvgPooledFeaturesForCase(item parity.TransformersTextClassificationReferenceCase, featureIndexByID map[int]int, embeddingMatrix tensor.Tensor) ([]float64, error) {
+	if len(item.InputIDs) != len(item.AttentionMask) {
+		return nil, fmt.Errorf("input_ids and attention_mask length mismatch (%d != %d)", len(item.InputIDs), len(item.AttentionMask))
+	}
+
+	indexValues := make([]float64, len(item.InputIDs))
+	maskValues := make([]float64, len(item.InputIDs))
+	for idx, tokenID := range item.InputIDs {
+		indexValues[idx] = -1
+		if item.AttentionMask[idx] == 0 {
+			continue
+		}
+
+		featureIdx, ok := featureIndexByID[tokenID]
+		if !ok {
+			continue
+		}
+
+		indexValues[idx] = float64(featureIdx)
+		maskValues[idx] = 1
+	}
+
+	indexTensor := tensor.New(indexValues, []int{len(item.InputIDs), 1, 1})
+	maskTensor := tensor.New(maskValues, []int{len(item.InputIDs), 1, 1})
+	embedded, err := functional.Embedding(indexTensor, &functional.ActivationParams{Weights: embeddingMatrix})
+	if err != nil {
+		return nil, err
+	}
+
+	pooled, err := functional.MaskedAveragePool(embedded, maskTensor)
 	if err != nil {
 		return nil, err
 	}

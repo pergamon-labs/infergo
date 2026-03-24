@@ -27,6 +27,7 @@ The first InferGo-native external comparison paths also live here today:
 
 - a simple `token-id-bag -> linear` bundle
 - a more expressive `embedding -> avg pool -> linear` bundle
+- a sequence-aware `embedding -> masked avg pool -> linear` bundle
 
 Those keep the bundle format and Go-only serving loop moving forward without
 claiming general transformer support too early.

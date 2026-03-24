@@ -32,9 +32,10 @@ Current scaffold highlights:
 - [`testdata/native/text-classification/`](./testdata/native/text-classification) contains checked-in native bundles used by the Go-only parity path
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
+- the public DistilBERT reference set is now intentionally broader than the initial 4-case spike so native bundle changes are tested against a less hand-fit baseline
 
 Next milestone:
 
-1. widen the native bundle beyond the current token-id-bag spike and prove it on a larger public reference set
-2. move from the current `embedding -> avg pool -> linear` native shape toward a less hand-fit and more reusable exported-model path
+1. make the native export path less regression-fit and more reusable across larger public input sets
+2. decide whether the next native primitive after masked pooling should be layer normalization or a small attention-style block
 3. keep the optional TorchScript bridge working without letting it define the core product story
