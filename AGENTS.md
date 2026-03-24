@@ -2,14 +2,14 @@
 
 ## Scope
 
-Instructions in this file apply to `/Users/jatto/Documents/workspaces/pergamon-labs/infergo`.
+Instructions in this file apply to this repository.
 
 ## Inheritance
 
 This file extends:
 
-- `/Users/jatto/Documents/workspaces/AGENTS.md`
-- `/Users/jatto/Documents/workspaces/pergamon-labs/AGENTS.md`
+- the workspace-level `AGENTS.md`
+- the Pergamon Labs workspace `AGENTS.md`
 
 If there is a conflict, this file takes precedence inside this repo.
 
@@ -28,7 +28,7 @@ Current repo reality:
 
 If present, also apply:
 
-- `/Users/jatto/Documents/workspaces/pergamon-labs/infergo/AGENTS.local.md`
+- `AGENTS.local.md`
 
 Use `AGENTS.local.md` for personal notes, machine-specific paths, temporary local workflow instructions, or private preferences that should not be committed.
 
