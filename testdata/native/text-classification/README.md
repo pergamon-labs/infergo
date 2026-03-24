@@ -20,6 +20,10 @@ Current bundles:
   compact masked-pooling export path to a second public sentiment model with a
   different tokenizer family and three output labels.
 
+The native bundle generator also has an experimental `-use-layernorm` flag for
+the masked-pooling path. That is useful for iteration, but it is not yet part
+of the checked-in supported parity path.
+
 This is intentionally narrower than general transformer execution. Its purpose
 is to prove three things:
 

@@ -3,7 +3,7 @@
   "source": "infergo-native-bundlegen",
   "model_id": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
   "task": "text-classification",
-  "generated_at": "2026-03-24T05:16:16Z",
+  "generated_at": "2026-03-24T14:44:36Z",
   "artifact": "model.gob",
   "embedding_artifact": "embeddings.gob",
   "labels": [

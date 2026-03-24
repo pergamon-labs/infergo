@@ -46,6 +46,7 @@ without a documented export path, backend, and parity test story.
 - arbitrary `.pt` files without a documented export path
 - direct Hugging Face repository loading
 - general transformer execution in the native `bionet` backend
+- experimental `-use-layernorm` native bundle generation as a public support claim until it meets the same parity bar as the default path
 - native attention blocks or full encoder stacks
 - ONNX runtime support
 - training, autograd, or optimizer APIs

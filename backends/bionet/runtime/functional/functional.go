@@ -68,6 +68,7 @@ const (
 	ActivationHiddenLstm
 	ActivationEmbedding
 	ActivationFlatten
+	ActivationLayerNormalization
 )
 
 // String returns the string representation of the ActivationType.
@@ -101,6 +102,8 @@ func (a ActivationType) String() string {
 		return "Embedding"
 	case ActivationFlatten:
 		return "Flatten"
+	case ActivationLayerNormalization:
+		return "LayerNormalization"
 	default:
 		return "Unknown"
 	}
@@ -138,6 +141,8 @@ func GetActivationFunction(activationType ActivationType) (ActivationFn, error) 
 		return Embedding, nil
 	case ActivationFlatten:
 		return Flatten, nil
+	case ActivationLayerNormalization:
+		return LayerNormalization, nil
 	default:
 		return nil, fmt.Errorf("unknown activation function: %v", activationType)
 	}
@@ -165,6 +170,8 @@ func GetActivationFunctionPrime(activationType ActivationType) (ActivationFn, er
 		return nil, fmt.Errorf("ELU gradient fn is not implemented")
 	case ActivationPReLU:
 		return nil, fmt.Errorf("PReLU gradient fn is not implemented")
+	case ActivationLayerNormalization:
+		return nil, fmt.Errorf("LayerNormalization gradient fn is not implemented")
 	default:
 		return nil, fmt.Errorf("unknown activation function: %v", activationType)
 	}

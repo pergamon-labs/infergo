@@ -32,10 +32,11 @@ Current scaffold highlights:
 - [`testdata/native/text-classification/`](./testdata/native/text-classification) contains checked-in native bundles used by the Go-only parity path
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
-- the public reference set is now validated against both a DistilBERT SST-2 path and a RoBERTa-based 3-label sentiment path, so native bundle changes are tested against more than one tokenizer/model family
+- the public reference set is now validated against both a DistilBERT SST-2 path and a RoBERTa-based 3-label sentiment path
+- layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 
 Next milestone:
 
-1. decide whether the next native primitive after masked pooling should be layer normalization or a small attention-style block
-2. test the compact native export path on a sequence-labeling or token-classification reference task
+1. test the compact native export path on a sequence-labeling or token-classification reference task
+2. decide whether layer normalization is ready to graduate from experimental generator support into the default native parity path
 3. keep the optional TorchScript bridge working without letting it define the core product story

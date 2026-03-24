@@ -7,6 +7,7 @@ This directory holds the first external reference path for InferGo parity work.
 - `twitter-roberta-sentiment-reference.json` is generated from a second public Hugging Face sentiment model.
 - `../../native/text-classification/distilbert-sst2-token-id-bag/` contains the first InferGo-native bundle generated from the same reference set.
 - the default native embedding bundles now use compact dense token embeddings derived from the fitted pooled classifier instead of identity-sized embedding tables.
+- the native bundle generator has an experimental `-use-layernorm` flag for the masked-pooling path, but the checked-in supported bundles still use the default head.
 - TorchScript export bundles are generated under `dist/torchscript/distilbert-sst2/` and are intentionally not committed.
 - The native Go candidate path requires `CGO_ENABLED=1`, `-tags torchscript_native`, and a libtorch install exposed through `CGO_CXXFLAGS` and `CGO_LDFLAGS`.
 

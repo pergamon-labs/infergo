@@ -32,6 +32,10 @@ The first InferGo-native external comparison paths also live here today:
 Those keep the bundle format and Go-only serving loop moving forward without
 claiming general transformer support too early.
 
+Layer normalization is now available in the BIOnet runtime as an activation
+primitive, but it remains experimental in the native bundle generator until it
+meets the same parity bar as the default masked-pooling path.
+
 ### `backends/torchscript`
 
 This package is reserved for a narrow, parity-tested exported-model path. It should remain a backend-specific boundary around libtorch/TorchScript details instead of leaking into the public API.

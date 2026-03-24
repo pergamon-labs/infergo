@@ -23,6 +23,7 @@ func TestActivationTypeString(t *testing.T) {
 		{ActivationTanH.String(), ActivationTanH, "TanH"},
 		{ActivationSwish.String(), ActivationSwish, "Swish"},
 		{ActivationSoftmax.String(), ActivationSoftmax, "Softmax"},
+		{ActivationLayerNormalization.String(), ActivationLayerNormalization, "LayerNormalization"},
 		{ActivationType(999).String(), ActivationType(999), "Unknown"},
 	}
 
@@ -46,6 +47,7 @@ func TestGetActivationFunction(t *testing.T) {
 		{"TanH", ActivationTanH, false},
 		{"Swish", ActivationSwish, false},
 		{"Softmax", ActivationSoftmax, false},
+		{"LayerNormalization", ActivationLayerNormalization, false},
 		{"Unknown", ActivationType(999), true},
 	}
 
@@ -67,7 +69,7 @@ func TestGetActivationFunctionReturnType(t *testing.T) {
 	validTypes := []ActivationType{
 		ActivationNone, ActivationReLU,
 		ActivationSigmoid, ActivationRangeSigmoid, ActivationTanH,
-		ActivationSwish, ActivationSoftmax,
+		ActivationSwish, ActivationSoftmax, ActivationLayerNormalization,
 	}
 
 	for _, aType := range validTypes {
@@ -95,6 +97,7 @@ func TestGetActivationFunctionPrime(t *testing.T) {
 		{"TanH", ActivationTanH, false},
 		{"Swish", ActivationSwish, false},
 		{"Softmax", ActivationSoftmax, false},
+		{"LayerNormalization", ActivationLayerNormalization, true},
 		{"Unknown", ActivationType(999), true},
 	}
 

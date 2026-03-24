@@ -21,6 +21,7 @@ const (
 	defaultOutputDir     = "testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool"
 	defaultArtifactName  = "model.gob"
 	defaultEmbeddingName = "embeddings.gob"
+	layerNormEpsilon     = 1e-5
 	ridgeLambda          = 1e-9
 )
 
@@ -28,6 +29,7 @@ func main() {
 	referencePath := flag.String("reference", defaultReferencePath, "path to the Transformers reference JSON file")
 	outputDir := flag.String("output-dir", defaultOutputDir, "directory to write the InferGo-native bundle into")
 	mode := flag.String("mode", bionet.TextClassificationFeatureModeEmbeddingMaskedAvgPool, "native bundle mode: token-id-bag, embedding-avg-pool, or embedding-masked-avg-pool")
+	useLayerNorm := flag.Bool("use-layernorm", false, "experimentally add a layer-normalization stage before the masked-pooling classifier head")
 	flag.Parse()
 
 	reference, err := parity.LoadTransformersTextClassificationReference(*referencePath)
@@ -35,7 +37,7 @@ func main() {
 		fatalf("load reference: %v", err)
 	}
 
-	metadata, classifier, embeddingMatrix, err := buildBundle(reference, *mode, defaultArtifactName, defaultEmbeddingName)
+	metadata, classifier, embeddingMatrix, err := buildBundle(reference, *mode, defaultArtifactName, defaultEmbeddingName, *useLayerNorm)
 	if err != nil {
 		fatalf("build bundle: %v", err)
 	}
@@ -61,13 +63,16 @@ func main() {
 	fmt.Printf("wrote infergo-native bundle to %s\n", *outputDir)
 }
 
-func buildBundle(reference parity.TransformersTextClassificationReference, mode, artifactName, embeddingArtifactName string) (bionet.TextClassificationBundleMetadata, *module.Module, tensor.Tensor, error) {
+func buildBundle(reference parity.TransformersTextClassificationReference, mode, artifactName, embeddingArtifactName string, useLayerNorm bool) (bionet.TextClassificationBundleMetadata, *module.Module, tensor.Tensor, error) {
 	switch mode {
 	case bionet.TextClassificationFeatureModeTokenIDBag:
 		return buildTokenIDBagBundle(reference, artifactName)
 	case bionet.TextClassificationFeatureModeEmbeddingAvgPool:
 		return buildEmbeddingAvgPoolBundle(reference, artifactName, embeddingArtifactName)
 	case bionet.TextClassificationFeatureModeEmbeddingMaskedAvgPool:
+		if useLayerNorm {
+			return buildEmbeddingMaskedAvgPoolLayerNormBundle(reference, artifactName, embeddingArtifactName)
+		}
 		return buildEmbeddingMaskedAvgPoolBundle(reference, artifactName, embeddingArtifactName)
 	default:
 		return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("unsupported bundle mode %q", mode)
@@ -145,6 +150,83 @@ func buildEmbeddingAvgPoolBundle(reference parity.TransformersTextClassification
 
 func buildEmbeddingMaskedAvgPoolBundle(reference parity.TransformersTextClassificationReference, artifactName, embeddingArtifactName string) (bionet.TextClassificationBundleMetadata, *module.Module, tensor.Tensor, error) {
 	return buildDenseEmbeddingBundle(reference, artifactName, embeddingArtifactName, bionet.TextClassificationFeatureModeEmbeddingMaskedAvgPool)
+}
+
+func buildEmbeddingMaskedAvgPoolLayerNormBundle(reference parity.TransformersTextClassificationReference, artifactName, embeddingArtifactName string) (bionet.TextClassificationBundleMetadata, *module.Module, tensor.Tensor, error) {
+	featureTokenIDs := collectFeatureTokenIDs(reference)
+	if len(featureTokenIDs) == 0 {
+		return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("no feature token ids discovered in reference cases")
+	}
+
+	numLabels := len(reference.Labels)
+	if numLabels == 0 {
+		return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("reference labels are empty")
+	}
+
+	numFeatures := len(featureTokenIDs)
+	featureIndexByID := make(map[int]int, len(featureTokenIDs))
+	for idx, tokenID := range featureTokenIDs {
+		featureIndexByID[tokenID] = idx
+	}
+
+	pooledDesign := make([][]float64, len(reference.Cases))
+	targets := make([][]float64, len(reference.Cases))
+	for caseIdx, item := range reference.Cases {
+		features, err := normalizedTokenFrequencyFeaturesForCase(item, featureIndexByID, numFeatures)
+		if err != nil {
+			return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("build masked pooled features for %q: %w", item.ID, err)
+		}
+
+		pooledDesign[caseIdx] = append(features, 1.0)
+		targets[caseIdx] = append([]float64(nil), item.ExpectedLogits...)
+	}
+
+	pooledCoefficients, err := solveRidgeRegression(pooledDesign, targets, ridgeLambda)
+	if err != nil {
+		return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("fit masked pooled embedding projection: %w", err)
+	}
+
+	embeddingMatrix, _, _ := denseEmbeddingArtifactsFromCoefficients(pooledCoefficients, numFeatures, numLabels)
+	layerNormDesign, err := buildLayerNormalizedDenseDesign(reference.Cases, featureIndexByID, embeddingMatrix)
+	if err != nil {
+		return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("build layer-normalized design: %w", err)
+	}
+
+	headCoefficients, err := solveRidgeRegression(layerNormDesign, targets, ridgeLambda)
+	if err != nil {
+		return bionet.TextClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("fit layer-normalized head: %w", err)
+	}
+
+	headWeights, bias := linearHeadFromCoefficients(headCoefficients, numLabels, numLabels)
+	layerNormModule := module.New(functional.ActivationLayerNormalization, functional.ActivationParams{
+		Gamma:   1.0,
+		Beta:    0.0,
+		Epsilon: layerNormEpsilon,
+	})
+	layerNormModule.ModuleType = module.ModuleTypeLayerNormalization
+
+	linearModule := module.New(functional.ActivationLinear, functional.ActivationParams{
+		Weights: headWeights,
+		Bias:    tensor.New(bias, []int{numLabels}),
+	})
+	linearModule.ModuleType = module.ModuleTypeFullyConnected
+
+	classifier := module.New(functional.ActivationNone, functional.ActivationParams{}, layerNormModule, linearModule)
+
+	metadata := bionet.TextClassificationBundleMetadata{
+		Name:              fmt.Sprintf("%s InferGo-native bundle", reference.Name),
+		Source:            "infergo-native-bundlegen",
+		ModelID:           reference.ModelID,
+		Task:              reference.Task,
+		GeneratedAt:       time.Now().UTC().Format(time.RFC3339),
+		Artifact:          artifactName,
+		EmbeddingArtifact: embeddingArtifactName,
+		Labels:            append([]string(nil), reference.Labels...),
+		FeatureMode:       bionet.TextClassificationFeatureModeEmbeddingMaskedAvgPool,
+		FeatureTokenIDs:   featureTokenIDs,
+	}
+
+	return metadata, classifier, embeddingMatrix, nil
 }
 
 func buildDenseEmbeddingBundle(reference parity.TransformersTextClassificationReference, artifactName, embeddingArtifactName, featureMode string) (bionet.TextClassificationBundleMetadata, *module.Module, tensor.Tensor, error) {
@@ -298,6 +380,75 @@ func denseEmbeddingArtifactsFromCoefficients(coefficients [][]float64, numFeatur
 	}
 
 	return tensor.New(embeddingValues, []int{numFeatures, numLabels}), tensor.New(headValues, []int{numLabels, numLabels}), bias
+}
+
+func buildLayerNormalizedDenseDesign(cases []parity.TransformersTextClassificationReferenceCase, featureIndexByID map[int]int, embeddingMatrix tensor.Tensor) ([][]float64, error) {
+	design := make([][]float64, len(cases))
+	numFeatures := embeddingMatrix.Shape()[0]
+
+	for caseIdx, item := range cases {
+		pooledFeatures, err := normalizedTokenFrequencyFeaturesForCase(item, featureIndexByID, numFeatures)
+		if err != nil {
+			return nil, fmt.Errorf("build pooled dense features for %q: %w", item.ID, err)
+		}
+
+		projected := projectDenseEmbeddingFeatures(pooledFeatures, embeddingMatrix)
+		normalized, err := layerNormalizeVector(projected)
+		if err != nil {
+			return nil, fmt.Errorf("layer normalize pooled dense features for %q: %w", item.ID, err)
+		}
+
+		design[caseIdx] = append(normalized, 1.0)
+	}
+
+	return design, nil
+}
+
+func projectDenseEmbeddingFeatures(features []float64, embeddingMatrix tensor.Tensor) []float64 {
+	shape := embeddingMatrix.Shape()
+	numFeatures := shape[0]
+	embeddingDim := shape[1]
+	projected := make([]float64, embeddingDim)
+
+	for featureIdx := 0; featureIdx < numFeatures; featureIdx++ {
+		value := features[featureIdx]
+		if value == 0 {
+			continue
+		}
+
+		base := featureIdx * embeddingDim
+		for dimIdx := 0; dimIdx < embeddingDim; dimIdx++ {
+			projected[dimIdx] += value * embeddingMatrix.Values()[base+dimIdx]
+		}
+	}
+
+	return projected
+}
+
+func layerNormalizeVector(values []float64) ([]float64, error) {
+	normalized, err := functional.LayerNormalization(tensor.New(append([]float64(nil), values...), []int{len(values)}), &functional.ActivationParams{
+		Gamma:   1.0,
+		Beta:    0.0,
+		Epsilon: layerNormEpsilon,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return append([]float64(nil), normalized.Values()...), nil
+}
+
+func linearHeadFromCoefficients(coefficients [][]float64, numInputs, numOutputs int) (tensor.Tensor, []float64) {
+	weights := make([]float64, 0, numOutputs*numInputs)
+	bias := make([]float64, numOutputs)
+	for outputIdx := 0; outputIdx < numOutputs; outputIdx++ {
+		for inputIdx := 0; inputIdx < numInputs; inputIdx++ {
+			weights = append(weights, coefficients[inputIdx][outputIdx])
+		}
+		bias[outputIdx] = coefficients[numInputs][outputIdx]
+	}
+
+	return tensor.New(weights, []int{numOutputs, numInputs}), bias
 }
 
 func solveRidgeRegression(design, targets [][]float64, lambda float64) ([][]float64, error) {
