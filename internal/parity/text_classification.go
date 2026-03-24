@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/minervaai/infergo/backends/bionet"
+	"github.com/pergamon-labs/infergo/backends/bionet"
 )
 
 // TextClassificationFixture describes a public-safe parity fixture for a simple

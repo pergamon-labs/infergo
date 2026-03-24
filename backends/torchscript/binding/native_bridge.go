@@ -2,7 +2,7 @@
 
 package binding
 
-import "github.com/minervaai/infergo/backends/torchscript/bindingnative"
+import "github.com/pergamon-labs/infergo/backends/torchscript/bindingnative"
 
 // Module wraps the native libtorch-backed module implementation.
 type Module struct {

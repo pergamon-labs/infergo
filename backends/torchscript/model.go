@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/minervaai/infergo/backends/torchscript/binding"
-	"github.com/minervaai/infergo/infer"
+	"github.com/pergamon-labs/infergo/backends/torchscript/binding"
+	"github.com/pergamon-labs/infergo/infer"
 )
 
 var _ infer.Backend = Backend{}

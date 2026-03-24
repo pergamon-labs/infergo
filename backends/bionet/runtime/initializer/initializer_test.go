@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/minervaai/infergo/backends/bionet/runtime/tensor"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/tensor"
 	"github.com/stretchr/testify/assert"
 )
 

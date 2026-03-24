@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/minervaai/infergo/backends/bionet/runtime/tensor"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/tensor"
 )
 
 // ImportGloVe loads a text GloVe embedding file into a tensor and vocabulary map.

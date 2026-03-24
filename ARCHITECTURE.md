@@ -23,6 +23,12 @@ This is the first real implementation path. It will absorb the reusable runtime 
 
 The low-level runtime stays under the BIOnet backend boundary until we know which internals are worth stabilizing as public APIs.
 
+The first InferGo-native external comparison path also lives here today: a
+metadata-driven text-classification bundle that projects token ids into a fixed
+feature vector before running the BIOnet runtime module. That keeps the bundle
+format and Go-only serving loop moving forward without claiming general
+transformer support too early.
+
 ### `backends/torchscript`
 
 This package is reserved for a narrow, parity-tested exported-model path. It should remain a backend-specific boundary around libtorch/TorchScript details instead of leaking into the public API.

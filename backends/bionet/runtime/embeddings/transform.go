@@ -3,8 +3,8 @@ package embeddings
 import (
 	"fmt"
 
-	"github.com/minervaai/infergo/backends/bionet/runtime/tensor"
-	"github.com/minervaai/infergo/backends/bionet/runtime/tokenizer"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/tensor"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/tokenizer"
 )
 
 // TextBatchToTokens tokenizes a batch of texts with the provided tokenizer.

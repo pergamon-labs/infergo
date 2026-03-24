@@ -1,6 +1,6 @@
 package module
 
-import "github.com/minervaai/infergo/backends/bionet/runtime/tensor"
+import "github.com/pergamon-labs/infergo/backends/bionet/runtime/tensor"
 
 type (
 	ModuleInterface interface {

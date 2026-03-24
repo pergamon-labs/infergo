@@ -4,7 +4,7 @@ import (
 	"math"
 	"math/rand/v2"
 
-	"github.com/minervaai/infergo/backends/bionet/runtime/tensor"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/tensor"
 )
 
 type Initializer func(t *tensor.Tensor)

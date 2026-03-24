@@ -1,4 +1,4 @@
-module github.com/minervaai/infergo
+module github.com/pergamon-labs/infergo
 
 go 1.26.1
 

@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/minervaai/infergo/backends/bionet/runtime/functional"
-	"github.com/minervaai/infergo/backends/bionet/runtime/initializer"
-	"github.com/minervaai/infergo/backends/bionet/runtime/tensor"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/functional"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/initializer"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/tensor"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -4,3 +4,5 @@ bin/
 dist/
 coverage.out
 .cache/
+AGENTS.local.md
+testdata/native/**/candidate*.json

@@ -1,0 +1,25 @@
+# InferGo-Native Text Classification Bundles
+
+This directory holds checked-in InferGo-native text-classification bundles used
+by the Go-only parity path.
+
+Current bundle:
+
+- `distilbert-sst2-token-id-bag/` is a narrow spike that projects active token
+  ids from the public DistilBERT SST-2 reference set into a fixed bag-of-token
+  feature vector, then runs a BIOnet linear classifier in pure Go.
+
+This is intentionally narrower than general transformer execution. Its purpose
+is to prove three things:
+
+- InferGo can define and load a native bundle format.
+- Go can produce the candidate side of the parity report without libtorch.
+- The parity harness can stay stable while the native artifact format evolves.
+
+Regenerate the bundle from the repo root with:
+
+```bash
+go run ./internal/tools/nativebundlegen \
+  -reference ./testdata/reference/text-classification/distilbert-sst2-reference.json \
+  -output-dir ./testdata/native/text-classification/distilbert-sst2-token-id-bag
+```

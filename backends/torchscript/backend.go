@@ -1,6 +1,6 @@
 package torchscript
 
-import "github.com/minervaai/infergo/infer"
+import "github.com/pergamon-labs/infergo/infer"
 
 // Backend is the scaffolded TorchScript backend identifier.
 type Backend struct{}

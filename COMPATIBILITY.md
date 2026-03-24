@@ -12,11 +12,13 @@ without a documented export path, backend, and parity test story.
 
 ## v1 launch path
 
-- Artifact type: BIOnet `.gob` artifacts with public-safe assets
+- Artifact type: InferGo-native BIOnet bundles backed by `.gob` runtime artifacts plus bundle metadata
 - Backend: `bionet`
 - Runtime posture: CPU-first
 - Primary task shape: small classification-style inference in Go services
-- Current validated example: synthetic text classification on dense feature vectors via `cmd/infergo-parity`
+- Current validated examples:
+  - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
+  - native text classification over public DistilBERT reference inputs via `cmd/infergo-parity -infergo-bundle-dir ...`
 
 ## v1 stretch path
 
@@ -36,6 +38,7 @@ without a documented export path, backend, and parity test story.
 
 - arbitrary `.pt` files without a documented export path
 - direct Hugging Face repository loading
+- general transformer execution in the native `bionet` backend
 - ONNX runtime support
 - training, autograd, or optimizer APIs
 - generative text serving

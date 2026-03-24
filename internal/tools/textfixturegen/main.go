@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/minervaai/infergo/backends/bionet"
-	"github.com/minervaai/infergo/backends/bionet/runtime/functional"
-	"github.com/minervaai/infergo/backends/bionet/runtime/module"
-	"github.com/minervaai/infergo/backends/bionet/runtime/tensor"
-	"github.com/minervaai/infergo/internal/parity"
+	"github.com/pergamon-labs/infergo/backends/bionet"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/functional"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/module"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/tensor"
+	"github.com/pergamon-labs/infergo/internal/parity"
 )
 
 func main() {

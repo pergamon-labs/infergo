@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	bionet "github.com/minervaai/infergo/backends/bionet/runtime"
+	bionet "github.com/pergamon-labs/infergo/backends/bionet/runtime"
 )
 
 // Tensor represents a multi-dimensional array of float64 values.

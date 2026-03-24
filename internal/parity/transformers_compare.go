@@ -7,25 +7,34 @@ import (
 	"os"
 	"time"
 
-	"github.com/minervaai/infergo/backends/torchscript"
+	"github.com/pergamon-labs/infergo/backends/bionet"
+	"github.com/pergamon-labs/infergo/backends/torchscript"
 )
 
-// TorchScriptTextClassificationCandidate stores the outputs produced by a
-// local TorchScript artifact over the public reference input set.
-type TorchScriptTextClassificationCandidate struct {
-	Name        string                                       `json:"name"`
-	Source      string                                       `json:"source"`
-	ModelID     string                                       `json:"model_id"`
-	Task        string                                       `json:"task"`
-	Artifact    string                                       `json:"artifact"`
-	GeneratedAt string                                       `json:"generated_at"`
-	Labels      []string                                     `json:"labels"`
-	Cases       []TorchScriptTextClassificationCandidateCase `json:"cases"`
+// TextClassificationPredictor captures the narrow batch prediction contract used
+// by parity-backed text classification comparisons.
+type TextClassificationPredictor interface {
+	PredictBatch(inputIDs, attentionMasks [][]int64) ([][]float64, error)
+	Labels() []string
+	ModelID() string
 }
 
-// TorchScriptTextClassificationCandidateCase stores the local-run outputs for
-// one text example.
-type TorchScriptTextClassificationCandidateCase struct {
+// TextClassificationCandidate stores the outputs produced by a local artifact
+// over the public reference input set.
+type TextClassificationCandidate struct {
+	Name        string                            `json:"name"`
+	Source      string                            `json:"source"`
+	ModelID     string                            `json:"model_id"`
+	Task        string                            `json:"task"`
+	Artifact    string                            `json:"artifact"`
+	GeneratedAt string                            `json:"generated_at"`
+	Labels      []string                          `json:"labels"`
+	Cases       []TextClassificationCandidateCase `json:"cases"`
+}
+
+// TextClassificationCandidateCase stores the local-run outputs for one text
+// example.
+type TextClassificationCandidateCase struct {
 	ID                    string    `json:"id"`
 	Text                  string    `json:"text"`
 	InputIDs              []int     `json:"input_ids"`
@@ -56,28 +65,28 @@ type TransformersTextClassificationComparisonCase struct {
 	Passed          bool
 }
 
-// LoadTorchScriptTextClassificationCandidate loads a TorchScript run JSON file.
-func LoadTorchScriptTextClassificationCandidate(path string) (TorchScriptTextClassificationCandidate, error) {
+// LoadTextClassificationCandidate loads a local candidate JSON file.
+func LoadTextClassificationCandidate(path string) (TextClassificationCandidate, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("read torchscript candidate: %w", err)
+		return TextClassificationCandidate{}, fmt.Errorf("read text classification candidate: %w", err)
 	}
 
-	var candidate TorchScriptTextClassificationCandidate
+	var candidate TextClassificationCandidate
 	if err := json.Unmarshal(raw, &candidate); err != nil {
-		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("decode torchscript candidate: %w", err)
+		return TextClassificationCandidate{}, fmt.Errorf("decode text classification candidate: %w", err)
 	}
 
 	if candidate.Name == "" {
-		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("decode torchscript candidate: missing name")
+		return TextClassificationCandidate{}, fmt.Errorf("decode text classification candidate: missing name")
 	}
 
 	if candidate.ModelID == "" {
-		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("decode torchscript candidate: missing model id")
+		return TextClassificationCandidate{}, fmt.Errorf("decode text classification candidate: missing model id")
 	}
 
 	if len(candidate.Cases) == 0 {
-		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("decode torchscript candidate: no cases defined")
+		return TextClassificationCandidate{}, fmt.Errorf("decode text classification candidate: no cases defined")
 	}
 
 	return candidate, nil
@@ -95,7 +104,7 @@ func CompareTransformersTextClassification(referencePath, candidatePath string, 
 		return TransformersTextClassificationComparisonReport{}, err
 	}
 
-	candidate, err := LoadTorchScriptTextClassificationCandidate(candidatePath)
+	candidate, err := LoadTextClassificationCandidate(candidatePath)
 	if err != nil {
 		return TransformersTextClassificationComparisonReport{}, err
 	}
@@ -151,50 +160,67 @@ func CompareTransformersTextClassification(referencePath, candidatePath string, 
 // RunTorchScriptTextClassificationBundle loads a TorchScript bundle through the
 // native InferGo backend path and produces the same candidate JSON shape used by
 // file-based comparisons.
-func RunTorchScriptTextClassificationBundle(referencePath, bundleDir string) (TorchScriptTextClassificationCandidate, error) {
+func RunTorchScriptTextClassificationBundle(referencePath, bundleDir string) (TextClassificationCandidate, error) {
 	reference, err := LoadTransformersTextClassificationReference(referencePath)
 	if err != nil {
-		return TorchScriptTextClassificationCandidate{}, err
+		return TextClassificationCandidate{}, err
 	}
 
 	model, err := torchscript.LoadBundle(bundleDir)
 	if err != nil {
-		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("run torchscript bundle: %w", err)
+		return TextClassificationCandidate{}, fmt.Errorf("run torchscript bundle: %w", err)
 	}
 	defer model.Close()
 
-	return BuildTorchScriptCandidate(reference, model, bundleDir)
+	return BuildTextClassificationCandidate(reference, model, bundleDir, "infergo-torchscript")
 }
 
-// BuildTorchScriptCandidate builds a candidate payload using any predictor that
-// satisfies the native TorchScript batch surface.
-func BuildTorchScriptCandidate(reference TransformersTextClassificationReference, predictor torchscript.Predictor, artifact string) (TorchScriptTextClassificationCandidate, error) {
+// RunBionetTextClassificationBundle loads an InferGo-native BIOnet bundle and
+// produces the same candidate JSON shape used by file-based comparisons.
+func RunBionetTextClassificationBundle(referencePath, bundleDir string) (TextClassificationCandidate, error) {
+	reference, err := LoadTransformersTextClassificationReference(referencePath)
+	if err != nil {
+		return TextClassificationCandidate{}, err
+	}
+
+	model, err := bionet.LoadTextClassificationBundle(bundleDir)
+	if err != nil {
+		return TextClassificationCandidate{}, fmt.Errorf("run bionet text classification bundle: %w", err)
+	}
+	defer model.Close()
+
+	return BuildTextClassificationCandidate(reference, model, bundleDir, "infergo-native")
+}
+
+// BuildTextClassificationCandidate builds a candidate payload using any
+// compatible text-classification predictor.
+func BuildTextClassificationCandidate(reference TransformersTextClassificationReference, predictor TextClassificationPredictor, artifact, source string) (TextClassificationCandidate, error) {
 	inputIDs := make([][]int64, len(reference.Cases))
 	attentionMasks := make([][]int64, len(reference.Cases))
 
 	for i, item := range reference.Cases {
-		inputIDs[i] = padIntSlice(item.InputIDs, predictor.SequenceLength(), predictor.PadTokenID())
-		attentionMasks[i] = padIntSlice(item.AttentionMask, predictor.SequenceLength(), 0)
+		inputIDs[i] = intsToInt64(item.InputIDs)
+		attentionMasks[i] = intsToInt64(item.AttentionMask)
 	}
 
 	logitsBatch, err := predictor.PredictBatch(inputIDs, attentionMasks)
 	if err != nil {
-		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("build torchscript candidate: %w", err)
+		return TextClassificationCandidate{}, fmt.Errorf("build text classification candidate: %w", err)
 	}
 
 	if len(logitsBatch) != len(reference.Cases) {
-		return TorchScriptTextClassificationCandidate{}, fmt.Errorf("build torchscript candidate: output batch size mismatch (%d != %d)", len(logitsBatch), len(reference.Cases))
+		return TextClassificationCandidate{}, fmt.Errorf("build text classification candidate: output batch size mismatch (%d != %d)", len(logitsBatch), len(reference.Cases))
 	}
 
-	candidate := TorchScriptTextClassificationCandidate{
-		Name:        fmt.Sprintf("%s TorchScript candidate", reference.Name),
-		Source:      "infergo-torchscript",
+	candidate := TextClassificationCandidate{
+		Name:        fmt.Sprintf("%s native candidate", reference.Name),
+		Source:      source,
 		ModelID:     predictor.ModelID(),
 		Task:        reference.Task,
 		Artifact:    artifact,
 		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
 		Labels:      predictor.Labels(),
-		Cases:       make([]TorchScriptTextClassificationCandidateCase, 0, len(reference.Cases)),
+		Cases:       make([]TextClassificationCandidateCase, 0, len(reference.Cases)),
 	}
 
 	for i, item := range reference.Cases {
@@ -202,11 +228,11 @@ func BuildTorchScriptCandidate(reference TransformersTextClassificationReference
 		probabilities := softmax(logits)
 		labelIdx := argMax(probabilities)
 
-		candidate.Cases = append(candidate.Cases, TorchScriptTextClassificationCandidateCase{
+		candidate.Cases = append(candidate.Cases, TextClassificationCandidateCase{
 			ID:                    item.ID,
 			Text:                  item.Text,
-			InputIDs:              intsToInt(item.InputIDs, predictor.SequenceLength(), predictor.PadTokenID()),
-			AttentionMask:         intsToInt(item.AttentionMask, predictor.SequenceLength(), 0),
+			InputIDs:              append([]int(nil), item.InputIDs...),
+			AttentionMask:         append([]int(nil), item.AttentionMask...),
 			ObservedLogits:        logits,
 			ObservedProbabilities: probabilities,
 			ObservedLabel:         labelAt(candidate.Labels, labelIdx),
@@ -216,15 +242,15 @@ func BuildTorchScriptCandidate(reference TransformersTextClassificationReference
 	return candidate, nil
 }
 
-// SaveTorchScriptTextClassificationCandidate writes a candidate payload to disk.
-func SaveTorchScriptTextClassificationCandidate(candidate TorchScriptTextClassificationCandidate, path string) error {
+// SaveTextClassificationCandidate writes a candidate payload to disk.
+func SaveTextClassificationCandidate(candidate TextClassificationCandidate, path string) error {
 	raw, err := json.MarshalIndent(candidate, "", "  ")
 	if err != nil {
-		return fmt.Errorf("save torchscript candidate: %w", err)
+		return fmt.Errorf("save text classification candidate: %w", err)
 	}
 
 	if err := os.WriteFile(path, append(raw, '\n'), 0o644); err != nil {
-		return fmt.Errorf("save torchscript candidate: %w", err)
+		return fmt.Errorf("save text classification candidate: %w", err)
 	}
 
 	return nil
@@ -292,15 +318,10 @@ func padIntSlice(values []int, targetLen int, padValue int) []int64 {
 	return output
 }
 
-func intsToInt(values []int, targetLen int, padValue int) []int {
-	output := make([]int, targetLen)
-	for i := 0; i < targetLen; i++ {
-		if i < len(values) {
-			output[i] = values[i]
-			continue
-		}
-
-		output[i] = padValue
+func intsToInt64(values []int) []int64 {
+	output := make([]int64, len(values))
+	for i, value := range values {
+		output[i] = int64(value)
 	}
 
 	return output

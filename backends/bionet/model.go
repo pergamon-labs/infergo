@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/minervaai/infergo/backends/bionet/runtime/module"
-	"github.com/minervaai/infergo/backends/bionet/runtime/tensor"
-	"github.com/minervaai/infergo/infer"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/module"
+	"github.com/pergamon-labs/infergo/backends/bionet/runtime/tensor"
+	"github.com/pergamon-labs/infergo/infer"
 )
 
 var _ infer.Model = (*Model)(nil)
