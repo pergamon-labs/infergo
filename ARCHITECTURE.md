@@ -28,9 +28,15 @@ The first InferGo-native external comparison paths also live here today:
 - a simple `token-id-bag -> linear` bundle
 - a more expressive `embedding -> avg pool -> linear` bundle with compact dense token embeddings
 - a sequence-aware `embedding -> masked avg pool -> linear` bundle with compact dense token embeddings
+- a narrow `token embedding -> linear` bundle for token classification against a public NER reference set
 
 Those keep the bundle format and Go-only serving loop moving forward without
 claiming general transformer support too early.
+
+The new token-classification path is intentionally scoped to score non-special,
+non-punctuation tokens from a public-safe reference set. It proves that InferGo
+can carry a sequence-labeling parity loop without claiming contextual encoder
+support the runtime does not yet have.
 
 Layer normalization is now available in the BIOnet runtime as an activation
 primitive, but it remains experimental in the native bundle generator until it

@@ -1,0 +1,11 @@
+{
+  "name": "public-safe ner smoke set",
+  "cases": [
+    { "id": "ner-001", "text": "John Smith founded Acme Labs near Berlin." },
+    { "id": "ner-002", "text": "Maria Garcia joined Google outside Madrid." },
+    { "id": "ner-003", "text": "Sundar Pichai addressed Stanford University yesterday." },
+    { "id": "ner-004", "text": "Priya Patel relocated to London after Amazon hired her." },
+    { "id": "ner-005", "text": "Elon Musk opened Tesla offices around Austin." },
+    { "id": "ner-006", "text": "Amina Yusuf met officials in Toronto on Monday." }
+  ]
+}
