@@ -18,7 +18,7 @@ import (
 
 const (
 	defaultReferencePath = "testdata/reference/token-classification/distilbert-ner-reference.json"
-	defaultOutputDir     = "testdata/native/token-classification/distilbert-ner-embedding-linear"
+	defaultOutputDir     = "testdata/native/token-classification/distilbert-ner-windowed-embedding-linear"
 	defaultArtifactName  = "model.gob"
 	defaultEmbeddingName = "embeddings.gob"
 	ridgeLambda          = 1e-9
@@ -27,6 +27,7 @@ const (
 func main() {
 	referencePath := flag.String("reference", defaultReferencePath, "path to the Transformers token-classification reference JSON file")
 	outputDir := flag.String("output-dir", defaultOutputDir, "directory to write the InferGo-native token-classification bundle into")
+	mode := flag.String("mode", bionet.TokenClassificationFeatureModeWindowedEmbeddingLinear, "native bundle mode: embedding-linear or windowed-embedding-linear")
 	flag.Parse()
 
 	reference, err := parity.LoadTransformersTokenClassificationReference(*referencePath)
@@ -34,7 +35,7 @@ func main() {
 		fatalf("load reference: %v", err)
 	}
 
-	metadata, classifier, embeddingMatrix, err := buildBundle(reference, defaultArtifactName, defaultEmbeddingName)
+	metadata, classifier, embeddingMatrix, err := buildBundle(reference, *mode, defaultArtifactName, defaultEmbeddingName)
 	if err != nil {
 		fatalf("build bundle: %v", err)
 	}
@@ -58,8 +59,19 @@ func main() {
 	fmt.Printf("wrote infergo-native token-classification bundle to %s\n", *outputDir)
 }
 
-func buildBundle(reference parity.TransformersTokenClassificationReference, artifactName, embeddingArtifactName string) (bionet.TokenClassificationBundleMetadata, *module.Module, tensor.Tensor, error) {
-	featureTokenIDs := collectFeatureTokenIDs(reference)
+func buildBundle(reference parity.TransformersTokenClassificationReference, mode, artifactName, embeddingArtifactName string) (bionet.TokenClassificationBundleMetadata, *module.Module, tensor.Tensor, error) {
+	switch mode {
+	case bionet.TokenClassificationFeatureModeEmbeddingLinear:
+		return buildEmbeddingLinearBundle(reference, artifactName, embeddingArtifactName)
+	case bionet.TokenClassificationFeatureModeWindowedEmbeddingLinear:
+		return buildWindowedEmbeddingLinearBundle(reference, artifactName, embeddingArtifactName)
+	default:
+		return bionet.TokenClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("unsupported token-classification bundle mode %q", mode)
+	}
+}
+
+func buildEmbeddingLinearBundle(reference parity.TransformersTokenClassificationReference, artifactName, embeddingArtifactName string) (bionet.TokenClassificationBundleMetadata, *module.Module, tensor.Tensor, error) {
+	featureTokenIDs := collectFeatureTokenIDs(reference, false)
 	if len(featureTokenIDs) == 0 {
 		return bionet.TokenClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("no feature token ids discovered in reference cases")
 	}
@@ -125,11 +137,96 @@ func buildBundle(reference parity.TransformersTokenClassificationReference, arti
 	return metadata, classifier, embeddingMatrix, nil
 }
 
-func collectFeatureTokenIDs(reference parity.TransformersTokenClassificationReference) []int {
+func buildWindowedEmbeddingLinearBundle(reference parity.TransformersTokenClassificationReference, artifactName, embeddingArtifactName string) (bionet.TokenClassificationBundleMetadata, *module.Module, tensor.Tensor, error) {
+	featureTokenIDs := collectFeatureTokenIDs(reference, true)
+	if len(featureTokenIDs) == 0 {
+		return bionet.TokenClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("no feature token ids discovered in reference cases")
+	}
+
+	numLabels := len(reference.Labels)
+	if numLabels == 0 {
+		return bionet.TokenClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("reference labels are empty")
+	}
+
+	baseFeatures := len(featureTokenIDs)
+	featureIndexByID := make(map[int]int, len(featureTokenIDs))
+	for idx, tokenID := range featureTokenIDs {
+		featureIndexByID[tokenID] = idx
+	}
+
+	totalFeatures := baseFeatures * 3
+	var design [][]float64
+	var targets [][]float64
+	for _, item := range reference.Cases {
+		if len(item.InputIDs) != len(item.ScoringMask) || len(item.InputIDs) != len(item.ExpectedLogits) || len(item.InputIDs) != len(item.AttentionMask) {
+			return bionet.TokenClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("reference case %q has inconsistent lengths", item.ID)
+		}
+
+		for pos := range item.InputIDs {
+			if item.ScoringMask[pos] == 0 {
+				continue
+			}
+
+			row := make([]float64, totalFeatures+1)
+			for slot, neighborPos := range []int{pos - 1, pos, pos + 1} {
+				if neighborPos < 0 || neighborPos >= len(item.InputIDs) {
+					continue
+				}
+				if item.AttentionMask[neighborPos] == 0 {
+					continue
+				}
+
+				featureIdx, ok := featureIndexByID[item.InputIDs[neighborPos]]
+				if !ok {
+					continue
+				}
+
+				row[(slot*baseFeatures)+featureIdx] = 1
+			}
+			row[totalFeatures] = 1
+
+			design = append(design, row)
+			targets = append(targets, append([]float64(nil), item.ExpectedLogits[pos]...))
+		}
+	}
+
+	coefficients, err := solveRidgeRegression(design, targets, ridgeLambda)
+	if err != nil {
+		return bionet.TokenClassificationBundleMetadata{}, nil, tensor.Tensor{}, fmt.Errorf("fit windowed token classifier: %w", err)
+	}
+
+	embeddingMatrix, headWeights, bias := denseEmbeddingArtifactsFromCoefficients(coefficients, totalFeatures, numLabels)
+
+	classifier := module.New(functional.ActivationLinear, functional.ActivationParams{
+		Weights: headWeights,
+		Bias:    tensor.New(bias, []int{numLabels}),
+	})
+	classifier.ModuleType = module.ModuleTypeFullyConnected
+
+	metadata := bionet.TokenClassificationBundleMetadata{
+		Name:              fmt.Sprintf("%s InferGo-native bundle", reference.Name),
+		Source:            "infergo-native-token-bundlegen",
+		ModelID:           reference.ModelID,
+		Task:              reference.Task,
+		GeneratedAt:       time.Now().UTC().Format(time.RFC3339),
+		Artifact:          artifactName,
+		EmbeddingArtifact: embeddingArtifactName,
+		Labels:            append([]string(nil), reference.Labels...),
+		FeatureMode:       bionet.TokenClassificationFeatureModeWindowedEmbeddingLinear,
+		FeatureTokenIDs:   featureTokenIDs,
+	}
+
+	return metadata, classifier, embeddingMatrix, nil
+}
+
+func collectFeatureTokenIDs(reference parity.TransformersTokenClassificationReference, includeAllActive bool) []int {
 	seen := make(map[int]struct{})
 	for _, item := range reference.Cases {
 		for pos, tokenID := range item.InputIDs {
-			if item.ScoringMask[pos] == 0 {
+			if !includeAllActive && item.ScoringMask[pos] == 0 {
+				continue
+			}
+			if item.AttentionMask[pos] == 0 {
 				continue
 			}
 			seen[tokenID] = struct{}{}

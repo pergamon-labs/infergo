@@ -5,7 +5,7 @@ import "testing"
 func TestLoadTokenClassificationBundleMetadata(t *testing.T) {
 	t.Parallel()
 
-	metadata, err := LoadTokenClassificationBundleMetadata("../../testdata/native/token-classification/distilbert-ner-embedding-linear")
+	metadata, err := LoadTokenClassificationBundleMetadata("../../testdata/native/token-classification/distilbert-ner-windowed-embedding-linear")
 	if err != nil {
 		t.Fatalf("LoadTokenClassificationBundleMetadata() error = %v", err)
 	}
@@ -14,7 +14,7 @@ func TestLoadTokenClassificationBundleMetadata(t *testing.T) {
 		t.Fatalf("unexpected task %q", metadata.Task)
 	}
 
-	if metadata.FeatureMode != TokenClassificationFeatureModeEmbeddingLinear {
+	if metadata.FeatureMode != TokenClassificationFeatureModeWindowedEmbeddingLinear {
 		t.Fatalf("unexpected feature mode %q", metadata.FeatureMode)
 	}
 }
@@ -22,7 +22,7 @@ func TestLoadTokenClassificationBundleMetadata(t *testing.T) {
 func TestTokenClassificationBundlePredictBatch(t *testing.T) {
 	t.Parallel()
 
-	bundle, err := LoadTokenClassificationBundle("../../testdata/native/token-classification/distilbert-ner-embedding-linear")
+	bundle, err := LoadTokenClassificationBundle("../../testdata/native/token-classification/distilbert-ner-windowed-embedding-linear")
 	if err != nil {
 		t.Fatalf("LoadTokenClassificationBundle() error = %v", err)
 	}

@@ -125,7 +125,7 @@ func TestRunBionetTokenClassificationBundle(t *testing.T) {
 	t.Parallel()
 
 	referencePath := "../../testdata/reference/token-classification/distilbert-ner-reference.json"
-	bundleDir := "../../testdata/native/token-classification/distilbert-ner-embedding-linear"
+	bundleDir := "../../testdata/native/token-classification/distilbert-ner-windowed-embedding-linear"
 	candidatePath := filepath.Join(t.TempDir(), "candidate-token.json")
 
 	candidate, err := RunBionetTokenClassificationBundle(referencePath, bundleDir)

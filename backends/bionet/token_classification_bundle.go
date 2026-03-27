@@ -14,6 +14,10 @@ const (
 	// TokenClassificationFeatureModeEmbeddingLinear maps active token ids into a
 	// compact embedding table and applies a BIOnet linear head per token.
 	TokenClassificationFeatureModeEmbeddingLinear = "embedding-linear"
+	// TokenClassificationFeatureModeWindowedEmbeddingLinear maps the previous,
+	// current, and next token ids into slot-specific compact embeddings, sums
+	// them, and applies a BIOnet linear head per token.
+	TokenClassificationFeatureModeWindowedEmbeddingLinear = "windowed-embedding-linear"
 )
 
 // TokenClassificationBundleMetadata describes an InferGo-native token
@@ -100,7 +104,9 @@ func LoadTokenClassificationBundleMetadata(bundleDir string) (TokenClassificatio
 	if metadata.Task != "token-classification" {
 		return TokenClassificationBundleMetadata{}, fmt.Errorf("decode bionet token classification metadata: unsupported task %q", metadata.Task)
 	}
-	if metadata.FeatureMode != TokenClassificationFeatureModeEmbeddingLinear {
+	switch metadata.FeatureMode {
+	case TokenClassificationFeatureModeEmbeddingLinear, TokenClassificationFeatureModeWindowedEmbeddingLinear:
+	default:
 		return TokenClassificationBundleMetadata{}, fmt.Errorf("decode bionet token classification metadata: unsupported feature mode %q", metadata.FeatureMode)
 	}
 	if len(metadata.Labels) == 0 {
@@ -132,10 +138,17 @@ func (b *TokenClassificationBundle) PredictBatch(inputIDs, attentionMasks [][]in
 		sequence := make([][]float64, len(inputIDs[i]))
 		for pos, tokenID := range inputIDs[i] {
 			var embedding []float64
-			if attentionMasks[i][pos] != 0 {
-				embedding = b.embeddingForTokenID(int(tokenID))
-			} else {
-				embedding = make([]float64, b.embeddingDim())
+			switch b.metadata.FeatureMode {
+			case TokenClassificationFeatureModeEmbeddingLinear:
+				if attentionMasks[i][pos] != 0 {
+					embedding = b.embeddingForTokenID(int(tokenID))
+				} else {
+					embedding = make([]float64, b.embeddingDim())
+				}
+			case TokenClassificationFeatureModeWindowedEmbeddingLinear:
+				embedding = b.windowedEmbeddingForPosition(inputIDs[i], attentionMasks[i], pos)
+			default:
+				return nil, fmt.Errorf("predict batch: unsupported feature mode %q", b.metadata.FeatureMode)
 			}
 
 			logits, err := b.model.PredictVector(embedding)
@@ -194,6 +207,40 @@ func (b *TokenClassificationBundle) embeddingForTokenID(tokenID int) []float64 {
 	start := featureIdx * dim
 	end := start + dim
 	return append([]float64(nil), b.embeddingMatrix.Values()[start:end]...)
+}
+
+func (b *TokenClassificationBundle) windowedEmbeddingForPosition(inputIDs, attentionMasks []int64, pos int) []float64 {
+	dim := b.embeddingDim()
+	if dim == 0 {
+		return nil
+	}
+
+	baseFeatures := len(b.metadata.FeatureTokenIDs)
+	output := make([]float64, dim)
+	windowPositions := []int{pos - 1, pos, pos + 1}
+
+	for slot, neighborPos := range windowPositions {
+		if neighborPos < 0 || neighborPos >= len(inputIDs) {
+			continue
+		}
+		if attentionMasks[neighborPos] == 0 {
+			continue
+		}
+
+		featureIdx, ok := b.featureIndexByID[int(inputIDs[neighborPos])]
+		if !ok {
+			continue
+		}
+
+		start := ((slot * baseFeatures) + featureIdx) * dim
+		end := start + dim
+		segment := b.embeddingMatrix.Values()[start:end]
+		for i := range output {
+			output[i] += segment[i]
+		}
+	}
+
+	return output
 }
 
 // PredictTokenEmbeddings is exposed for tests and future feature work so the

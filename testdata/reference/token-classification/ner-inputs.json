@@ -1,11 +1,25 @@
 {
-  "name": "public-safe ner smoke set",
+  "name": "public-safe ner parity set",
   "cases": [
     { "id": "ner-001", "text": "John Smith founded Acme Labs near Berlin." },
     { "id": "ner-002", "text": "Maria Garcia joined Google outside Madrid." },
     { "id": "ner-003", "text": "Sundar Pichai addressed Stanford University yesterday." },
     { "id": "ner-004", "text": "Priya Patel relocated to London after Amazon hired her." },
     { "id": "ner-005", "text": "Elon Musk opened Tesla offices around Austin." },
-    { "id": "ner-006", "text": "Amina Yusuf met officials in Toronto on Monday." }
+    { "id": "ner-006", "text": "Amina Yusuf met officials in Toronto on Monday." },
+    { "id": "ner-007", "text": "Michael Jordan visited Jordan after speaking with Queen Rania." },
+    { "id": "ner-008", "text": "Apple hired Sam Lee, but the apple pie stayed on the table." },
+    { "id": "ner-009", "text": "Washington hosted talks in Washington after meeting the Washington Post team." },
+    { "id": "ner-010", "text": "New York University invited York officials to New York." },
+    { "id": "ner-011", "text": "Jean-Luc Picard met New York-based reporters at SpaceX headquarters." },
+    { "id": "ner-012", "text": "Mary-Jane Watson thanked Dr. Stephen Strange in New York City." },
+    { "id": "ner-013", "text": "The Los Angeles Lakers beat Brooklyn in Los Angeles." },
+    { "id": "ner-014", "text": "Amazon employees in Brazil studied flooding near the Amazon River." },
+    { "id": "ner-015", "text": "Jordan Romero thanked Jordan officials during the Jordan conference." },
+    { "id": "ner-016", "text": "OpenAI invited Ana Maria de Souza to San Francisco." },
+    { "id": "ner-017", "text": "IBM's Arvind Krishna met Microsoft CEO Satya Nadella." },
+    { "id": "ner-018", "text": "Barack Obama and Michelle Obama visited the Obama Foundation." },
+    { "id": "ner-019", "text": "University of California, Berkeley welcomed Berkeley alumni." },
+    { "id": "ner-020", "text": "McDonald's hired Sean O'Connor in Dublin." }
   ]
 }

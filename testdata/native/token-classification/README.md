@@ -5,8 +5,11 @@ public-safe token-classification parity checks.
 
 Current bundle:
 
-- `distilbert-ner-embedding-linear`: compact token-embedding plus linear-head
-  artifact derived from the public `dslim/distilbert-NER` reference set
+- `distilbert-ner-windowed-embedding-linear`: compact prev/current/next token
+  embedding plus linear-head artifact derived from the public
+  `dslim/distilbert-NER` reference set
+- `distilbert-ner-embedding-linear`: earlier token-only baseline kept as a
+  simple comparison point
 
 Generation:
 
@@ -19,3 +22,4 @@ Notes:
 - this bundle is intentionally narrow and reference-driven
 - it is a parity spike for sequence labeling, not a claim of full contextual NER
   support
+- the windowed bundle is the current supported native token-classification path
