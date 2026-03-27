@@ -124,25 +124,39 @@ func TestBuildTokenClassificationCandidate(t *testing.T) {
 func TestRunBionetTokenClassificationBundle(t *testing.T) {
 	t.Parallel()
 
-	referencePath := "../../testdata/reference/token-classification/distilbert-ner-reference.json"
-	bundleDir := "../../testdata/native/token-classification/distilbert-ner-windowed-embedding-linear"
-	candidatePath := filepath.Join(t.TempDir(), "candidate-token.json")
-
-	candidate, err := RunBionetTokenClassificationBundle(referencePath, bundleDir)
-	if err != nil {
-		t.Fatalf("RunBionetTokenClassificationBundle() error = %v", err)
+	testCases := []struct {
+		referencePath string
+		bundleDir     string
+	}{
+		{
+			referencePath: "../../testdata/reference/token-classification/distilbert-ner-reference.json",
+			bundleDir:     "../../testdata/native/token-classification/distilbert-ner-windowed-embedding-linear",
+		},
+		{
+			referencePath: "../../testdata/reference/token-classification/bert-base-ner-reference.json",
+			bundleDir:     "../../testdata/native/token-classification/bert-base-ner-windowed-embedding-linear",
+		},
 	}
 
-	if err := SaveTokenClassificationCandidate(candidate, candidatePath); err != nil {
-		t.Fatalf("SaveTokenClassificationCandidate() error = %v", err)
-	}
+	for _, tt := range testCases {
+		candidatePath := filepath.Join(t.TempDir(), filepath.Base(tt.bundleDir)+".json")
 
-	report, err := CompareTransformersTokenClassification(referencePath, candidatePath, 1e-4)
-	if err != nil {
-		t.Fatalf("CompareTransformersTokenClassification() error = %v", err)
-	}
+		candidate, err := RunBionetTokenClassificationBundle(tt.referencePath, tt.bundleDir)
+		if err != nil {
+			t.Fatalf("RunBionetTokenClassificationBundle(%q) error = %v", tt.bundleDir, err)
+		}
 
-	if !report.Passed() {
-		t.Fatalf("expected token-classification comparison to pass, got report:\n%s", report.String())
+		if err := SaveTokenClassificationCandidate(candidate, candidatePath); err != nil {
+			t.Fatalf("SaveTokenClassificationCandidate(%q) error = %v", tt.bundleDir, err)
+		}
+
+		report, err := CompareTransformersTokenClassification(tt.referencePath, candidatePath, 1e-4)
+		if err != nil {
+			t.Fatalf("CompareTransformersTokenClassification(%q) error = %v", tt.bundleDir, err)
+		}
+
+		if !report.Passed() {
+			t.Fatalf("expected token-classification comparison for %q to pass, got report:\n%s", tt.bundleDir, report.String())
+		}
 	}
 }

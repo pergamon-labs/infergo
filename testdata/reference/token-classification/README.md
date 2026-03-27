@@ -8,6 +8,7 @@ Current reference set:
 - `ner-inputs.json`: a widened, reproducible NER parity set with repeated
   tokens, multi-token entities, punctuation-heavy examples, and subword splits
 - `distilbert-ner-reference.json`: generated from `dslim/distilbert-NER`
+- `bert-base-ner-reference.json`: generated from `dslim/bert-base-NER`
 
 Generation:
 

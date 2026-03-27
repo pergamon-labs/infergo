@@ -20,7 +20,7 @@ without a documented export path, backend, and parity test story.
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
   - native text classification over public DistilBERT reference inputs via `cmd/infergo-parity -infergo-bundle-dir ...`
   - native text classification over public RoBERTa sentiment reference inputs via `cmd/infergo-parity -infergo-bundle-dir ...`
-  - native token classification over a widened public `dslim/distilbert-NER` reference set via `cmd/infergo-parity -infergo-bundle-dir ...`
+  - native token classification over widened public `dslim/distilbert-NER` and `dslim/bert-base-NER` reference sets via `cmd/infergo-parity -infergo-bundle-dir ...`
   - checked-in native bundle shapes:
     - `token-id-bag`
     - `embedding-avg-pool -> linear` with compact dense token embeddings
@@ -37,6 +37,7 @@ without a documented export path, backend, and parity test story.
   - `distilbert/distilbert-base-uncased-finetuned-sst-2-english`
   - `cardiffnlp/twitter-roberta-base-sentiment-latest`
   - `dslim/distilbert-NER` for native token-classification parity through the `bionet` backend
+  - `dslim/bert-base-NER` for native token-classification parity through the `bionet` backend
 - Current local comparison path: TorchScript export plus native Go candidate generation through `cmd/infergo-parity -torchscript-bundle-dir ...`
 
 ## Native backend note

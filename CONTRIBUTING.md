@@ -9,6 +9,20 @@ Current contribution priorities:
 3. prefer public-safe fixtures and examples
 4. keep backend-specific code behind backend boundaries
 
+## Community norms
+
+By participating in this project, you agree to follow the guidance in
+[CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
+
+## Pull requests
+
+Before opening a pull request:
+
+- run `go test ./...`
+- update `README.md` if the public workflow changed
+- update `COMPATIBILITY.md` if support claims changed
+- keep examples, bundles, and fixtures public-safe and reproducible
+
 ## Before adding support for a backend
 
 - document the artifact/export path

@@ -37,12 +37,12 @@ Current scaffold highlights:
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 - the public reference set is now validated against both a DistilBERT SST-2 path and a RoBERTa-based 3-label sentiment path
-- the native `bionet` path is now also validated on a widened public `dslim/distilbert-NER` token-classification reference set without `libtorch`
+- the native `bionet` path is now also validated on widened public token-classification reference sets for both `dslim/distilbert-NER` and `dslim/bert-base-NER`, without `libtorch`
 - the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
 - layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 
 Next milestone:
 
-1. widen the token-classification reference set further or add a second token-classification model to pressure-test the new windowed path
+1. add a substantially larger public-safe token-classification set or a third token-classification model to pressure-test the windowed path further
 2. decide whether layer normalization is ready to graduate from experimental generator support into the default native parity path
 3. keep the optional TorchScript bridge healthy without letting it drive the core roadmap
