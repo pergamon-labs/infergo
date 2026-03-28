@@ -29,6 +29,14 @@
       "reference_path": "testdata/reference/token-classification/roberta-large-ner-english-reference.json",
       "native_bundle_dir": "testdata/native/token-classification/roberta-large-ner-english-windowed-embedding-linear",
       "native_mode": "windowed-embedding-linear"
+    },
+    {
+      "key": "xlm-roberta-ner-hrl",
+      "model_id": "Davlan/xlm-roberta-base-ner-hrl",
+      "input_set_path": "testdata/reference/token-classification/multilingual-ner-inputs.json",
+      "reference_path": "testdata/reference/token-classification/xlm-roberta-ner-hrl-reference.json",
+      "native_bundle_dir": "testdata/native/token-classification/xlm-roberta-ner-hrl-windowed-embedding-linear",
+      "native_mode": "windowed-embedding-linear"
     }
   ]
 }

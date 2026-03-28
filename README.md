@@ -50,6 +50,7 @@ uv run python ./scripts/build_token_classification_reference_pack.py --list
 
 ```bash
 uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  --with sentencepiece --with protobuf --with tiktoken \
   python ./scripts/build_token_classification_reference_pack.py
 ```
 
@@ -57,6 +58,7 @@ uv run --with torch==2.10.0 --with transformers==5.3.0 \
 
 ```bash
 uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  --with sentencepiece --with protobuf --with tiktoken \
   python ./scripts/build_token_classification_reference_pack.py \
   --pack-key distilbert-ner
 ```
@@ -67,6 +69,7 @@ uv run --with torch==2.10.0 --with transformers==5.3.0 \
 uv run python ./scripts/build_text_classification_reference_pack.py --list
 
 uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  --with sentencepiece --with protobuf --with tiktoken \
   python ./scripts/build_text_classification_reference_pack.py
 ```
 
@@ -106,6 +109,7 @@ Current scaffold highlights:
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 - the public text-classification packs are now validated against an English DistilBERT SST-2 path, an English RoBERTa sentiment path, and a first non-English multilingual sentiment path
+- the native `bionet` path now also includes a first non-English token-classification pack through `Davlan/xlm-roberta-base-ner-hrl` on a public-safe multilingual NER corpus
 - the native `bionet` path is now validated on the supported token-classification model packs listed in [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json), without `libtorch`
 - the text-classification parity path now follows the same manifest-backed contributor workflow as token classification
 - [`examples/bionet-classifier`](./examples/bionet-classifier) and [`examples/http-server`](./examples/http-server) now show honest, runnable usage with checked-in bundles
@@ -114,6 +118,6 @@ Current scaffold highlights:
 
 Next milestone:
 
-1. add a first non-English token-classification pack
-2. expand examples beyond checked-in case IDs only when the public tokenization story is documented end to end
+1. decide whether the next multilingual proof should widen the token corpus further or add a second multilingual token model
+2. widen the multilingual token-classification corpus and stress-test the new pack
 3. keep the optional TorchScript bridge healthy without letting it drive the core roadmap

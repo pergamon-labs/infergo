@@ -17,6 +17,7 @@ type TokenClassificationManifest struct {
 // TokenClassificationManifestEntry describes one supported token-classification
 // reference pack.
 type TokenClassificationManifestEntry struct {
+	InputSetPath    string `json:"input_set_path,omitempty"`
 	Key             string `json:"key"`
 	ModelID         string `json:"model_id"`
 	ReferencePath   string `json:"reference_path"`
@@ -48,7 +49,7 @@ func LoadTokenClassificationManifest(path string) (TokenClassificationManifest, 
 	}
 
 	seenKeys := make(map[string]struct{}, len(manifest.Packs))
-	for _, entry := range manifest.Packs {
+	for idx, entry := range manifest.Packs {
 		if entry.Key == "" {
 			return TokenClassificationManifest{}, fmt.Errorf("decode token-classification pack manifest: missing pack key")
 		}
@@ -68,6 +69,10 @@ func LoadTokenClassificationManifest(path string) (TokenClassificationManifest, 
 		}
 		if entry.NativeMode == "" {
 			return TokenClassificationManifest{}, fmt.Errorf("decode token-classification pack manifest: pack %q missing native_mode", entry.Key)
+		}
+
+		if entry.InputSetPath == "" {
+			manifest.Packs[idx].InputSetPath = manifest.InputSetPath
 		}
 	}
 

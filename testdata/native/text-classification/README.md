@@ -31,6 +31,7 @@ Regenerate all supported text-classification packs from the repo root with:
 
 ```bash
 uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  --with sentencepiece --with protobuf --with tiktoken \
   python ./scripts/build_text_classification_reference_pack.py
 ```
 
@@ -44,6 +45,7 @@ Regenerate one supported pack explicitly with:
 
 ```bash
 uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  --with sentencepiece --with protobuf --with tiktoken \
   python ./scripts/build_text_classification_reference_pack.py \
   --pack-key distilbert-sst2
 ```

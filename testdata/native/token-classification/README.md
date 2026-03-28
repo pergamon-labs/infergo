@@ -9,11 +9,14 @@ Current bundle:
   model pack in `testdata/reference/token-classification/model-packs.json`
 - `distilbert-ner-embedding-linear`: earlier token-only baseline kept as a
   simple comparison point
+- the multilingual `xlm-roberta-ner-hrl-windowed-embedding-linear/` bundle is
+  the first checked-in non-English token-classification native path
 
 Generation:
 
 ```bash
 uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  --with sentencepiece --with protobuf --with tiktoken \
   python ./scripts/build_token_classification_reference_pack.py
 ```
 

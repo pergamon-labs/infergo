@@ -20,6 +20,7 @@ without a documented export path, backend, and parity test story.
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
   - native text classification over the manifest-backed public model packs listed in `testdata/reference/text-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
   - native token classification over the manifest-backed public model packs listed in `testdata/reference/token-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
+  - the token-classification manifest now includes a first non-English multilingual NER pack through `Davlan/xlm-roberta-base-ner-hrl`
   - checked-in native bundle shapes:
     - `token-id-bag`
     - `embedding-avg-pool -> linear` with compact dense token embeddings

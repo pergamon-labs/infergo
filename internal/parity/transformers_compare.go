@@ -315,6 +315,31 @@ func sliceMaxAbsDiff(reference, observed []float64) float64 {
 	return maxDiff
 }
 
+func centeredSliceMaxAbsDiff(reference, observed []float64) float64 {
+	if len(reference) == 0 || len(observed) == 0 {
+		return 0
+	}
+
+	referenceMean := 0.0
+	observedMean := 0.0
+	for i := range reference {
+		referenceMean += reference[i]
+		observedMean += observed[i]
+	}
+	referenceMean /= float64(len(reference))
+	observedMean /= float64(len(observed))
+
+	maxDiff := 0.0
+	for i := range reference {
+		diff := math.Abs((reference[i] - referenceMean) - (observed[i] - observedMean))
+		if diff > maxDiff {
+			maxDiff = diff
+		}
+	}
+
+	return maxDiff
+}
+
 func padIntSlice(values []int, targetLen int, padValue int) []int64 {
 	output := make([]int64, targetLen)
 	for i := 0; i < targetLen; i++ {

@@ -1,0 +1,17 @@
+{
+  "name": "public-safe multilingual ner parity set",
+  "cases": [
+    { "id": "mner-es-001", "text": "Juan Perez se reunio con Telefonica en Madrid." },
+    { "id": "mner-es-002", "text": "Maria Lopez visito Barcelona con el equipo de Iberdrola." },
+    { "id": "mner-fr-001", "text": "Claire Dubois a rencontre Airbus a Toulouse." },
+    { "id": "mner-fr-002", "text": "Jean Martin a presente Renault a Paris." },
+    { "id": "mner-de-001", "text": "Anna Schmidt sprach mit Siemens in Berlin." },
+    { "id": "mner-de-002", "text": "Lukas Weber besuchte Hamburg mit der Deutschen Bahn." },
+    { "id": "mner-it-001", "text": "Giulia Rossi ha incontrato ENI a Roma." },
+    { "id": "mner-it-002", "text": "Marco Bianchi ha visitato Milano con Ferrari." },
+    { "id": "mner-pt-001", "text": "Ana Silva encontrou a Galp em Lisboa." },
+    { "id": "mner-pt-002", "text": "Pedro Costa visitou o Porto com a TAP." },
+    { "id": "mner-mix-001", "text": "Juan Perez y Claire Dubois hablaron con Airbus en Madrid." },
+    { "id": "mner-mix-002", "text": "Anna Schmidt e Giulia Rossi viajaram para Lisboa com Siemens." }
+  ]
+}

@@ -9,6 +9,8 @@ Current reference set:
   tokens, multi-token entities, punctuation-heavy examples, subword splits,
   acronyms, quoted entities, slash-separated organizations, and title-heavy
   cases
+- `multilingual-ner-inputs.json`: the first public-safe non-English NER corpus
+  covering Spanish, French, German, Italian, and Portuguese examples
 - `model-packs.json`: the supported public token-classification model pack
   manifest
 - one generated `*-reference.json` file per supported pack in the manifest
@@ -17,12 +19,19 @@ Generation:
 
 ```bash
 uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  --with sentencepiece --with protobuf --with tiktoken \
   python ./scripts/build_token_classification_reference_pack.py
 ```
+
+That manifest now includes a first non-English token-classification pack:
+
+- `xlm-roberta-ner-hrl`
 
 Scoring rules:
 
 - InferGo compares only tokens where `scoring_mask` is `1`
 - special tokens and punctuation are intentionally excluded from scoring
+- token-classification pass/fail is based on label agreement plus probability
+  agreement within tolerance; raw logit deltas are still reported as diagnostics
 - the goal is to validate a narrow, public-safe native token-labeling path, not
   to claim general transformer-equivalent NER support

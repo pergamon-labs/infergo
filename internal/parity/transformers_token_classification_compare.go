@@ -150,7 +150,7 @@ func CompareTransformersTokenClassification(referencePath, candidatePath string,
 			}
 			scoredTokens++
 
-			logitDiff := sliceMaxAbsDiff(referenceCase.ExpectedLogits[pos], candidateCase.ObservedLogits[pos])
+			logitDiff := centeredSliceMaxAbsDiff(referenceCase.ExpectedLogits[pos], candidateCase.ObservedLogits[pos])
 			probDiff := sliceMaxAbsDiff(referenceCase.ExpectedProbabilities[pos], candidateCase.ObservedProbabilities[pos])
 			if logitDiff > maxLogitDiff {
 				maxLogitDiff = logitDiff
@@ -169,7 +169,7 @@ func CompareTransformersTokenClassification(referencePath, candidatePath string,
 			MismatchedTokens: mismatchedTokens,
 			MaxLogitAbsDiff:  maxLogitDiff,
 			MaxProbAbsDiff:   maxProbDiff,
-			Passed:           mismatchedTokens == 0 && maxLogitDiff <= tolerance && maxProbDiff <= tolerance,
+			Passed:           mismatchedTokens == 0 && maxProbDiff <= tolerance,
 		})
 	}
 

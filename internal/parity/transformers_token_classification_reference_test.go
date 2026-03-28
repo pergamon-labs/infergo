@@ -42,16 +42,24 @@ func TestLoadTransformersTokenClassificationReferencesFromManifest(t *testing.T)
 		t.Fatalf("LoadTokenClassificationManifest() error = %v", err)
 	}
 
-	inputSet, err := LoadTransformersTokenClassificationInputSet("../../" + manifest.InputSetPath)
-	if err != nil {
-		t.Fatalf("LoadTransformersTokenClassificationInputSet() error = %v", err)
-	}
-
-	if len(inputSet.Cases) < 30 {
-		t.Fatalf("expected widened token-classification input set, got %d cases", len(inputSet.Cases))
-	}
-
 	for _, pack := range manifest.Packs {
+		inputSetPath := pack.InputSetPath
+		if inputSetPath == "" {
+			inputSetPath = manifest.InputSetPath
+		}
+
+		inputSet, err := LoadTransformersTokenClassificationInputSet("../../" + inputSetPath)
+		if err != nil {
+			t.Fatalf("LoadTransformersTokenClassificationInputSet(%q) error = %v", inputSetPath, err)
+		}
+
+		if inputSetPath == manifest.InputSetPath && len(inputSet.Cases) < 30 {
+			t.Fatalf("expected widened default token-classification input set, got %d cases", len(inputSet.Cases))
+		}
+		if inputSetPath != manifest.InputSetPath && len(inputSet.Cases) < 10 {
+			t.Fatalf("expected per-pack token-classification input set %q, got %d cases", inputSetPath, len(inputSet.Cases))
+		}
+
 		reference, err := LoadTransformersTokenClassificationReference("../../" + pack.ReferencePath)
 		if err != nil {
 			t.Fatalf("LoadTransformersTokenClassificationReference(%q) error = %v", pack.ReferencePath, err)

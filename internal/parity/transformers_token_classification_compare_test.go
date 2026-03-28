@@ -80,6 +80,66 @@ func TestCompareTransformersTokenClassification(t *testing.T) {
 	}
 }
 
+func TestCompareTransformersTokenClassificationIgnoresConstantLogitShift(t *testing.T) {
+	t.Parallel()
+
+	reference := TransformersTokenClassificationReference{
+		Name:        "synthetic token reference",
+		Source:      "test",
+		ModelID:     "example/model",
+		Task:        "token-classification",
+		GeneratedAt: "2026-03-26T00:00:00Z",
+		Labels:      []string{"O", "B-PER"},
+		Cases: []TransformersTokenClassificationReferenceCase{
+			{
+				ID:                    "case-a",
+				Text:                  "John arrived",
+				Tokens:                []string{"john", "arrived"},
+				InputIDs:              []int{101, 202},
+				AttentionMask:         []int{1, 1},
+				ScoringMask:           []int{1, 1},
+				ExpectedLogits:        [][]float64{{-1.0, 1.0}, {2.0, -2.0}},
+				ExpectedProbabilities: [][]float64{softmax([]float64{-1.0, 1.0}), softmax([]float64{2.0, -2.0})},
+				ExpectedLabels:        []string{"B-PER", "O"},
+			},
+		},
+	}
+	candidate := TokenClassificationCandidate{
+		Name:        "candidate",
+		Source:      "test",
+		ModelID:     "example/model",
+		Task:        "token-classification",
+		Artifact:    "dist/model",
+		GeneratedAt: "2026-03-26T00:00:00Z",
+		Labels:      []string{"O", "B-PER"},
+		Cases: []TokenClassificationCandidateCase{
+			{
+				ID:                    "case-a",
+				Text:                  "John arrived",
+				Tokens:                []string{"john", "arrived"},
+				InputIDs:              []int{101, 202},
+				AttentionMask:         []int{1, 1},
+				ScoringMask:           []int{1, 1},
+				ObservedLogits:        [][]float64{{4.0, 6.0}, {-1.0, -5.0}},
+				ObservedProbabilities: [][]float64{softmax([]float64{4.0, 6.0}), softmax([]float64{-1.0, -5.0})},
+				ObservedLabels:        []string{"B-PER", "O"},
+			},
+		},
+	}
+
+	referencePath := writeTempJSON(t, "reference-token-shift.json", reference)
+	candidatePath := writeTempJSON(t, "candidate-token-shift.json", candidate)
+
+	report, err := CompareTransformersTokenClassification(referencePath, candidatePath, 1e-9)
+	if err != nil {
+		t.Fatalf("CompareTransformersTokenClassification() error = %v", err)
+	}
+
+	if !report.Passed() {
+		t.Fatalf("expected comparison with constant logit shift to pass, got report:\n%s", report.String())
+	}
+}
+
 func TestBuildTokenClassificationCandidate(t *testing.T) {
 	t.Parallel()
 
