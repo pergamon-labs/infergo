@@ -1,18 +1,21 @@
 package bionet
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/pergamon-labs/infergo/internal/modelpacks"
+)
 
 func TestLoadTokenClassificationBundleMetadata(t *testing.T) {
 	t.Parallel()
 
-	bundles := []string{
-		"../../testdata/native/token-classification/distilbert-ner-windowed-embedding-linear",
-		"../../testdata/native/token-classification/bert-base-ner-windowed-embedding-linear",
-		"../../testdata/native/token-classification/elastic-distilbert-conll03-windowed-embedding-linear",
-		"../../testdata/native/token-classification/roberta-large-ner-english-windowed-embedding-linear",
+	manifest, err := modelpacks.LoadTokenClassificationManifest("../../testdata/reference/token-classification/model-packs.json")
+	if err != nil {
+		t.Fatalf("LoadTokenClassificationManifest() error = %v", err)
 	}
 
-	for _, bundleDir := range bundles {
+	for _, pack := range manifest.Packs {
+		bundleDir := "../../" + pack.NativeBundleDir
 		metadata, err := LoadTokenClassificationBundleMetadata(bundleDir)
 		if err != nil {
 			t.Fatalf("LoadTokenClassificationBundleMetadata(%q) error = %v", bundleDir, err)
@@ -31,14 +34,13 @@ func TestLoadTokenClassificationBundleMetadata(t *testing.T) {
 func TestTokenClassificationBundlePredictBatch(t *testing.T) {
 	t.Parallel()
 
-	bundles := []string{
-		"../../testdata/native/token-classification/distilbert-ner-windowed-embedding-linear",
-		"../../testdata/native/token-classification/bert-base-ner-windowed-embedding-linear",
-		"../../testdata/native/token-classification/elastic-distilbert-conll03-windowed-embedding-linear",
-		"../../testdata/native/token-classification/roberta-large-ner-english-windowed-embedding-linear",
+	manifest, err := modelpacks.LoadTokenClassificationManifest("../../testdata/reference/token-classification/model-packs.json")
+	if err != nil {
+		t.Fatalf("LoadTokenClassificationManifest() error = %v", err)
 	}
 
-	for _, bundleDir := range bundles {
+	for _, pack := range manifest.Packs {
+		bundleDir := "../../" + pack.NativeBundleDir
 		bundle, err := LoadTokenClassificationBundle(bundleDir)
 		if err != nil {
 			t.Fatalf("LoadTokenClassificationBundle(%q) error = %v", bundleDir, err)

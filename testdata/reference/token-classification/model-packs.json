@@ -1,0 +1,34 @@
+{
+  "name": "supported public token-classification packs",
+  "input_set_path": "testdata/reference/token-classification/ner-inputs.json",
+  "packs": [
+    {
+      "key": "distilbert-ner",
+      "model_id": "dslim/distilbert-NER",
+      "reference_path": "testdata/reference/token-classification/distilbert-ner-reference.json",
+      "native_bundle_dir": "testdata/native/token-classification/distilbert-ner-windowed-embedding-linear",
+      "native_mode": "windowed-embedding-linear"
+    },
+    {
+      "key": "bert-base-ner",
+      "model_id": "dslim/bert-base-NER",
+      "reference_path": "testdata/reference/token-classification/bert-base-ner-reference.json",
+      "native_bundle_dir": "testdata/native/token-classification/bert-base-ner-windowed-embedding-linear",
+      "native_mode": "windowed-embedding-linear"
+    },
+    {
+      "key": "elastic-distilbert-conll03",
+      "model_id": "elastic/distilbert-base-cased-finetuned-conll03-english",
+      "reference_path": "testdata/reference/token-classification/elastic-distilbert-conll03-reference.json",
+      "native_bundle_dir": "testdata/native/token-classification/elastic-distilbert-conll03-windowed-embedding-linear",
+      "native_mode": "windowed-embedding-linear"
+    },
+    {
+      "key": "roberta-large-ner-english",
+      "model_id": "Jean-Baptiste/roberta-large-ner-english",
+      "reference_path": "testdata/reference/token-classification/roberta-large-ner-english-reference.json",
+      "native_bundle_dir": "testdata/native/token-classification/roberta-large-ner-english-windowed-embedding-linear",
+      "native_mode": "windowed-embedding-linear"
+    }
+  ]
+}

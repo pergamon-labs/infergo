@@ -5,23 +5,16 @@ public-safe token-classification parity checks.
 
 Current bundle:
 
-- `distilbert-ner-windowed-embedding-linear`: compact prev/current/next token
-  embedding plus linear-head artifact derived from the public
-  `dslim/distilbert-NER` reference set
-- `bert-base-ner-windowed-embedding-linear`: the same native bundle contract
-  validated against `dslim/bert-base-NER`
-- `elastic-distilbert-conll03-windowed-embedding-linear`: the same native
-  bundle contract validated against
-  `elastic/distilbert-base-cased-finetuned-conll03-english`
-- `roberta-large-ner-english-windowed-embedding-linear`: the same native
-  bundle contract validated against `Jean-Baptiste/roberta-large-ner-english`
+- one checked-in `*-windowed-embedding-linear` native bundle per supported
+  model pack in `testdata/reference/token-classification/model-packs.json`
 - `distilbert-ner-embedding-linear`: earlier token-only baseline kept as a
   simple comparison point
 
 Generation:
 
 ```bash
-go run ./internal/tools/nativetokenbundlegen
+uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  python ./scripts/build_token_classification_reference_pack.py
 ```
 
 Notes:

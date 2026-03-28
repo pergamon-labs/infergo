@@ -14,9 +14,9 @@ const (
 	// TokenClassificationFeatureModeEmbeddingLinear maps active token ids into a
 	// compact embedding table and applies a BIOnet linear head per token.
 	TokenClassificationFeatureModeEmbeddingLinear = "embedding-linear"
-	// TokenClassificationFeatureModeWindowedEmbeddingLinear maps the previous,
-	// current, and next token ids into slot-specific compact embeddings, sums
-	// them, and applies a BIOnet linear head per token.
+	// TokenClassificationFeatureModeWindowedEmbeddingLinear maps a small local
+	// context window into slot-specific compact embeddings, sums them, and
+	// applies a BIOnet linear head per token.
 	TokenClassificationFeatureModeWindowedEmbeddingLinear = "windowed-embedding-linear"
 )
 
@@ -33,6 +33,7 @@ type TokenClassificationBundleMetadata struct {
 	Labels            []string `json:"labels"`
 	FeatureMode       string   `json:"feature_mode"`
 	FeatureTokenIDs   []int    `json:"feature_token_ids"`
+	WindowOffsets     []int    `json:"window_offsets,omitempty"`
 }
 
 // TokenClassificationBundle loads a BIOnet-native token classification
@@ -114,6 +115,9 @@ func LoadTokenClassificationBundleMetadata(bundleDir string) (TokenClassificatio
 	}
 	if len(metadata.FeatureTokenIDs) == 0 {
 		return TokenClassificationBundleMetadata{}, fmt.Errorf("decode bionet token classification metadata: missing feature token ids")
+	}
+	if metadata.FeatureMode == TokenClassificationFeatureModeWindowedEmbeddingLinear && len(metadata.WindowOffsets) == 0 {
+		metadata.WindowOffsets = defaultTokenClassificationWindowOffsets()
 	}
 
 	return metadata, nil
@@ -217,9 +221,13 @@ func (b *TokenClassificationBundle) windowedEmbeddingForPosition(inputIDs, atten
 
 	baseFeatures := len(b.metadata.FeatureTokenIDs)
 	output := make([]float64, dim)
-	windowPositions := []int{pos - 1, pos, pos + 1}
+	windowOffsets := b.metadata.WindowOffsets
+	if len(windowOffsets) == 0 {
+		windowOffsets = defaultTokenClassificationWindowOffsets()
+	}
 
-	for slot, neighborPos := range windowPositions {
+	for slot, offset := range windowOffsets {
+		neighborPos := pos + offset
 		if neighborPos < 0 || neighborPos >= len(inputIDs) {
 			continue
 		}
@@ -241,6 +249,10 @@ func (b *TokenClassificationBundle) windowedEmbeddingForPosition(inputIDs, atten
 	}
 
 	return output
+}
+
+func defaultTokenClassificationWindowOffsets() []int {
+	return []int{-2, -1, 0, 1, 2}
 }
 
 // PredictTokenEmbeddings is exposed for tests and future feature work so the

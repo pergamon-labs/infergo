@@ -1,6 +1,12 @@
 package parity
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/pergamon-labs/infergo/internal/modelpacks"
+)
+
+const tokenClassificationPackManifestPath = "../../testdata/reference/token-classification/model-packs.json"
 
 func TestLoadTransformersTokenClassificationInputSet(t *testing.T) {
 	t.Parallel()
@@ -15,70 +21,48 @@ func TestLoadTransformersTokenClassificationInputSet(t *testing.T) {
 	}
 }
 
-func TestLoadTransformersTokenClassificationReference(t *testing.T) {
+func TestLoadTokenClassificationPackManifest(t *testing.T) {
 	t.Parallel()
 
-	reference, err := LoadTransformersTokenClassificationReference("../../testdata/reference/token-classification/distilbert-ner-reference.json")
+	manifest, err := modelpacks.LoadTokenClassificationManifest(tokenClassificationPackManifestPath)
 	if err != nil {
-		t.Fatalf("LoadTransformersTokenClassificationReference() error = %v", err)
+		t.Fatalf("LoadTokenClassificationManifest() error = %v", err)
 	}
 
-	if reference.ModelID != "dslim/distilbert-NER" {
-		t.Fatalf("unexpected model id %q", reference.ModelID)
-	}
-
-	if len(reference.Cases) < 6 {
-		t.Fatalf("expected token-classification reference cases, got %d", len(reference.Cases))
+	if len(manifest.Packs) < 4 {
+		t.Fatalf("expected supported token-classification packs, got %d", len(manifest.Packs))
 	}
 }
 
-func TestLoadTransformersTokenClassificationReferenceBert(t *testing.T) {
+func TestLoadTransformersTokenClassificationReferencesFromManifest(t *testing.T) {
 	t.Parallel()
 
-	reference, err := LoadTransformersTokenClassificationReference("../../testdata/reference/token-classification/bert-base-ner-reference.json")
+	manifest, err := modelpacks.LoadTokenClassificationManifest(tokenClassificationPackManifestPath)
 	if err != nil {
-		t.Fatalf("LoadTransformersTokenClassificationReference() error = %v", err)
+		t.Fatalf("LoadTokenClassificationManifest() error = %v", err)
 	}
 
-	if reference.ModelID != "dslim/bert-base-NER" {
-		t.Fatalf("unexpected model id %q", reference.ModelID)
-	}
-
-	if len(reference.Cases) < 12 {
-		t.Fatalf("expected widened token-classification reference cases, got %d", len(reference.Cases))
-	}
-}
-
-func TestLoadTransformersTokenClassificationReferenceElasticDistilBert(t *testing.T) {
-	t.Parallel()
-
-	reference, err := LoadTransformersTokenClassificationReference("../../testdata/reference/token-classification/elastic-distilbert-conll03-reference.json")
+	inputSet, err := LoadTransformersTokenClassificationInputSet("../../" + manifest.InputSetPath)
 	if err != nil {
-		t.Fatalf("LoadTransformersTokenClassificationReference() error = %v", err)
+		t.Fatalf("LoadTransformersTokenClassificationInputSet() error = %v", err)
 	}
 
-	if reference.ModelID != "elastic/distilbert-base-cased-finetuned-conll03-english" {
-		t.Fatalf("unexpected model id %q", reference.ModelID)
+	if len(inputSet.Cases) < 30 {
+		t.Fatalf("expected widened token-classification input set, got %d cases", len(inputSet.Cases))
 	}
 
-	if len(reference.Cases) < 12 {
-		t.Fatalf("expected widened token-classification reference cases, got %d", len(reference.Cases))
-	}
-}
+	for _, pack := range manifest.Packs {
+		reference, err := LoadTransformersTokenClassificationReference("../../" + pack.ReferencePath)
+		if err != nil {
+			t.Fatalf("LoadTransformersTokenClassificationReference(%q) error = %v", pack.ReferencePath, err)
+		}
 
-func TestLoadTransformersTokenClassificationReferenceRobertaLarge(t *testing.T) {
-	t.Parallel()
+		if reference.ModelID != pack.ModelID {
+			t.Fatalf("reference %q reported model id %q, want %q", pack.ReferencePath, reference.ModelID, pack.ModelID)
+		}
 
-	reference, err := LoadTransformersTokenClassificationReference("../../testdata/reference/token-classification/roberta-large-ner-english-reference.json")
-	if err != nil {
-		t.Fatalf("LoadTransformersTokenClassificationReference() error = %v", err)
-	}
-
-	if reference.ModelID != "Jean-Baptiste/roberta-large-ner-english" {
-		t.Fatalf("unexpected model id %q", reference.ModelID)
-	}
-
-	if len(reference.Cases) < 12 {
-		t.Fatalf("expected widened token-classification reference cases, got %d", len(reference.Cases))
+		if got, want := len(reference.Cases), len(inputSet.Cases); got != want {
+			t.Fatalf("reference %q case count = %d, want %d", pack.ReferencePath, got, want)
+		}
 	}
 }

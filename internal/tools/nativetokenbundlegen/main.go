@@ -149,12 +149,13 @@ func buildWindowedEmbeddingLinearBundle(reference parity.TransformersTokenClassi
 	}
 
 	baseFeatures := len(featureTokenIDs)
+	windowOffsets := []int{-2, -1, 0, 1, 2}
 	featureIndexByID := make(map[int]int, len(featureTokenIDs))
 	for idx, tokenID := range featureTokenIDs {
 		featureIndexByID[tokenID] = idx
 	}
 
-	totalFeatures := baseFeatures * 3
+	totalFeatures := baseFeatures * len(windowOffsets)
 	var design [][]float64
 	var targets [][]float64
 	for _, item := range reference.Cases {
@@ -168,7 +169,8 @@ func buildWindowedEmbeddingLinearBundle(reference parity.TransformersTokenClassi
 			}
 
 			row := make([]float64, totalFeatures+1)
-			for slot, neighborPos := range []int{pos - 1, pos, pos + 1} {
+			for slot, offset := range windowOffsets {
+				neighborPos := pos + offset
 				if neighborPos < 0 || neighborPos >= len(item.InputIDs) {
 					continue
 				}
@@ -214,6 +216,7 @@ func buildWindowedEmbeddingLinearBundle(reference parity.TransformersTokenClassi
 		Labels:            append([]string(nil), reference.Labels...),
 		FeatureMode:       bionet.TokenClassificationFeatureModeWindowedEmbeddingLinear,
 		FeatureTokenIDs:   featureTokenIDs,
+		WindowOffsets:     append([]int(nil), windowOffsets...),
 	}
 
 	return metadata, classifier, embeddingMatrix, nil

@@ -6,19 +6,18 @@ by InferGo parity checks.
 Current reference set:
 
 - `ner-inputs.json`: a widened, reproducible NER parity set with repeated
-  tokens, multi-token entities, punctuation-heavy examples, and subword splits
-- `distilbert-ner-reference.json`: generated from `dslim/distilbert-NER`
-- `bert-base-ner-reference.json`: generated from `dslim/bert-base-NER`
-- `elastic-distilbert-conll03-reference.json`: generated from
-  `elastic/distilbert-base-cased-finetuned-conll03-english`
-- `roberta-large-ner-english-reference.json`: generated from
-  `Jean-Baptiste/roberta-large-ner-english`
+  tokens, multi-token entities, punctuation-heavy examples, subword splits,
+  acronyms, quoted entities, slash-separated organizations, and title-heavy
+  cases
+- `model-packs.json`: the supported public token-classification model pack
+  manifest
+- one generated `*-reference.json` file per supported pack in the manifest
 
 Generation:
 
 ```bash
 uv run --with torch==2.10.0 --with transformers==5.3.0 \
-  python ./scripts/transformers_token_classification_reference.py
+  python ./scripts/build_token_classification_reference_pack.py
 ```
 
 Scoring rules:

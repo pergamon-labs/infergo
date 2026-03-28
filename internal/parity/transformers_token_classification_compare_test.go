@@ -3,6 +3,8 @@ package parity
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/pergamon-labs/infergo/internal/modelpacks"
 )
 
 type fakeTokenClassificationPredictor struct {
@@ -124,47 +126,32 @@ func TestBuildTokenClassificationCandidate(t *testing.T) {
 func TestRunBionetTokenClassificationBundle(t *testing.T) {
 	t.Parallel()
 
-	testCases := []struct {
-		referencePath string
-		bundleDir     string
-	}{
-		{
-			referencePath: "../../testdata/reference/token-classification/distilbert-ner-reference.json",
-			bundleDir:     "../../testdata/native/token-classification/distilbert-ner-windowed-embedding-linear",
-		},
-		{
-			referencePath: "../../testdata/reference/token-classification/bert-base-ner-reference.json",
-			bundleDir:     "../../testdata/native/token-classification/bert-base-ner-windowed-embedding-linear",
-		},
-		{
-			referencePath: "../../testdata/reference/token-classification/elastic-distilbert-conll03-reference.json",
-			bundleDir:     "../../testdata/native/token-classification/elastic-distilbert-conll03-windowed-embedding-linear",
-		},
-		{
-			referencePath: "../../testdata/reference/token-classification/roberta-large-ner-english-reference.json",
-			bundleDir:     "../../testdata/native/token-classification/roberta-large-ner-english-windowed-embedding-linear",
-		},
+	manifest, err := modelpacks.LoadTokenClassificationManifest(tokenClassificationPackManifestPath)
+	if err != nil {
+		t.Fatalf("LoadTokenClassificationManifest() error = %v", err)
 	}
 
-	for _, tt := range testCases {
-		candidatePath := filepath.Join(t.TempDir(), filepath.Base(tt.bundleDir)+".json")
+	for _, pack := range manifest.Packs {
+		referencePath := "../../" + pack.ReferencePath
+		bundleDir := "../../" + pack.NativeBundleDir
+		candidatePath := filepath.Join(t.TempDir(), filepath.Base(bundleDir)+".json")
 
-		candidate, err := RunBionetTokenClassificationBundle(tt.referencePath, tt.bundleDir)
+		candidate, err := RunBionetTokenClassificationBundle(referencePath, bundleDir)
 		if err != nil {
-			t.Fatalf("RunBionetTokenClassificationBundle(%q) error = %v", tt.bundleDir, err)
+			t.Fatalf("RunBionetTokenClassificationBundle(%q) error = %v", bundleDir, err)
 		}
 
 		if err := SaveTokenClassificationCandidate(candidate, candidatePath); err != nil {
-			t.Fatalf("SaveTokenClassificationCandidate(%q) error = %v", tt.bundleDir, err)
+			t.Fatalf("SaveTokenClassificationCandidate(%q) error = %v", bundleDir, err)
 		}
 
-		report, err := CompareTransformersTokenClassification(tt.referencePath, candidatePath, 1e-4)
+		report, err := CompareTransformersTokenClassification(referencePath, candidatePath, 1e-4)
 		if err != nil {
-			t.Fatalf("CompareTransformersTokenClassification(%q) error = %v", tt.bundleDir, err)
+			t.Fatalf("CompareTransformersTokenClassification(%q) error = %v", bundleDir, err)
 		}
 
 		if !report.Passed() {
-			t.Fatalf("expected token-classification comparison for %q to pass, got report:\n%s", tt.bundleDir, report.String())
+			t.Fatalf("expected token-classification comparison for %q to pass, got report:\n%s", bundleDir, report.String())
 		}
 	}
 }

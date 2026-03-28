@@ -20,6 +20,20 @@
     { "id": "ner-017", "text": "IBM's Arvind Krishna met Microsoft CEO Satya Nadella." },
     { "id": "ner-018", "text": "Barack Obama and Michelle Obama visited the Obama Foundation." },
     { "id": "ner-019", "text": "University of California, Berkeley welcomed Berkeley alumni." },
-    { "id": "ner-020", "text": "McDonald's hired Sean O'Connor in Dublin." }
+    { "id": "ner-020", "text": "McDonald's hired Sean O'Connor in Dublin." },
+    { "id": "ner-021", "text": "The U.N. invited Nadia al-Fayed to Geneva, Switzerland." },
+    { "id": "ner-022", "text": "J.P. Morgan analysts met Morgan Stanley in New York." },
+    { "id": "ner-023", "text": "Dr. Aisha Khan of St. Mary's Hospital visited Abu Dhabi." },
+    { "id": "ner-024", "text": "The New York Times interviewed Tim Cook at Apple Park." },
+    { "id": "ner-025", "text": "Jean-Pierre Leaud spoke with Cannes Film Festival organizers." },
+    { "id": "ner-026", "text": "Meta's Nick Clegg met officials from the European Commission." },
+    { "id": "ner-027", "text": "Sarah O'Brien left O'Brien & Sons for Bank of Ireland." },
+    { "id": "ner-028", "text": "UCLA researchers joined Los Angeles County officials in L.A." },
+    { "id": "ner-029", "text": "The \"New Yorker\" assigned Jane Doe to cover Newark." },
+    { "id": "ner-030", "text": "NATO Secretary Jens Stoltenberg met leaders in Brussels." },
+    { "id": "ner-031", "text": "Prime Minister Lee Hsien Loong visited Singapore Management University." },
+    { "id": "ner-032", "text": "Boeing 747 pilot Carla Ruiz landed near Mexico City International Airport." },
+    { "id": "ner-033", "text": "AT&T hired Omar Ali after talks with T-Mobile in Seattle." },
+    { "id": "ner-034", "text": "UNICEF/WHO staff met Dr. Fatima Noor in Nairobi." }
   ]
 }

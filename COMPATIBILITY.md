@@ -20,7 +20,7 @@ without a documented export path, backend, and parity test story.
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
   - native text classification over public DistilBERT reference inputs via `cmd/infergo-parity -infergo-bundle-dir ...`
   - native text classification over public RoBERTa sentiment reference inputs via `cmd/infergo-parity -infergo-bundle-dir ...`
-  - native token classification over widened public `dslim/distilbert-NER`, `dslim/bert-base-NER`, `elastic/distilbert-base-cased-finetuned-conll03-english`, and `Jean-Baptiste/roberta-large-ner-english` reference sets via `cmd/infergo-parity -infergo-bundle-dir ...`
+  - native token classification over the manifest-backed public model packs listed in `testdata/reference/token-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
   - checked-in native bundle shapes:
     - `token-id-bag`
     - `embedding-avg-pool -> linear` with compact dense token embeddings
@@ -36,10 +36,7 @@ without a documented export path, backend, and parity test story.
 - Current external reference paths:
   - `distilbert/distilbert-base-uncased-finetuned-sst-2-english`
   - `cardiffnlp/twitter-roberta-base-sentiment-latest`
-  - `dslim/distilbert-NER` for native token-classification parity through the `bionet` backend
-  - `dslim/bert-base-NER` for native token-classification parity through the `bionet` backend
-  - `elastic/distilbert-base-cased-finetuned-conll03-english` for native token-classification parity through the `bionet` backend
-  - `Jean-Baptiste/roberta-large-ner-english` for native token-classification parity through the `bionet` backend
+  - the checked-in token-classification model packs listed in `testdata/reference/token-classification/model-packs.json` for native parity through the `bionet` backend
 - Current local comparison path: TorchScript export plus native Go candidate generation through `cmd/infergo-parity -torchscript-bundle-dir ...`
 
 ## Native backend note
