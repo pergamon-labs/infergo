@@ -10,7 +10,9 @@ Current reference set:
   acronyms, quoted entities, slash-separated organizations, and title-heavy
   cases
 - `multilingual-ner-inputs.json`: the first public-safe non-English NER corpus
-  covering Spanish, French, German, Italian, and Portuguese examples
+  covering Spanish, French, German, Italian, and Portuguese examples, with
+  diacritics, apostrophes, quoted entities, slash-separated organizations, and
+  mixed-language cases
 - `model-packs.json`: the supported public token-classification model pack
   manifest
 - one generated `*-reference.json` file per supported pack in the manifest

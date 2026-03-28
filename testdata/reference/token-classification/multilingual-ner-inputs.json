@@ -3,15 +3,27 @@
   "cases": [
     { "id": "mner-es-001", "text": "Juan Perez se reunio con Telefonica en Madrid." },
     { "id": "mner-es-002", "text": "Maria Lopez visito Barcelona con el equipo de Iberdrola." },
+    { "id": "mner-es-003", "text": "José Álvarez habló con BBVA en Sevilla." },
+    { "id": "mner-es-004", "text": "El País entrevistó a Marta Ruiz en Valencia." },
     { "id": "mner-fr-001", "text": "Claire Dubois a rencontre Airbus a Toulouse." },
     { "id": "mner-fr-002", "text": "Jean Martin a presente Renault a Paris." },
+    { "id": "mner-fr-003", "text": "Léa Moreau a visité l'Université de Lyon avec Airbus." },
+    { "id": "mner-fr-004", "text": "Le \"Figaro\" a envoyé Zoé Bernard à Marseille." },
     { "id": "mner-de-001", "text": "Anna Schmidt sprach mit Siemens in Berlin." },
     { "id": "mner-de-002", "text": "Lukas Weber besuchte Hamburg mit der Deutschen Bahn." },
+    { "id": "mner-de-003", "text": "Jörg Müller traf die Deutsche Telekom in München." },
+    { "id": "mner-de-004", "text": "BMW/MINI lud Nina Hoffmann nach Köln ein." },
     { "id": "mner-it-001", "text": "Giulia Rossi ha incontrato ENI a Roma." },
     { "id": "mner-it-002", "text": "Marco Bianchi ha visitato Milano con Ferrari." },
+    { "id": "mner-it-003", "text": "L'Università di Bologna ha invitato Sara Conti a Torino." },
+    { "id": "mner-it-004", "text": "Alessandro Gallo ha incontrato Intesa Sanpaolo a Napoli." },
     { "id": "mner-pt-001", "text": "Ana Silva encontrou a Galp em Lisboa." },
     { "id": "mner-pt-002", "text": "Pedro Costa visitou o Porto com a TAP." },
+    { "id": "mner-pt-003", "text": "João Pereira encontrou a Universidade do Porto no Porto." },
+    { "id": "mner-pt-004", "text": "O jornal Público entrevistou Inês Costa em Coimbra." },
     { "id": "mner-mix-001", "text": "Juan Perez y Claire Dubois hablaron con Airbus en Madrid." },
-    { "id": "mner-mix-002", "text": "Anna Schmidt e Giulia Rossi viajaram para Lisboa com Siemens." }
+    { "id": "mner-mix-002", "text": "Anna Schmidt e Giulia Rossi viajaram para Lisboa com Siemens." },
+    { "id": "mner-mix-003", "text": "José Álvarez e Claire Dubois encontraram Airbus e ENI em Lisboa." },
+    { "id": "mner-mix-004", "text": "Jörg Müller falou com Telefónica Deutschland entre Madrid e Berlim." }
   ]
 }
