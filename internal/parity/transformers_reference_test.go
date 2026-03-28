@@ -42,16 +42,21 @@ func TestLoadTransformersTextClassificationReferencesFromManifest(t *testing.T) 
 		t.Fatalf("LoadTextClassificationManifest() error = %v", err)
 	}
 
-	inputSet, err := LoadTransformersTextClassificationInputSet("../../" + manifest.InputSetPath)
-	if err != nil {
-		t.Fatalf("LoadTransformersTextClassificationInputSet() error = %v", err)
-	}
-
-	if len(inputSet.Cases) < 12 {
-		t.Fatalf("expected a widened public input set, got %d cases", len(inputSet.Cases))
-	}
-
 	for _, pack := range manifest.Packs {
+		inputSetPath := pack.InputSetPath
+		if inputSetPath == "" {
+			inputSetPath = manifest.InputSetPath
+		}
+
+		inputSet, err := LoadTransformersTextClassificationInputSet("../../" + inputSetPath)
+		if err != nil {
+			t.Fatalf("LoadTransformersTextClassificationInputSet(%q) error = %v", inputSetPath, err)
+		}
+
+		if len(inputSet.Cases) < 12 {
+			t.Fatalf("expected a widened public input set for %q, got %d cases", pack.Key, len(inputSet.Cases))
+		}
+
 		reference, err := LoadTransformersTextClassificationReference("../../" + pack.ReferencePath)
 		if err != nil {
 			t.Fatalf("LoadTransformersTextClassificationReference(%q) error = %v", pack.ReferencePath, err)

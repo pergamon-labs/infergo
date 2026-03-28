@@ -70,6 +70,18 @@ uv run --with torch==2.10.0 --with transformers==5.3.0 \
   python ./scripts/build_text_classification_reference_pack.py
 ```
 
+8. If you want a direct library usage example, try:
+
+```bash
+go run ./examples/bionet-classifier
+```
+
+9. If you want a tiny HTTP serving example, try:
+
+```bash
+go run ./examples/http-server
+```
+
 Current scaffold highlights:
 
 - [`infer/`](./infer) is the stable public API layer
@@ -93,14 +105,15 @@ Current scaffold highlights:
 - [`testdata/reference/text-classification/model-packs.json`](./testdata/reference/text-classification/model-packs.json) and [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json) are the contributor-facing source of truth for supported public packs
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
-- the public reference set is now validated against both a DistilBERT SST-2 path and a RoBERTa-based 3-label sentiment path
+- the public text-classification packs are now validated against an English DistilBERT SST-2 path, an English RoBERTa sentiment path, and a first non-English multilingual sentiment path
 - the native `bionet` path is now validated on the supported token-classification model packs listed in [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json), without `libtorch`
 - the text-classification parity path now follows the same manifest-backed contributor workflow as token classification
+- [`examples/bionet-classifier`](./examples/bionet-classifier) and [`examples/http-server`](./examples/http-server) now show honest, runnable usage with checked-in bundles
 - the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
 - layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 
 Next milestone:
 
-1. pressure-test the windowed native path on harder token-classification edge cases or a fifth public model pack
-2. decide whether layer normalization is ready to graduate from experimental generator support into the default native parity path
+1. add a first non-English token-classification pack
+2. expand examples beyond checked-in case IDs only when the public tokenization story is documented end to end
 3. keep the optional TorchScript bridge healthy without letting it drive the core roadmap

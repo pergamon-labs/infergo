@@ -2,7 +2,9 @@
 
 This directory holds the first external reference path for InferGo parity work.
 
-- `sst2-inputs.json` is the public-safe text input set.
+- `sst2-inputs.json` is the default English public-safe text input set.
+- `multilingual-sentiment-inputs.json` is the first public-safe non-English
+  text input set used for multilingual sentiment parity.
 - `model-packs.json` is the supported public text-classification pack manifest.
 - one generated `*-reference.json` file exists per supported pack in the manifest.
 - `../../native/text-classification/distilbert-sst2-token-id-bag/` contains the first InferGo-native bundle generated from the same reference set.
@@ -23,6 +25,10 @@ List the supported text-classification pack keys with:
 ```bash
 uv run python ./scripts/build_text_classification_reference_pack.py --list
 ```
+
+That manifest currently includes a first non-English text-classification pack:
+
+- `twitter-xlm-roberta-sentiment-multilingual`
 
 Export the reference model to TorchScript and run the local candidate path with:
 

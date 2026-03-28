@@ -13,6 +13,8 @@ Current bundles:
   - `distilbert-sst2-embedding-masked-avg-pool/`
 - the Twitter RoBERTa sentiment pack currently keeps:
   - `twitter-roberta-sentiment-embedding-masked-avg-pool/`
+- the multilingual XLM-R sentiment pack currently keeps:
+  - `twitter-xlm-roberta-sentiment-multilingual-embedding-masked-avg-pool/`
 
 The native bundle generator also has an experimental `-use-layernorm` flag for
 the masked-pooling path. That is useful for iteration, but it is not yet part

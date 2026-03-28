@@ -1,0 +1,53 @@
+{
+  "name": "Public Multilingual Sentiment Inputs",
+  "cases": [
+    {
+      "id": "es-positive-review",
+      "text": "Este producto es excelente y muy facil de usar."
+    },
+    {
+      "id": "es-negative-review",
+      "text": "La experiencia fue terrible y perdi mucho tiempo."
+    },
+    {
+      "id": "es-neutral-update",
+      "text": "La actualizacion cambio algunas opciones del menu."
+    },
+    {
+      "id": "fr-positive-support",
+      "text": "Le service client a ete rapide, poli et vraiment utile."
+    },
+    {
+      "id": "fr-negative-delay",
+      "text": "La livraison est arrivee en retard et la boite etait abimee."
+    },
+    {
+      "id": "fr-neutral-note",
+      "text": "La reunion a eu lieu lundi apres-midi comme prevu."
+    },
+    {
+      "id": "de-positive-design",
+      "text": "Das Design fuehlt sich stabil an und sieht hochwertig aus."
+    },
+    {
+      "id": "de-negative-bug",
+      "text": "Das Update ist instabil und die App stuerzt staendig ab."
+    },
+    {
+      "id": "de-neutral-status",
+      "text": "Die Bestellung wurde gestern bearbeitet und heute versendet."
+    },
+    {
+      "id": "pt-positive-onboarding",
+      "text": "O processo de onboarding foi claro e muito tranquilo."
+    },
+    {
+      "id": "pt-negative-refund",
+      "text": "Pedir o reembolso foi confuso e extremamente demorado."
+    },
+    {
+      "id": "it-positive-staff",
+      "text": "Il personale e stato gentile, paziente e molto professionale."
+    }
+  ]
+}

@@ -71,8 +71,9 @@ def main() -> None:
         if missing:
             raise SystemExit(f"unknown pack key(s): {', '.join(sorted(missing))}")
 
-    input_path = manifest["input_set_path"]
+    default_input_path = manifest["input_set_path"]
     for pack in selected:
+        input_path = pack.get("input_set_path", default_input_path)
         print(f'building text-classification pack {pack["key"]} ({pack["model_id"]})')
         run(
             [

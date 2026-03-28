@@ -19,6 +19,7 @@ type TextClassificationManifest struct {
 type TextClassificationManifestEntry struct {
 	Key           string                           `json:"key"`
 	ModelID       string                           `json:"model_id"`
+	InputSetPath  string                           `json:"input_set_path,omitempty"`
 	ReferencePath string                           `json:"reference_path"`
 	NativeBundles []TextClassificationNativeBundle `json:"native_bundles"`
 }
@@ -56,7 +57,7 @@ func LoadTextClassificationManifest(path string) (TextClassificationManifest, er
 	}
 
 	seenPackKeys := make(map[string]struct{}, len(manifest.Packs))
-	for _, pack := range manifest.Packs {
+	for i, pack := range manifest.Packs {
 		if pack.Key == "" {
 			return TextClassificationManifest{}, fmt.Errorf("decode text-classification pack manifest: missing pack key")
 		}
@@ -67,6 +68,10 @@ func LoadTextClassificationManifest(path string) (TextClassificationManifest, er
 
 		if pack.ModelID == "" {
 			return TextClassificationManifest{}, fmt.Errorf("decode text-classification pack manifest: pack %q missing model_id", pack.Key)
+		}
+		if pack.InputSetPath == "" {
+			manifest.Packs[i].InputSetPath = manifest.InputSetPath
+			pack.InputSetPath = manifest.InputSetPath
 		}
 		if pack.ReferencePath == "" {
 			return TextClassificationManifest{}, fmt.Errorf("decode text-classification pack manifest: pack %q missing reference_path", pack.Key)

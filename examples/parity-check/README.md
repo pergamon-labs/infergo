@@ -1,9 +1,23 @@
 # Parity Check Example
 
-This example demonstrates the first public-safe parity workflow:
+This example demonstrates the first public-safe parity workflow using a checked-in
+native pack:
 
 ```bash
-go run ./cmd/infergo-parity -fixture ./testdata/parity/text-classification/fixture.json
+go run ./cmd/infergo-parity \
+  -reference ./testdata/reference/token-classification/distilbert-ner-reference.json \
+  -infergo-bundle-dir ./testdata/native/token-classification/distilbert-ner-windowed-embedding-linear \
+  -tolerance 1e-4
 ```
 
-The current fixture uses a synthetic BIOnet-backed text-classification artifact so we can validate the parity harness before moving to a Hugging Face / Transformers-backed reference path.
+List the supported token-classification packs with:
+
+```bash
+uv run python ./scripts/build_token_classification_reference_pack.py --list
+```
+
+Or list the supported text-classification packs with:
+
+```bash
+uv run python ./scripts/build_text_classification_reference_pack.py --list
+```

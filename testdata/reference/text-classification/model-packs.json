@@ -35,6 +35,19 @@
           "mode": "embedding-masked-avg-pool"
         }
       ]
+    },
+    {
+      "key": "twitter-xlm-roberta-sentiment-multilingual",
+      "model_id": "cardiffnlp/twitter-xlm-roberta-base-sentiment-multilingual",
+      "input_set_path": "testdata/reference/text-classification/multilingual-sentiment-inputs.json",
+      "reference_path": "testdata/reference/text-classification/twitter-xlm-roberta-sentiment-multilingual-reference.json",
+      "native_bundles": [
+        {
+          "key": "embedding-masked-avg-pool",
+          "output_dir": "testdata/native/text-classification/twitter-xlm-roberta-sentiment-multilingual-embedding-masked-avg-pool",
+          "mode": "embedding-masked-avg-pool"
+        }
+      ]
     }
   ]
 }
