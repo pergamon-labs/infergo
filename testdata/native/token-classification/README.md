@@ -10,6 +10,11 @@ Current bundle:
   `dslim/distilbert-NER` reference set
 - `bert-base-ner-windowed-embedding-linear`: the same native bundle contract
   validated against `dslim/bert-base-NER`
+- `elastic-distilbert-conll03-windowed-embedding-linear`: the same native
+  bundle contract validated against
+  `elastic/distilbert-base-cased-finetuned-conll03-english`
+- `roberta-large-ner-english-windowed-embedding-linear`: the same native
+  bundle contract validated against `Jean-Baptiste/roberta-large-ner-english`
 - `distilbert-ner-embedding-linear`: earlier token-only baseline kept as a
   simple comparison point
 

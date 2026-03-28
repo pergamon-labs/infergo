@@ -8,6 +8,8 @@ func TestLoadTokenClassificationBundleMetadata(t *testing.T) {
 	bundles := []string{
 		"../../testdata/native/token-classification/distilbert-ner-windowed-embedding-linear",
 		"../../testdata/native/token-classification/bert-base-ner-windowed-embedding-linear",
+		"../../testdata/native/token-classification/elastic-distilbert-conll03-windowed-embedding-linear",
+		"../../testdata/native/token-classification/roberta-large-ner-english-windowed-embedding-linear",
 	}
 
 	for _, bundleDir := range bundles {
@@ -32,6 +34,8 @@ func TestTokenClassificationBundlePredictBatch(t *testing.T) {
 	bundles := []string{
 		"../../testdata/native/token-classification/distilbert-ner-windowed-embedding-linear",
 		"../../testdata/native/token-classification/bert-base-ner-windowed-embedding-linear",
+		"../../testdata/native/token-classification/elastic-distilbert-conll03-windowed-embedding-linear",
+		"../../testdata/native/token-classification/roberta-large-ner-english-windowed-embedding-linear",
 	}
 
 	for _, bundleDir := range bundles {

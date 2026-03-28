@@ -136,6 +136,14 @@ func TestRunBionetTokenClassificationBundle(t *testing.T) {
 			referencePath: "../../testdata/reference/token-classification/bert-base-ner-reference.json",
 			bundleDir:     "../../testdata/native/token-classification/bert-base-ner-windowed-embedding-linear",
 		},
+		{
+			referencePath: "../../testdata/reference/token-classification/elastic-distilbert-conll03-reference.json",
+			bundleDir:     "../../testdata/native/token-classification/elastic-distilbert-conll03-windowed-embedding-linear",
+		},
+		{
+			referencePath: "../../testdata/reference/token-classification/roberta-large-ner-english-reference.json",
+			bundleDir:     "../../testdata/native/token-classification/roberta-large-ner-english-windowed-embedding-linear",
+		},
 	}
 
 	for _, tt := range testCases {

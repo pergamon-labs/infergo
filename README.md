@@ -16,6 +16,56 @@ What InferGo is not in v1:
 - an LLM platform
 - a GPU-first system
 
+## Quickstart
+
+If you want the fastest path from clone to a real parity run, use the checked-in
+native token-classification assets.
+
+1. Clone the repo and enter it.
+2. Run the test suite:
+
+```bash
+go test ./...
+```
+
+3. Run a first parity check with the checked-in DistilBERT NER reference and
+   native bundle:
+
+```bash
+go run ./cmd/infergo-parity \
+  -reference ./testdata/reference/token-classification/distilbert-ner-reference.json \
+  -infergo-bundle-dir ./testdata/native/token-classification/distilbert-ner-windowed-embedding-linear \
+  -tolerance 1e-4
+```
+
+4. If you want to see the same native artifact shape validated against more
+   public models, try:
+
+```bash
+go run ./cmd/infergo-parity \
+  -reference ./testdata/reference/token-classification/bert-base-ner-reference.json \
+  -infergo-bundle-dir ./testdata/native/token-classification/bert-base-ner-windowed-embedding-linear \
+  -tolerance 1e-4
+
+go run ./cmd/infergo-parity \
+  -reference ./testdata/reference/token-classification/elastic-distilbert-conll03-reference.json \
+  -infergo-bundle-dir ./testdata/native/token-classification/elastic-distilbert-conll03-windowed-embedding-linear \
+  -tolerance 1e-4
+
+go run ./cmd/infergo-parity \
+  -reference ./testdata/reference/token-classification/roberta-large-ner-english-reference.json \
+  -infergo-bundle-dir ./testdata/native/token-classification/roberta-large-ner-english-windowed-embedding-linear \
+  -tolerance 1e-4
+```
+
+5. If you want to regenerate a public reference file yourself, install `uv`,
+   then run:
+
+```bash
+uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  python ./scripts/transformers_token_classification_reference.py
+```
+
 Current scaffold highlights:
 
 - [`infer/`](./infer) is the stable public API layer
@@ -37,12 +87,12 @@ Current scaffold highlights:
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 - the public reference set is now validated against both a DistilBERT SST-2 path and a RoBERTa-based 3-label sentiment path
-- the native `bionet` path is now also validated on widened public token-classification reference sets for both `dslim/distilbert-NER` and `dslim/bert-base-NER`, without `libtorch`
+- the native `bionet` path is now also validated on widened public token-classification reference sets for `dslim/distilbert-NER`, `dslim/bert-base-NER`, `elastic/distilbert-base-cased-finetuned-conll03-english`, and `Jean-Baptiste/roberta-large-ner-english`, without `libtorch`
 - the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
 - layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 
 Next milestone:
 
-1. add a substantially larger public-safe token-classification set or a third token-classification model to pressure-test the windowed path further
+1. add an even larger public-safe token-classification set or a fifth public model to pressure-test the windowed path further
 2. decide whether layer normalization is ready to graduate from experimental generator support into the default native parity path
 3. keep the optional TorchScript bridge healthy without letting it drive the core roadmap

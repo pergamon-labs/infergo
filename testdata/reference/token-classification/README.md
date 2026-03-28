@@ -9,6 +9,10 @@ Current reference set:
   tokens, multi-token entities, punctuation-heavy examples, and subword splits
 - `distilbert-ner-reference.json`: generated from `dslim/distilbert-NER`
 - `bert-base-ner-reference.json`: generated from `dslim/bert-base-NER`
+- `elastic-distilbert-conll03-reference.json`: generated from
+  `elastic/distilbert-base-cased-finetuned-conll03-english`
+- `roberta-large-ner-english-reference.json`: generated from
+  `Jean-Baptiste/roberta-large-ner-english`
 
 Generation:
 
