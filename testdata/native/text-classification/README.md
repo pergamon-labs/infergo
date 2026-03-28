@@ -5,20 +5,14 @@ by the Go-only parity path.
 
 Current bundles:
 
-- `distilbert-sst2-token-id-bag/` is the narrow baseline that projects active
-  token ids into a fixed bag-of-token feature vector, then runs a BIOnet linear
-  classifier in pure Go.
-- `distilbert-sst2-embedding-avg-pool/` is the next native step. It maps
-  active token ids into a compact dense embedding table derived from the fitted
-  pooled classifier, average-pools across the sequence, and then runs a BIOnet
-  linear head.
-- `distilbert-sst2-embedding-masked-avg-pool/` is the current default path. It
-  keeps the original sequence length, applies compact dense embedding lookup,
-  respects the reference attention mask during pooling, and then runs a BIOnet
-  linear head.
-- `twitter-roberta-sentiment-embedding-masked-avg-pool/` applies the same
-  compact masked-pooling export path to a second public sentiment model with a
-  different tokenizer family and three output labels.
+- one or more checked-in native bundles exist per supported pack in
+  `testdata/reference/text-classification/model-packs.json`
+- the DistilBERT SST-2 pack currently keeps:
+  - `distilbert-sst2-token-id-bag/`
+  - `distilbert-sst2-embedding-avg-pool/`
+  - `distilbert-sst2-embedding-masked-avg-pool/`
+- the Twitter RoBERTa sentiment pack currently keeps:
+  - `twitter-roberta-sentiment-embedding-masked-avg-pool/`
 
 The native bundle generator also has an experimental `-use-layernorm` flag for
 the masked-pooling path. That is useful for iteration, but it is not yet part
@@ -31,24 +25,30 @@ is to prove three things:
 - Go can produce the candidate side of the parity report without libtorch.
 - The parity harness can stay stable while the native artifact format evolves.
 
-Regenerate the default `embedding-masked-avg-pool` bundle from the repo root
-with:
+Regenerate all supported text-classification packs from the repo root with:
 
 ```bash
-go run ./internal/tools/nativebundlegen \
-  -reference ./testdata/reference/text-classification/distilbert-sst2-reference.json \
-  -output-dir ./testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool
+uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  python ./scripts/build_text_classification_reference_pack.py
 ```
 
-Generate the second-model masked bundle explicitly with:
+List the supported text-classification pack keys with:
 
 ```bash
-go run ./internal/tools/nativebundlegen \
-  -reference ./testdata/reference/text-classification/twitter-roberta-sentiment-reference.json \
-  -output-dir ./testdata/native/text-classification/twitter-roberta-sentiment-embedding-masked-avg-pool
+uv run python ./scripts/build_text_classification_reference_pack.py --list
 ```
 
-Regenerate the earlier `embedding-avg-pool` bundle explicitly with:
+Regenerate one supported pack explicitly with:
+
+```bash
+uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  python ./scripts/build_text_classification_reference_pack.py \
+  --pack-key distilbert-sst2
+```
+
+The lower-level generator is still available when you want to experiment
+outside the supported pack workflow. For example, regenerate the earlier
+`embedding-avg-pool` bundle explicitly with:
 
 ```bash
 go run ./internal/tools/nativebundlegen \

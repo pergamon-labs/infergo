@@ -61,6 +61,15 @@ uv run --with torch==2.10.0 --with transformers==5.3.0 \
   --pack-key distilbert-ner
 ```
 
+7. The text-classification parity path now uses the same contributor workflow:
+
+```bash
+uv run python ./scripts/build_text_classification_reference_pack.py --list
+
+uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  python ./scripts/build_text_classification_reference_pack.py
+```
+
 Current scaffold highlights:
 
 - [`infer/`](./infer) is the stable public API layer
@@ -73,6 +82,7 @@ Current scaffold highlights:
 - [`cmd/infergo-parity/`](./cmd/infergo-parity) runs the current parity harness
 - [`testdata/parity/text-classification/`](./testdata/parity/text-classification) contains the first public-safe artifact fixture
 - [`scripts/transformers_text_classification_reference.py`](./scripts/transformers_text_classification_reference.py) generates the first external Transformers reference file
+- [`scripts/build_text_classification_reference_pack.py`](./scripts/build_text_classification_reference_pack.py) regenerates checked-in text-classification reference packs from the manifest
 - [`scripts/transformers_token_classification_reference.py`](./scripts/transformers_token_classification_reference.py) generates a single external Transformers token-classification reference file
 - [`scripts/build_token_classification_reference_pack.py`](./scripts/build_token_classification_reference_pack.py) regenerates checked-in token-classification reference packs from the manifest
 - [`scripts/export_transformers_torchscript.py`](./scripts/export_transformers_torchscript.py) plus the native `torchscript` backend define the first TorchScript export/run path
@@ -80,10 +90,12 @@ Current scaffold highlights:
 - [`internal/tools/nativetokenbundlegen/`](./internal/tools/nativetokenbundlegen) generates InferGo-native token-classification bundles from the public NER reference set
 - [`testdata/native/text-classification/`](./testdata/native/text-classification) contains checked-in native bundles used by the Go-only parity path
 - [`testdata/native/token-classification/`](./testdata/native/token-classification) contains checked-in native token-classification bundles, including the current windowed local-context path
+- [`testdata/reference/text-classification/model-packs.json`](./testdata/reference/text-classification/model-packs.json) and [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json) are the contributor-facing source of truth for supported public packs
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 - the public reference set is now validated against both a DistilBERT SST-2 path and a RoBERTa-based 3-label sentiment path
 - the native `bionet` path is now validated on the supported token-classification model packs listed in [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json), without `libtorch`
+- the text-classification parity path now follows the same manifest-backed contributor workflow as token classification
 - the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
 - layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 

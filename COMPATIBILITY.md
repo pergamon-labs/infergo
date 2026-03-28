@@ -18,8 +18,7 @@ without a documented export path, backend, and parity test story.
 - Primary task shape: small classification-style inference in Go services
 - Current validated examples:
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
-  - native text classification over public DistilBERT reference inputs via `cmd/infergo-parity -infergo-bundle-dir ...`
-  - native text classification over public RoBERTa sentiment reference inputs via `cmd/infergo-parity -infergo-bundle-dir ...`
+  - native text classification over the manifest-backed public model packs listed in `testdata/reference/text-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
   - native token classification over the manifest-backed public model packs listed in `testdata/reference/token-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
   - checked-in native bundle shapes:
     - `token-id-bag`
@@ -34,8 +33,7 @@ without a documented export path, backend, and parity test story.
 - Runtime posture: CPU-first initially
 - Support bar: parity-tested on fixed public inputs against a Python reference implementation
 - Current external reference paths:
-  - `distilbert/distilbert-base-uncased-finetuned-sst-2-english`
-  - `cardiffnlp/twitter-roberta-base-sentiment-latest`
+  - the checked-in text-classification model packs listed in `testdata/reference/text-classification/model-packs.json`
   - the checked-in token-classification model packs listed in `testdata/reference/token-classification/model-packs.json` for native parity through the `bionet` backend
 - Current local comparison path: TorchScript export plus native Go candidate generation through `cmd/infergo-parity -torchscript-bundle-dir ...`
 

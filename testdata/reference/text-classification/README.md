@@ -3,26 +3,25 @@
 This directory holds the first external reference path for InferGo parity work.
 
 - `sst2-inputs.json` is the public-safe text input set.
-- `distilbert-sst2-reference.json` is generated from a Hugging Face Transformers model.
-- `twitter-roberta-sentiment-reference.json` is generated from a second public Hugging Face sentiment model.
+- `model-packs.json` is the supported public text-classification pack manifest.
+- one generated `*-reference.json` file exists per supported pack in the manifest.
 - `../../native/text-classification/distilbert-sst2-token-id-bag/` contains the first InferGo-native bundle generated from the same reference set.
 - the default native embedding bundles now use compact dense token embeddings derived from the fitted pooled classifier instead of identity-sized embedding tables.
 - the native bundle generator has an experimental `-use-layernorm` flag for the masked-pooling path, but the checked-in supported bundles still use the default head.
 - TorchScript export bundles are generated under `dist/torchscript/distilbert-sst2/` and are intentionally not committed.
 - The native Go candidate path requires `CGO_ENABLED=1`, `-tags torchscript_native`, and a libtorch install exposed through `CGO_CXXFLAGS` and `CGO_LDFLAGS`.
 
-Generate or refresh the reference file from the repo root with:
+Generate or refresh the supported text-classification packs from the repo root with:
 
 ```bash
-uv run --with torch==2.10.0 --with transformers==5.3.0 python ./scripts/transformers_text_classification_reference.py
+uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  python ./scripts/build_text_classification_reference_pack.py
 ```
 
-Generate the RoBERTa sentiment reference explicitly with:
+List the supported text-classification pack keys with:
 
 ```bash
-uv run --with torch==2.10.0 --with transformers==5.3.0 python ./scripts/transformers_text_classification_reference.py \
-  --model-id cardiffnlp/twitter-roberta-base-sentiment-latest \
-  --output ./testdata/reference/text-classification/twitter-roberta-sentiment-reference.json
+uv run python ./scripts/build_text_classification_reference_pack.py --list
 ```
 
 Export the reference model to TorchScript and run the local candidate path with:
@@ -37,14 +36,17 @@ go run -tags torchscript_native ./cmd/infergo-parity \
   -tolerance 1e-4
 ```
 
-Generate or refresh the default InferGo-native `embedding-masked-avg-pool`
-bundle and run the Go-only native candidate path with:
+Regenerate a single supported pack explicitly with:
 
 ```bash
-go run ./internal/tools/nativebundlegen \
-  -reference ./testdata/reference/text-classification/distilbert-sst2-reference.json \
-  -output-dir ./testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool
+uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  python ./scripts/build_text_classification_reference_pack.py \
+  --pack-key distilbert-sst2
+```
 
+Run the Go-only native candidate path with:
+
+```bash
 go run ./cmd/infergo-parity \
   -reference ./testdata/reference/text-classification/distilbert-sst2-reference.json \
   -infergo-bundle-dir ./testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool \
@@ -52,7 +54,9 @@ go run ./cmd/infergo-parity \
   -tolerance 1e-4
 ```
 
-Regenerate the earlier `embedding-avg-pool` bundle explicitly with:
+The lower-level generators are still available when you want to experiment
+outside the supported pack workflow. For example, regenerate the earlier
+`embedding-avg-pool` bundle explicitly with:
 
 ```bash
 go run ./internal/tools/nativebundlegen \

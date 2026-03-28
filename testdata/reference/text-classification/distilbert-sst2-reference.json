@@ -3,7 +3,7 @@
   "source": "huggingface-transformers",
   "model_id": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
   "task": "text-classification",
-  "generated_at": "2026-03-24T05:10:17.397160+00:00",
+  "generated_at": "2026-03-28T01:07:16.895856+00:00",
   "transformers_version": "5.3.0",
   "torch_version": "2.10.0",
   "labels": [

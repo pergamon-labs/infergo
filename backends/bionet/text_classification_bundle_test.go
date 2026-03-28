@@ -4,36 +4,23 @@ import (
 	"testing"
 
 	"github.com/pergamon-labs/infergo/backends/bionet"
+	"github.com/pergamon-labs/infergo/internal/modelpacks"
 	"github.com/pergamon-labs/infergo/internal/parity"
 )
 
 func TestLoadTextClassificationBundle(t *testing.T) {
 	t.Parallel()
 
-	testCases := []struct {
-		referencePath string
-		bundleDirs    []string
-	}{
-		{
-			referencePath: "../../testdata/reference/text-classification/distilbert-sst2-reference.json",
-			bundleDirs: []string{
-				"../../testdata/native/text-classification/distilbert-sst2-token-id-bag",
-				"../../testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
-				"../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool",
-			},
-		},
-		{
-			referencePath: "../../testdata/reference/text-classification/twitter-roberta-sentiment-reference.json",
-			bundleDirs: []string{
-				"../../testdata/native/text-classification/twitter-roberta-sentiment-embedding-masked-avg-pool",
-			},
-		},
+	manifest, err := modelpacks.LoadTextClassificationManifest("../../testdata/reference/text-classification/model-packs.json")
+	if err != nil {
+		t.Fatalf("LoadTextClassificationManifest() error = %v", err)
 	}
 
-	for _, tt := range testCases {
-		reference, err := parity.LoadTransformersTextClassificationReference(tt.referencePath)
+	for _, pack := range manifest.Packs {
+		referencePath := "../../" + pack.ReferencePath
+		reference, err := parity.LoadTransformersTextClassificationReference(referencePath)
 		if err != nil {
-			t.Fatalf("LoadTransformersTextClassificationReference(%q) error = %v", tt.referencePath, err)
+			t.Fatalf("LoadTransformersTextClassificationReference(%q) error = %v", referencePath, err)
 		}
 
 		inputIDs := make([][]int64, len(reference.Cases))
@@ -43,7 +30,8 @@ func TestLoadTextClassificationBundle(t *testing.T) {
 			attentionMasks[i] = intsToInt64(item.AttentionMask)
 		}
 
-		for _, bundleDir := range tt.bundleDirs {
+		for _, bundleSpec := range pack.NativeBundles {
+			bundleDir := "../../" + bundleSpec.OutputDir
 			bundle, err := bionet.LoadTextClassificationBundle(bundleDir)
 			if err != nil {
 				t.Fatalf("LoadTextClassificationBundle(%q) error = %v", bundleDir, err)

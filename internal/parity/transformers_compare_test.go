@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/pergamon-labs/infergo/internal/modelpacks"
 )
 
 type fakeTorchScriptPredictor struct {
@@ -197,31 +199,18 @@ func TestBuildTextClassificationCandidate(t *testing.T) {
 func TestRunBionetTextClassificationBundle(t *testing.T) {
 	t.Parallel()
 
-	testCases := []struct {
-		referencePath string
-		bundleDirs    []string
-	}{
-		{
-			referencePath: "../../testdata/reference/text-classification/distilbert-sst2-reference.json",
-			bundleDirs: []string{
-				"../../testdata/native/text-classification/distilbert-sst2-token-id-bag",
-				"../../testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
-				"../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool",
-			},
-		},
-		{
-			referencePath: "../../testdata/reference/text-classification/twitter-roberta-sentiment-reference.json",
-			bundleDirs: []string{
-				"../../testdata/native/text-classification/twitter-roberta-sentiment-embedding-masked-avg-pool",
-			},
-		},
+	manifest, err := modelpacks.LoadTextClassificationManifest(textClassificationPackManifestPath)
+	if err != nil {
+		t.Fatalf("LoadTextClassificationManifest() error = %v", err)
 	}
 
-	for _, tt := range testCases {
-		for _, bundleDir := range tt.bundleDirs {
+	for _, pack := range manifest.Packs {
+		referencePath := "../../" + pack.ReferencePath
+		for _, bundleSpec := range pack.NativeBundles {
+			bundleDir := "../../" + bundleSpec.OutputDir
 			candidatePath := filepath.Join(t.TempDir(), filepath.Base(bundleDir)+".json")
 
-			candidate, err := RunBionetTextClassificationBundle(tt.referencePath, bundleDir)
+			candidate, err := RunBionetTextClassificationBundle(referencePath, bundleDir)
 			if err != nil {
 				t.Fatalf("RunBionetTextClassificationBundle(%q) error = %v", bundleDir, err)
 			}
@@ -230,7 +219,7 @@ func TestRunBionetTextClassificationBundle(t *testing.T) {
 				t.Fatalf("SaveTextClassificationCandidate(%q) error = %v", bundleDir, err)
 			}
 
-			report, err := CompareTransformersTextClassification(tt.referencePath, candidatePath, 1e-4)
+			report, err := CompareTransformersTextClassification(referencePath, candidatePath, 1e-4)
 			if err != nil {
 				t.Fatalf("CompareTransformersTextClassification(%q) error = %v", bundleDir, err)
 			}

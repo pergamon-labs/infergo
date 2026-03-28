@@ -1,0 +1,40 @@
+{
+  "name": "supported public text-classification packs",
+  "input_set_path": "testdata/reference/text-classification/sst2-inputs.json",
+  "packs": [
+    {
+      "key": "distilbert-sst2",
+      "model_id": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+      "reference_path": "testdata/reference/text-classification/distilbert-sst2-reference.json",
+      "native_bundles": [
+        {
+          "key": "token-id-bag",
+          "output_dir": "testdata/native/text-classification/distilbert-sst2-token-id-bag",
+          "mode": "token-id-bag"
+        },
+        {
+          "key": "embedding-avg-pool",
+          "output_dir": "testdata/native/text-classification/distilbert-sst2-embedding-avg-pool",
+          "mode": "embedding-avg-pool"
+        },
+        {
+          "key": "embedding-masked-avg-pool",
+          "output_dir": "testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool",
+          "mode": "embedding-masked-avg-pool"
+        }
+      ]
+    },
+    {
+      "key": "twitter-roberta-sentiment",
+      "model_id": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+      "reference_path": "testdata/reference/text-classification/twitter-roberta-sentiment-reference.json",
+      "native_bundles": [
+        {
+          "key": "embedding-masked-avg-pool",
+          "output_dir": "testdata/native/text-classification/twitter-roberta-sentiment-embedding-masked-avg-pool",
+          "mode": "embedding-masked-avg-pool"
+        }
+      ]
+    }
+  ]
+}
