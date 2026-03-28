@@ -41,6 +41,7 @@ Rules for the local overlay:
 ## Product Guardrails
 
 - Keep the north star: Go-native inference for backend services.
+- Treat checked-in model packs as curated proof fixtures, not as a goal to maximize.
 - Do not market or document InferGo as a blanket `.pt` loader, training framework, or general transformer runtime unless the repo actually supports that path end to end.
 - Keep CPU-first and pure-Go-by-default as the baseline posture.
 - Treat libtorch and TorchScript as optional backend-specific dependencies, not project-wide requirements.

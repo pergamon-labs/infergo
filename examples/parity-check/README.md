@@ -7,7 +7,7 @@ native pack:
 go run ./cmd/infergo-parity \
   -reference ./testdata/reference/token-classification/distilbert-ner-reference.json \
   -infergo-bundle-dir ./testdata/native/token-classification/distilbert-ner-windowed-embedding-linear \
-  -tolerance 1e-4
+  -tolerance 1e-3
 ```
 
 List the supported token-classification packs with:

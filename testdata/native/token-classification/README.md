@@ -11,6 +11,8 @@ Current bundle:
   simple comparison point
 - the multilingual `xlm-roberta-ner-hrl-windowed-embedding-linear/` bundle is
   the first checked-in non-English token-classification native path
+- `distilcamembert-french-ner-windowed-embedding-linear/` is the first
+  French-specific checked-in native token-classification bundle
 
 Generation:
 

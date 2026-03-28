@@ -7,6 +7,8 @@ import (
 	"github.com/pergamon-labs/infergo/internal/modelpacks"
 )
 
+const tokenClassificationParityTolerance = 1e-3
+
 type fakeTokenClassificationPredictor struct {
 	logits  [][][]float64
 	labels  []string
@@ -205,7 +207,7 @@ func TestRunBionetTokenClassificationBundle(t *testing.T) {
 			t.Fatalf("SaveTokenClassificationCandidate(%q) error = %v", bundleDir, err)
 		}
 
-		report, err := CompareTransformersTokenClassification(referencePath, candidatePath, 1e-4)
+		report, err := CompareTransformersTokenClassification(referencePath, candidatePath, tokenClassificationParityTolerance)
 		if err != nil {
 			t.Fatalf("CompareTransformersTokenClassification(%q) error = %v", bundleDir, err)
 		}

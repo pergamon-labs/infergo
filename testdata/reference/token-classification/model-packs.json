@@ -37,6 +37,14 @@
       "reference_path": "testdata/reference/token-classification/xlm-roberta-ner-hrl-reference.json",
       "native_bundle_dir": "testdata/native/token-classification/xlm-roberta-ner-hrl-windowed-embedding-linear",
       "native_mode": "windowed-embedding-linear"
+    },
+    {
+      "key": "distilcamembert-french-ner",
+      "model_id": "cmarkea/distilcamembert-base-ner",
+      "input_set_path": "testdata/reference/token-classification/french-ner-inputs.json",
+      "reference_path": "testdata/reference/token-classification/distilcamembert-french-ner-reference.json",
+      "native_bundle_dir": "testdata/native/token-classification/distilcamembert-french-ner-windowed-embedding-linear",
+      "native_mode": "windowed-embedding-linear"
     }
   ]
 }

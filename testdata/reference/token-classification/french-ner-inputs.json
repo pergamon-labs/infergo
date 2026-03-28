@@ -1,0 +1,17 @@
+{
+  "name": "public-safe french ner parity set",
+  "cases": [
+    { "id": "frca-001", "text": "Jean Dupont a rencontré Airbus à Paris." },
+    { "id": "frca-002", "text": "Claire Martin a visité Lyon avec Orange." },
+    { "id": "frca-003", "text": "Sophie Tremblay a parlé avec Hydro-Québec à Montréal." },
+    { "id": "frca-004", "text": "Radio-Canada a invité Marc Gagnon à Québec." },
+    { "id": "frca-005", "text": "L'Université de Montréal a accueilli Nadia Benali." },
+    { "id": "frca-006", "text": "Banque Nationale a reçu Julie Roy à Laval." },
+    { "id": "frca-007", "text": "Le journal Le Monde a envoyé Paul Bernard à Nice." },
+    { "id": "frca-008", "text": "Pierre Dubois a rejoint la SNCF à Marseille." },
+    { "id": "frca-009", "text": "Mélanie Côté a rencontré Ubisoft à Montréal." },
+    { "id": "frca-010", "text": "Québec solidaire a invité Anne Moreau à Gatineau." },
+    { "id": "frca-011", "text": "Jean Dupont et Sophie Tremblay ont discuté avec Airbus et Hydro-Québec à Montréal." },
+    { "id": "frca-012", "text": "L'Oréal Canada a envoyé Karim Haddad à Ottawa." }
+  ]
+}

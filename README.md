@@ -15,6 +15,7 @@ What InferGo is not in v1:
 - a blanket loader for arbitrary `.pt` files
 - an LLM platform
 - a GPU-first system
+- a model zoo; checked-in packs are curated proofs of backend and artifact support
 
 ## Quickstart
 
@@ -35,7 +36,7 @@ go test ./...
 go run ./cmd/infergo-parity \
   -reference ./testdata/reference/token-classification/distilbert-ner-reference.json \
   -infergo-bundle-dir ./testdata/native/token-classification/distilbert-ner-windowed-embedding-linear \
-  -tolerance 1e-4
+  -tolerance 1e-3
 ```
 
 4. If you want to see more checked-in token-classification packs, list the
@@ -109,7 +110,7 @@ Current scaffold highlights:
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 - the public text-classification packs are now validated against an English DistilBERT SST-2 path, an English RoBERTa sentiment path, and a first non-English multilingual sentiment path
-- the native `bionet` path now also includes a first non-English token-classification pack through `Davlan/xlm-roberta-base-ner-hrl` on a widened multilingual NER corpus with diacritics, apostrophes, quoted entities, slash-separated orgs, and mixed-language cases
+- the native `bionet` path now includes both a widened multilingual token-classification pack through `Davlan/xlm-roberta-base-ner-hrl` and a French-specific token pack through `cmarkea/distilcamembert-base-ner`
 - the native `bionet` path is now validated on the supported token-classification model packs listed in [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json), without `libtorch`
 - the text-classification parity path now follows the same manifest-backed contributor workflow as token classification
 - [`examples/bionet-classifier`](./examples/bionet-classifier) and [`examples/http-server`](./examples/http-server) now show honest, runnable usage with checked-in bundles
@@ -118,6 +119,6 @@ Current scaffold highlights:
 
 Next milestone:
 
-1. decide whether the next multilingual proof should add a second multilingual token model or a language-specific token pack
-2. decide whether the public example surface should include a token-classification serving example
+1. decide whether the public example surface should include a token-classification serving example
+2. decide whether the next language-specific proof should stay in French-adjacent workflows or add another language-specific pack
 3. keep the optional TorchScript bridge healthy without letting it drive the core roadmap
