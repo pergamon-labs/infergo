@@ -18,30 +18,33 @@ type predictRequest struct {
 }
 
 type predictResponse struct {
-	Backend        string    `json:"backend"`
-	ModelID        string    `json:"model_id"`
-	Labels         []string  `json:"labels"`
-	ObservedLabel  string    `json:"observed_label"`
-	ObservedLogits []float64 `json:"observed_logits"`
+	Backend       string      `json:"backend"`
+	ModelID       string      `json:"model_id"`
+	Labels        []string    `json:"labels"`
+	Tokens        []string    `json:"tokens,omitempty"`
+	TokenLabels   []string    `json:"token_labels"`
+	TokenLogits   [][]float64 `json:"token_logits"`
+	ScoringMask   []int       `json:"scoring_mask,omitempty"`
+	ReferenceCase string      `json:"reference_case,omitempty"`
 }
 
 func main() {
-	addr := flag.String("addr", ":8080", "http listen address")
-	bundleDir := flag.String("bundle", "./testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool", "path to a checked-in InferGo-native text bundle")
-	referencePath := flag.String("reference", "./testdata/reference/text-classification/distilbert-sst2-reference.json", "path to a reference JSON file with demo cases")
+	addr := flag.String("addr", ":8081", "http listen address")
+	bundleDir := flag.String("bundle", "./testdata/native/token-classification/distilcamembert-french-ner-windowed-embedding-linear", "path to a checked-in InferGo-native token bundle")
+	referencePath := flag.String("reference", "./testdata/reference/token-classification/distilcamembert-french-ner-reference.json", "path to a token-classification reference JSON file with demo cases")
 	flag.Parse()
 
-	classifier, err := infer.LoadTextClassifier(*bundleDir)
+	classifier, err := infer.LoadTokenClassifier(*bundleDir)
 	if err != nil {
 		log.Fatalf("load classifier: %v", err)
 	}
 	defer classifier.Close()
 
-	reference, err := parity.LoadTransformersTextClassificationReference(*referencePath)
+	reference, err := parity.LoadTransformersTokenClassificationReference(*referencePath)
 	if err != nil {
 		log.Fatalf("load reference: %v", err)
 	}
-	referenceCases := make(map[string]parity.TransformersTextClassificationReferenceCase, len(reference.Cases))
+	referenceCases := make(map[string]parity.TransformersTokenClassificationReferenceCase, len(reference.Cases))
 	for _, item := range reference.Cases {
 		referenceCases[item.ID] = item
 	}
@@ -60,6 +63,8 @@ func main() {
 
 		inputIDs := req.InputIDs
 		attentionMask := req.AttentionMask
+		var tokens []string
+		var scoringMask []int
 		if req.CaseID != "" {
 			item, ok := referenceCases[req.CaseID]
 			if !ok {
@@ -68,14 +73,16 @@ func main() {
 			}
 			inputIDs = intsToInt64(item.InputIDs)
 			attentionMask = intsToInt64(item.AttentionMask)
+			tokens = append([]string(nil), item.Tokens...)
+			scoringMask = append([]int(nil), item.ScoringMask...)
 		}
 
-		if len(inputIDs) == 0 || len(attentionMask) == 0 || len(inputIDs) != len(attentionMask) {
-			http.Error(w, "provide matching input_ids and attention_mask or a valid case_id", http.StatusBadRequest)
+		if len(inputIDs) == 0 {
+			http.Error(w, "provide input_ids or a valid case_id", http.StatusBadRequest)
 			return
 		}
 
-		prediction, err := classifier.Predict(infer.TextInput{
+		prediction, err := classifier.Predict(infer.TokenInput{
 			InputIDs:      inputIDs,
 			AttentionMask: attentionMask,
 		})
@@ -85,11 +92,16 @@ func main() {
 		}
 
 		resp := predictResponse{
-			Backend:        prediction.Backend,
-			ModelID:        prediction.ModelID,
-			Labels:         prediction.Labels,
-			ObservedLabel:  prediction.Label,
-			ObservedLogits: prediction.Logits,
+			Backend:     prediction.Backend,
+			ModelID:     prediction.ModelID,
+			Labels:      prediction.Labels,
+			Tokens:      tokens,
+			TokenLabels: prediction.TokenLabels,
+			TokenLogits: prediction.TokenLogits,
+			ScoringMask: scoringMask,
+		}
+		if req.CaseID != "" {
+			resp.ReferenceCase = req.CaseID
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -99,12 +111,12 @@ func main() {
 		}
 	})
 
-	log.Printf("InferGo example server listening on %s", *addr)
+	log.Printf("InferGo token example server listening on %s", *addr)
 	curlAddr := *addr
 	if strings.HasPrefix(curlAddr, ":") {
 		curlAddr = "127.0.0.1" + curlAddr
 	}
-	log.Printf("Try: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"case_id\":\"positive-review\"}' | jq", curlAddr)
+	log.Printf("Try: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"case_id\":\"frca-003\"}' | jq", curlAddr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal(err)
 	}

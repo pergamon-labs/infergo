@@ -1,7 +1,8 @@
 # HTTP Server Example
 
-This example demonstrates the core InferGo shape today without overclaiming raw
-text tokenization support.
+This example demonstrates the stable public `infer` API for serving a checked-in
+native text-classification bundle without overclaiming raw-text tokenization
+support.
 
 It will:
 

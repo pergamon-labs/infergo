@@ -16,10 +16,13 @@ without a documented export path, backend, and parity test story.
 - Backend: `bionet`
 - Runtime posture: CPU-first
 - Primary task shape: small classification-style inference in Go services
+- Public API: `infer.LoadTextClassifier` and `infer.LoadTokenClassifier`
 - Current validated examples:
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
   - native text classification over the manifest-backed public model packs listed in `testdata/reference/text-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
   - native token classification over the manifest-backed public model packs listed in `testdata/reference/token-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
+  - text classification served through `examples/http-server`
+  - token classification served through `examples/token-http-server`
   - the token-classification manifest now includes a first non-English multilingual NER pack through `Davlan/xlm-roberta-base-ner-hrl`
   - the token-classification manifest now also includes a French-specific NER pack through `cmarkea/distilcamembert-base-ner`
   - checked-in native bundle shapes:

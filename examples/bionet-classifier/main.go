@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/pergamon-labs/infergo/backends/bionet"
+	"github.com/pergamon-labs/infergo/infer"
 	"github.com/pergamon-labs/infergo/internal/parity"
 )
 
@@ -27,27 +27,30 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bundle, err := bionet.LoadTextClassificationBundle(*bundleDir)
+	classifier, err := infer.LoadTextClassifier(*bundleDir)
 	if err != nil {
-		log.Fatalf("load bundle: %v", err)
+		log.Fatalf("load classifier: %v", err)
 	}
-	defer bundle.Close()
+	defer classifier.Close()
 
-	logitsBatch, err := bundle.PredictBatch([][]int64{intsToInt64(item.InputIDs)}, [][]int64{intsToInt64(item.AttentionMask)})
+	prediction, err := classifier.Predict(infer.TextInput{
+		InputIDs:      intsToInt64(item.InputIDs),
+		AttentionMask: intsToInt64(item.AttentionMask),
+	})
 	if err != nil {
 		log.Fatalf("predict: %v", err)
 	}
-
-	logits := logitsBatch[0]
-	labelIdx := argMax(logits)
 
 	output := map[string]any{
 		"bundle":          *bundleDir,
 		"reference_case":  item.ID,
 		"text":            item.Text,
 		"tokens":          item.Tokens,
-		"observed_logits": logits,
-		"observed_label":  bundle.Labels()[labelIdx],
+		"backend":         prediction.Backend,
+		"model_id":        prediction.ModelID,
+		"labels":          prediction.Labels,
+		"observed_logits": prediction.Logits,
+		"observed_label":  prediction.Label,
 	}
 
 	encoder := json.NewEncoder(os.Stdout)
@@ -72,16 +75,4 @@ func intsToInt64(values []int) []int64 {
 		output[i] = int64(value)
 	}
 	return output
-}
-
-func argMax(values []float64) int {
-	bestIdx := 0
-	bestValue := values[0]
-	for i := 1; i < len(values); i++ {
-		if values[i] > bestValue {
-			bestValue = values[i]
-			bestIdx = i
-		}
-	}
-	return bestIdx
 }

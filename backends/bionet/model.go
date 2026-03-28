@@ -6,19 +6,11 @@ import (
 
 	"github.com/pergamon-labs/infergo/backends/bionet/runtime/module"
 	"github.com/pergamon-labs/infergo/backends/bionet/runtime/tensor"
-	"github.com/pergamon-labs/infergo/infer"
 )
-
-var _ infer.Model = (*Model)(nil)
 
 // Model wraps a BIOnet runtime module behind a backend-specific model handle.
 type Model struct {
 	runtime *module.Module
-}
-
-// Load satisfies the generic loader contract for BIOnet artifacts.
-func (Backend) Load(path string) (infer.Model, error) {
-	return LoadModel(path)
 }
 
 // LoadModel loads a BIOnet gob artifact from disk.

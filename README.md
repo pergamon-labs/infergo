@@ -74,13 +74,36 @@ uv run --with torch==2.10.0 --with transformers==5.3.0 \
   python ./scripts/build_text_classification_reference_pack.py
 ```
 
-8. If you want a direct library usage example, try:
+## Supported usage paths
+
+### Run text classification
+
+Use the stable public `infer` API with a checked-in native text bundle:
 
 ```bash
 go run ./examples/bionet-classifier
 ```
 
-9. If you want a tiny HTTP serving example, try:
+### Run token classification
+
+Run a checked-in native token bundle against a checked-in public reference:
+
+```bash
+go run ./cmd/infergo-parity \
+  -reference ./testdata/reference/token-classification/distilcamembert-french-ner-reference.json \
+  -infergo-bundle-dir ./testdata/native/token-classification/distilcamembert-french-ner-windowed-embedding-linear \
+  -tolerance 1e-3
+```
+
+### Serve token classification over HTTP
+
+Use the stable public `infer` API behind a tiny HTTP server:
+
+```bash
+go run ./examples/token-http-server
+```
+
+If you want the text-classification HTTP example instead, use:
 
 ```bash
 go run ./examples/http-server
@@ -113,12 +136,12 @@ Current scaffold highlights:
 - the native `bionet` path now includes both a widened multilingual token-classification pack through `Davlan/xlm-roberta-base-ner-hrl` and a French-specific token pack through `cmarkea/distilcamembert-base-ner`
 - the native `bionet` path is now validated on the supported token-classification model packs listed in [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json), without `libtorch`
 - the text-classification parity path now follows the same manifest-backed contributor workflow as token classification
-- [`examples/bionet-classifier`](./examples/bionet-classifier) and [`examples/http-server`](./examples/http-server) now show honest, runnable usage with checked-in bundles
+- [`examples/bionet-classifier`](./examples/bionet-classifier), [`examples/http-server`](./examples/http-server), and [`examples/token-http-server`](./examples/token-http-server) now show honest, runnable usage through the stable public `infer` package
 - the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
 - layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 
 Next milestone:
 
-1. decide whether the public example surface should include a token-classification serving example
+1. decide whether the next public API pass should add tokenizer-aware request helpers without overclaiming raw-text support
 2. decide whether the next language-specific proof should stay in French-adjacent workflows or add another language-specific pack
 3. keep the optional TorchScript bridge healthy without letting it drive the core roadmap

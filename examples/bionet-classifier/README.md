@@ -1,7 +1,7 @@
-# BIOnet Classifier Example
+# Text Classification Example
 
-This example demonstrates the first supported BIOnet-backed inference path using
-checked-in public-safe assets.
+This example demonstrates the stable public `infer` API for checked-in native
+text-classification bundles.
 
 Run it from the repo root:
 

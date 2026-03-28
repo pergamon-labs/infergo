@@ -4,9 +4,20 @@ InferGo is structured around a small public API and explicit backend boundaries.
 
 ## Public API
 
-The `infer` package is the stable entrypoint for loading models, selecting backends, and running inference from Go code.
+The `infer` package is the stable entrypoint for loading models and running
+inference from Go code.
 
 The design goal is to keep end-user code focused on serving concerns rather than low-level runtime details.
+
+Current stable surfaces:
+
+- `infer.LoadTextClassifier(...)`
+- `infer.LoadTokenClassifier(...)`
+- typed `TextInput` / `TextPrediction`
+- typed `TokenInput` / `TokenPrediction`
+
+Those APIs intentionally expose checked-in native bundle behavior without
+forcing callers to know about `backends/bionet`.
 
 ## Backend boundaries
 
