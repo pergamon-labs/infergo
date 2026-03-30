@@ -7,14 +7,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pergamon-labs/infergo/infer"
-	"github.com/pergamon-labs/infergo/internal/parity"
+	"github.com/pergamon-labs/infergo/infer/packs"
 )
 
 type predictRequest struct {
-	CaseID        string  `json:"case_id,omitempty"`
-	InputIDs      []int64 `json:"input_ids,omitempty"`
-	AttentionMask []int64 `json:"attention_mask,omitempty"`
+	CaseID string   `json:"case_id,omitempty"`
+	Tokens []string `json:"tokens,omitempty"`
 }
 
 type predictResponse struct {
@@ -30,24 +28,14 @@ type predictResponse struct {
 
 func main() {
 	addr := flag.String("addr", ":8081", "http listen address")
-	bundleDir := flag.String("bundle", "./testdata/native/token-classification/distilcamembert-french-ner-windowed-embedding-linear", "path to a checked-in InferGo-native token bundle")
-	referencePath := flag.String("reference", "./testdata/reference/token-classification/distilcamembert-french-ner-reference.json", "path to a token-classification reference JSON file with demo cases")
+	packKey := flag.String("pack", "distilcamembert-french-ner", "supported checked-in token pack key")
 	flag.Parse()
 
-	classifier, err := infer.LoadTokenClassifier(*bundleDir)
+	pack, err := packs.LoadTokenPack(*packKey)
 	if err != nil {
-		log.Fatalf("load classifier: %v", err)
+		log.Fatalf("load token pack: %v", err)
 	}
-	defer classifier.Close()
-
-	reference, err := parity.LoadTransformersTokenClassificationReference(*referencePath)
-	if err != nil {
-		log.Fatalf("load reference: %v", err)
-	}
-	referenceCases := make(map[string]parity.TransformersTokenClassificationReferenceCase, len(reference.Cases))
-	for _, item := range reference.Cases {
-		referenceCases[item.ID] = item
-	}
+	defer pack.Close()
 
 	http.HandleFunc("/predict", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -61,45 +49,42 @@ func main() {
 			return
 		}
 
-		inputIDs := req.InputIDs
-		attentionMask := req.AttentionMask
 		var tokens []string
-		var scoringMask []int
+		var prediction predictResponse
 		if req.CaseID != "" {
-			item, ok := referenceCases[req.CaseID]
-			if !ok {
-				http.Error(w, "unknown case_id", http.StatusBadRequest)
+			result, err := pack.PredictReferenceCase(req.CaseID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-			inputIDs = intsToInt64(item.InputIDs)
-			attentionMask = intsToInt64(item.AttentionMask)
-			tokens = append([]string(nil), item.Tokens...)
-			scoringMask = append([]int(nil), item.ScoringMask...)
-		}
-
-		if len(inputIDs) == 0 {
-			http.Error(w, "provide input_ids or a valid case_id", http.StatusBadRequest)
+			prediction = predictResponse{
+				Backend:     result.Backend,
+				ModelID:     result.ModelID,
+				Labels:      result.Labels,
+				TokenLabels: result.TokenLabels,
+				TokenLogits: result.TokenLogits,
+			}
+		} else if len(req.Tokens) > 0 {
+			result, err := pack.PredictTokens(req.Tokens)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			prediction = predictResponse{
+				Backend:     result.Backend,
+				ModelID:     result.ModelID,
+				Labels:      result.Labels,
+				TokenLabels: result.TokenLabels,
+				TokenLogits: result.TokenLogits,
+			}
+			tokens = append([]string(nil), req.Tokens...)
+		} else {
+			http.Error(w, "provide tokens or a valid case_id", http.StatusBadRequest)
 			return
 		}
 
-		prediction, err := classifier.Predict(infer.TokenInput{
-			InputIDs:      inputIDs,
-			AttentionMask: attentionMask,
-		})
-		if err != nil {
-			http.Error(w, "prediction failed", http.StatusInternalServerError)
-			return
-		}
-
-		resp := predictResponse{
-			Backend:     prediction.Backend,
-			ModelID:     prediction.ModelID,
-			Labels:      prediction.Labels,
-			Tokens:      tokens,
-			TokenLabels: prediction.TokenLabels,
-			TokenLogits: prediction.TokenLogits,
-			ScoringMask: scoringMask,
-		}
+		resp := prediction
+		resp.Tokens = tokens
 		if req.CaseID != "" {
 			resp.ReferenceCase = req.CaseID
 		}
@@ -116,16 +101,9 @@ func main() {
 	if strings.HasPrefix(curlAddr, ":") {
 		curlAddr = "127.0.0.1" + curlAddr
 	}
-	log.Printf("Try: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"case_id\":\"frca-003\"}' | jq", curlAddr)
+	log.Printf("Try pieces: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"tokens\":[\"▁Jean\",\"▁Dupont\",\"▁a\",\"▁rencontré\",\"▁Air\",\"bus\",\"▁à\",\"▁Paris\"]}' | jq", curlAddr)
+	log.Printf("Try a checked-in case: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"case_id\":\"frca-003\"}' | jq", curlAddr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func intsToInt64(values []int) []int64 {
-	output := make([]int64, len(values))
-	for i, value := range values {
-		output[i] = int64(value)
-	}
-	return output
 }

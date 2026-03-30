@@ -6,6 +6,7 @@ This repository is the early public home for InferGo under the Pergamon Labs Git
 
 - CPU-first inference for small models
 - a stable Go-facing serving API
+- a curated pack helper layer for checked-in public-safe bundles
 - BIOnet as the first real backend path
 - parity-driven validation against reference implementations for future exported model support
 
@@ -78,11 +79,15 @@ uv run --with torch==2.10.0 --with transformers==5.3.0 \
 
 ### Run text classification
 
-Use the stable public `infer` API with a checked-in native text bundle:
+Use the curated pack helper layer for a checked-in text pack:
 
 ```bash
 go run ./examples/bionet-classifier
 ```
+
+That example defaults to the checked-in `distilbert-sst2` pack and a reference
+case. If a future pack honestly supports raw-text tokenization, the same entry
+point can use `-text`.
 
 ### Run token classification
 
@@ -97,7 +102,7 @@ go run ./cmd/infergo-parity \
 
 ### Serve token classification over HTTP
 
-Use the stable public `infer` API behind a tiny HTTP server:
+Use the curated token pack helper behind a tiny HTTP server:
 
 ```bash
 go run ./examples/token-http-server
@@ -109,9 +114,13 @@ If you want the text-classification HTTP example instead, use:
 go run ./examples/http-server
 ```
 
+That HTTP example accepts pack tokens by default and only accepts raw text when
+the chosen checked-in pack supports it honestly.
+
 Current scaffold highlights:
 
 - [`infer/`](./infer) is the stable public API layer
+- [`infer/packs`](./infer/packs) is the curated convenience layer for checked-in public-safe packs
 - [`backends/bionet/`](./backends/bionet) is the first implementation path
 - [`backends/bionet/runtime/`](./backends/bionet/runtime) now contains the first extracted BIOnet runtime core
 - [`backends/bionet/text_classification_bundle.go`](./backends/bionet/text_classification_bundle.go) defines the first InferGo-native bundle formats for text classification
@@ -136,12 +145,14 @@ Current scaffold highlights:
 - the native `bionet` path now includes both a widened multilingual token-classification pack through `Davlan/xlm-roberta-base-ner-hrl` and a French-specific token pack through `cmarkea/distilcamembert-base-ner`
 - the native `bionet` path is now validated on the supported token-classification model packs listed in [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json), without `libtorch`
 - the text-classification parity path now follows the same manifest-backed contributor workflow as token classification
-- [`examples/bionet-classifier`](./examples/bionet-classifier), [`examples/http-server`](./examples/http-server), and [`examples/token-http-server`](./examples/token-http-server) now show honest, runnable usage through the stable public `infer` package
+- [`examples/bionet-classifier`](./examples/bionet-classifier), [`examples/http-server`](./examples/http-server), and [`examples/token-http-server`](./examples/token-http-server) now show honest, runnable usage through the stable public `infer` and curated `infer/packs` packages
+- the curated `infer/packs` layer now lets callers list/load checked-in packs, predict checked-in reference cases, and submit tokenizer-piece arrays without hand-wiring manifest paths
+- raw-text prediction is intentionally conditional; InferGo only exposes it for packs whose checked-in tokenizer behavior validates against the public-safe pack data
 - the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
 - layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 
 Next milestone:
 
-1. decide whether the next public API pass should add tokenizer-aware request helpers without overclaiming raw-text support
+1. decide whether the next curated pack pass should add a native raw-text-capable text pack instead of only piece-aware pack helpers
 2. decide whether the next language-specific proof should stay in French-adjacent workflows or add another language-specific pack
 3. keep the optional TorchScript bridge healthy without letting it drive the core roadmap

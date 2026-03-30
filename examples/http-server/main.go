@@ -7,14 +7,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pergamon-labs/infergo/infer"
-	"github.com/pergamon-labs/infergo/internal/parity"
+	"github.com/pergamon-labs/infergo/infer/packs"
 )
 
 type predictRequest struct {
-	CaseID        string  `json:"case_id,omitempty"`
-	InputIDs      []int64 `json:"input_ids,omitempty"`
-	AttentionMask []int64 `json:"attention_mask,omitempty"`
+	CaseID string   `json:"case_id,omitempty"`
+	Text   string   `json:"text,omitempty"`
+	Tokens []string `json:"tokens,omitempty"`
 }
 
 type predictResponse struct {
@@ -27,24 +26,14 @@ type predictResponse struct {
 
 func main() {
 	addr := flag.String("addr", ":8080", "http listen address")
-	bundleDir := flag.String("bundle", "./testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool", "path to a checked-in InferGo-native text bundle")
-	referencePath := flag.String("reference", "./testdata/reference/text-classification/distilbert-sst2-reference.json", "path to a reference JSON file with demo cases")
+	packKey := flag.String("pack", "distilbert-sst2", "supported checked-in text pack key")
 	flag.Parse()
 
-	classifier, err := infer.LoadTextClassifier(*bundleDir)
+	pack, err := packs.LoadTextPack(*packKey)
 	if err != nil {
-		log.Fatalf("load classifier: %v", err)
+		log.Fatalf("load text pack: %v", err)
 	}
-	defer classifier.Close()
-
-	reference, err := parity.LoadTransformersTextClassificationReference(*referencePath)
-	if err != nil {
-		log.Fatalf("load reference: %v", err)
-	}
-	referenceCases := make(map[string]parity.TransformersTextClassificationReferenceCase, len(reference.Cases))
-	for _, item := range reference.Cases {
-		referenceCases[item.ID] = item
-	}
+	defer pack.Close()
 
 	http.HandleFunc("/predict", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -58,42 +47,54 @@ func main() {
 			return
 		}
 
-		inputIDs := req.InputIDs
-		attentionMask := req.AttentionMask
-		if req.CaseID != "" {
-			item, ok := referenceCases[req.CaseID]
-			if !ok {
-				http.Error(w, "unknown case_id", http.StatusBadRequest)
+		var prediction inferResponse
+		switch {
+		case req.Text != "":
+			result, err := pack.PredictText(req.Text)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-			inputIDs = intsToInt64(item.InputIDs)
-			attentionMask = intsToInt64(item.AttentionMask)
-		}
-
-		if len(inputIDs) == 0 || len(attentionMask) == 0 || len(inputIDs) != len(attentionMask) {
-			http.Error(w, "provide matching input_ids and attention_mask or a valid case_id", http.StatusBadRequest)
+			prediction = inferResponse{
+				Backend:        result.Backend,
+				ModelID:        result.ModelID,
+				Labels:         result.Labels,
+				ObservedLabel:  result.Label,
+				ObservedLogits: result.Logits,
+			}
+		case len(req.Tokens) > 0:
+			result, err := pack.PredictTokens(req.Tokens)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			prediction = inferResponse{
+				Backend:        result.Backend,
+				ModelID:        result.ModelID,
+				Labels:         result.Labels,
+				ObservedLabel:  result.Label,
+				ObservedLogits: result.Logits,
+			}
+		case req.CaseID != "":
+			result, err := pack.PredictReferenceCase(req.CaseID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			prediction = inferResponse{
+				Backend:        result.Backend,
+				ModelID:        result.ModelID,
+				Labels:         result.Labels,
+				ObservedLabel:  result.Label,
+				ObservedLogits: result.Logits,
+			}
+		default:
+			http.Error(w, "provide tokens, text, or a valid case_id", http.StatusBadRequest)
 			return
-		}
-
-		prediction, err := classifier.Predict(infer.TextInput{
-			InputIDs:      inputIDs,
-			AttentionMask: attentionMask,
-		})
-		if err != nil {
-			http.Error(w, "prediction failed", http.StatusInternalServerError)
-			return
-		}
-
-		resp := predictResponse{
-			Backend:        prediction.Backend,
-			ModelID:        prediction.ModelID,
-			Labels:         prediction.Labels,
-			ObservedLabel:  prediction.Label,
-			ObservedLogits: prediction.Logits,
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
+		if err := json.NewEncoder(w).Encode(prediction); err != nil {
 			http.Error(w, "encode response failed", http.StatusInternalServerError)
 			return
 		}
@@ -104,16 +105,12 @@ func main() {
 	if strings.HasPrefix(curlAddr, ":") {
 		curlAddr = "127.0.0.1" + curlAddr
 	}
-	log.Printf("Try: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"case_id\":\"positive-review\"}' | jq", curlAddr)
+	log.Printf("Try tokens: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"tokens\":[\"this\",\"product\",\"is\",\"excellent\",\"and\",\"reliable\",\".\"]}' | jq", curlAddr)
+	log.Printf("Try raw text only if the chosen pack supports it")
+	log.Printf("Try a checked-in case: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"case_id\":\"positive-review\"}' | jq", curlAddr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func intsToInt64(values []int) []int64 {
-	output := make([]int64, len(values))
-	for i, value := range values {
-		output[i] = int64(value)
-	}
-	return output
-}
+type inferResponse = predictResponse

@@ -16,11 +16,15 @@ without a documented export path, backend, and parity test story.
 - Backend: `bionet`
 - Runtime posture: CPU-first
 - Primary task shape: small classification-style inference in Go services
-- Public API: `infer.LoadTextClassifier` and `infer.LoadTokenClassifier`
+- Public APIs:
+  - stable bundle API: `infer.LoadTextClassifier` and `infer.LoadTokenClassifier`
+  - curated pack API: `infer/packs.LoadTextPack` and `infer/packs.LoadTokenPack`
 - Current validated examples:
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
   - native text classification over the manifest-backed public model packs listed in `testdata/reference/text-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
   - native token classification over the manifest-backed public model packs listed in `testdata/reference/token-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
+  - curated text-pack prediction via `examples/bionet-classifier`
+  - curated token-pack prediction via `examples/token-http-server`
   - text classification served through `examples/http-server`
   - token classification served through `examples/token-http-server`
   - the token-classification manifest now includes a first non-English multilingual NER pack through `Davlan/xlm-roberta-base-ner-hrl`
@@ -30,6 +34,11 @@ without a documented export path, backend, and parity test story.
     - `embedding-avg-pool -> linear` with compact dense token embeddings
     - `embedding-masked-avg-pool -> linear` with compact dense token embeddings
     - `windowed token embedding -> linear` for narrow token classification parity
+  - curated pack helpers:
+    - checked-in text packs can be loaded and queried by pack key
+    - checked-in token packs can be loaded and queried by pack key
+    - piece-aware prediction helpers are supported for checked-in packs whose tokenizer-piece to id mapping is validated from the public-safe reference data
+    - raw-text prediction is only supported when a pack explicitly validates a checked-in tokenizer helper
 
 ## v1 stretch path
 
@@ -53,6 +62,7 @@ without a documented export path, backend, and parity test story.
 - direct Hugging Face repository loading
 - general transformer execution in the native `bionet` backend
 - token classification beyond the explicitly documented local-window NER path
+- blanket raw-text tokenization support for checked-in packs that do not validate a native tokenizer helper
 - experimental `-use-layernorm` native bundle generation as a public support claim until it meets the same parity bar as the default path
 - native attention blocks or full encoder stacks
 - ONNX runtime support

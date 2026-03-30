@@ -19,6 +19,11 @@ Current stable surfaces:
 Those APIs intentionally expose checked-in native bundle behavior without
 forcing callers to know about `backends/bionet`.
 
+The `infer/packs` package is the curated convenience layer above that stable
+bundle API. It is where checked-in manifests, reference-aware helpers, and
+piece-aware prediction paths live. This keeps repo-shipped pack workflows out
+of the lower-level stable surface.
+
 ## Backend boundaries
 
 ### `backends/bionet`
@@ -68,6 +73,11 @@ The `internal/parity` package and `cmd/infergo-parity` command are intended to s
 - reference-output capture
 - tolerance-based comparisons
 - layer-by-layer debugging when needed
+
+The checked-in pack manifests are the public-facing contract for supported
+proof packs. They drive both contributor workflows and the curated `infer/packs`
+helper layer, so pack-specific conveniences stay tied to explicit parity-backed
+artifacts instead of leaking into generic runtime claims.
 
 ## Extraction mapping from screening
 

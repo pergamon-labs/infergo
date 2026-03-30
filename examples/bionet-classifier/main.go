@@ -7,14 +7,15 @@ import (
 	"log"
 	"os"
 
-	"github.com/pergamon-labs/infergo/infer"
+	"github.com/pergamon-labs/infergo/infer/packs"
 	"github.com/pergamon-labs/infergo/internal/parity"
 )
 
 func main() {
-	bundleDir := flag.String("bundle", "./testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool", "path to a checked-in InferGo-native text bundle")
+	packKey := flag.String("pack", "distilbert-sst2", "supported checked-in text pack key")
 	referencePath := flag.String("reference", "./testdata/reference/text-classification/distilbert-sst2-reference.json", "path to a reference JSON file with demo cases")
-	caseID := flag.String("case-id", "positive-review", "reference case id to run")
+	caseID := flag.String("case-id", "positive-review", "reference case id to run when -text is empty")
+	text := flag.String("text", "", "raw text to score when the chosen pack supports it")
 	flag.Parse()
 
 	reference, err := parity.LoadTransformersTextClassificationReference(*referencePath)
@@ -27,35 +28,49 @@ func main() {
 		log.Fatal(err)
 	}
 
-	classifier, err := infer.LoadTextClassifier(*bundleDir)
+	pack, err := packs.LoadTextPack(*packKey)
 	if err != nil {
-		log.Fatalf("load classifier: %v", err)
+		log.Fatalf("load text pack: %v", err)
 	}
-	defer classifier.Close()
+	defer pack.Close()
 
-	prediction, err := classifier.Predict(infer.TextInput{
-		InputIDs:      intsToInt64(item.InputIDs),
-		AttentionMask: intsToInt64(item.AttentionMask),
-	})
-	if err != nil {
-		log.Fatalf("predict: %v", err)
-	}
+	var prediction any
+	if *text != "" {
+		result, err := pack.PredictText(*text)
+		if err != nil {
+			log.Fatalf("predict text: %v", err)
+		}
+		prediction = map[string]any{
+			"pack":            *packKey,
+			"text":            *text,
+			"backend":         result.Backend,
+			"model_id":        result.ModelID,
+			"labels":          result.Labels,
+			"observed_logits": result.Logits,
+			"observed_label":  result.Label,
+		}
+	} else {
+		result, err := pack.PredictReferenceCase(*caseID)
+		if err != nil {
+			log.Fatalf("predict case: %v", err)
+		}
 
-	output := map[string]any{
-		"bundle":          *bundleDir,
-		"reference_case":  item.ID,
-		"text":            item.Text,
-		"tokens":          item.Tokens,
-		"backend":         prediction.Backend,
-		"model_id":        prediction.ModelID,
-		"labels":          prediction.Labels,
-		"observed_logits": prediction.Logits,
-		"observed_label":  prediction.Label,
+		prediction = map[string]any{
+			"pack":            *packKey,
+			"reference_case":  item.ID,
+			"text":            item.Text,
+			"tokens":          item.Tokens,
+			"backend":         result.Backend,
+			"model_id":        result.ModelID,
+			"labels":          result.Labels,
+			"observed_logits": result.Logits,
+			"observed_label":  result.Label,
+		}
 	}
 
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(output); err != nil {
+	if err := encoder.Encode(prediction); err != nil {
 		log.Fatalf("encode output: %v", err)
 	}
 }
