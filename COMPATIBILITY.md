@@ -20,6 +20,7 @@ without a documented export path, backend, and parity test story.
   - stable bundle API: `infer.LoadTextClassifier` and `infer.LoadTokenClassifier`
   - curated pack API: `infer/packs.LoadTextPack` and `infer/packs.LoadTokenPack`
 - Current validated examples:
+  - curated pack discovery through `cmd/infergo-packs`
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
   - native text classification over the manifest-backed public model packs listed in `testdata/reference/text-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
   - native token classification over the manifest-backed public model packs listed in `testdata/reference/token-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`

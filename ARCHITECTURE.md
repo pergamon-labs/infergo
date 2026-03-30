@@ -80,6 +80,10 @@ proof packs. They drive both contributor workflows and the curated `infer/packs`
 helper layer, so pack-specific conveniences stay tied to explicit parity-backed
 artifacts instead of leaking into generic runtime claims.
 
+`cmd/infergo-packs` sits on top of that same contract. It gives developers one
+discovery path for the curated pack surface, including which text packs support
+raw text today, without forcing them to inspect manifests by hand.
+
 The first raw-text-capable text pack uses a native BasicTokenizer projection of
 the SST-2 proof set. That is intentionally narrower than claiming generic raw
 text support across the whole manifest, but it gives InferGo one fully honest
