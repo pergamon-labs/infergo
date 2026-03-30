@@ -12,21 +12,11 @@ import (
 )
 
 func main() {
-	packKey := flag.String("pack", "distilbert-sst2", "supported checked-in text pack key")
-	referencePath := flag.String("reference", "./testdata/reference/text-classification/distilbert-sst2-reference.json", "path to a reference JSON file with demo cases")
+	packKey := flag.String("pack", "infergo-basic-sst2", "supported checked-in text pack key")
+	referencePath := flag.String("reference", "./testdata/reference/text-classification/infergo-basic-sst2-reference.json", "path to a reference JSON file with demo cases")
 	caseID := flag.String("case-id", "positive-review", "reference case id to run when -text is empty")
 	text := flag.String("text", "", "raw text to score when the chosen pack supports it")
 	flag.Parse()
-
-	reference, err := parity.LoadTransformersTextClassificationReference(*referencePath)
-	if err != nil {
-		log.Fatalf("load reference: %v", err)
-	}
-
-	item, err := findTextCase(reference, *caseID)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	pack, err := packs.LoadTextPack(*packKey)
 	if err != nil {
@@ -50,6 +40,16 @@ func main() {
 			"observed_label":  result.Label,
 		}
 	} else {
+		reference, err := parity.LoadTransformersTextClassificationReference(*referencePath)
+		if err != nil {
+			log.Fatalf("load reference: %v", err)
+		}
+
+		item, err := findTextCase(reference, *caseID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		result, err := pack.PredictReferenceCase(*caseID)
 		if err != nil {
 			log.Fatalf("predict case: %v", err)
@@ -82,12 +82,4 @@ func findTextCase(reference parity.TransformersTextClassificationReference, case
 		}
 	}
 	return parity.TransformersTextClassificationReferenceCase{}, fmt.Errorf("reference case %q not found", caseID)
-}
-
-func intsToInt64(values []int) []int64 {
-	output := make([]int64, len(values))
-	for i, value := range values {
-		output[i] = int64(value)
-	}
-	return output
 }

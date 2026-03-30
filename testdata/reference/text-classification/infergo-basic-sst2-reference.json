@@ -1,0 +1,968 @@
+{
+  "name": "infergo-basic-sst2 BasicTokenizer Projection",
+  "source": "infergo-basic-tokenizer-projection:distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+  "model_id": "infergo/basic-sst2-sentiment",
+  "task": "text-classification",
+  "generated_at": "2026-03-30T21:59:15Z",
+  "transformers_version": "5.3.0",
+  "torch_version": "2.10.0",
+  "labels": [
+    "NEGATIVE",
+    "POSITIVE"
+  ],
+  "cases": [
+    {
+      "id": "positive-review",
+      "text": "This product is excellent and reliable.",
+      "tokens": [
+        "this",
+        "product",
+        "is",
+        "excellent",
+        "and",
+        "reliable",
+        "."
+      ],
+      "input_ids": [
+        95,
+        73,
+        47,
+        26,
+        6,
+        77,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -4.337915420532227,
+        4.705198764801025
+      ],
+      "expected_probabilities": [
+        0.00011818823986686766,
+        0.9998817443847656
+      ],
+      "expected_label": "POSITIVE"
+    },
+    {
+      "id": "negative-review",
+      "text": "This was a terrible experience.",
+      "tokens": [
+        "this",
+        "was",
+        "a",
+        "terrible",
+        "experience",
+        "."
+      ],
+      "input_ids": [
+        95,
+        109,
+        2,
+        93,
+        28,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        3.716874599456787,
+        -3.1733884811401367
+      ],
+      "expected_probabilities": [
+        0.9989833235740662,
+        0.0010166114661842585
+      ],
+      "expected_label": "NEGATIVE"
+    },
+    {
+      "id": "mixed-review",
+      "text": "The service was okay overall.",
+      "tokens": [
+        "the",
+        "service",
+        "was",
+        "okay",
+        "overall",
+        "."
+      ],
+      "input_ids": [
+        94,
+        80,
+        109,
+        66,
+        70,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -4.009629726409912,
+        4.371831893920898
+      ],
+      "expected_probabilities": [
+        0.0002290222910232842,
+        0.9997709393501282
+      ],
+      "expected_label": "POSITIVE"
+    },
+    {
+      "id": "support-praise",
+      "text": "Fast helpful support team.",
+      "tokens": [
+        "fast",
+        "helpful",
+        "support",
+        "team",
+        "."
+      ],
+      "input_ids": [
+        30,
+        42,
+        90,
+        92,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -4.13802433013916,
+        4.479250431060791
+      ],
+      "expected_probabilities": [
+        0.00018091990204993635,
+        0.9998190999031067
+      ],
+      "expected_label": "POSITIVE"
+    },
+    {
+      "id": "great-update",
+      "text": "The latest update made the app faster and easier to use.",
+      "tokens": [
+        "the",
+        "latest",
+        "update",
+        "made",
+        "the",
+        "app",
+        "faster",
+        "and",
+        "easier",
+        "to",
+        "use",
+        "."
+      ],
+      "input_ids": [
+        94,
+        52,
+        107,
+        57,
+        94,
+        7,
+        31,
+        6,
+        21,
+        98,
+        108,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.5178096294403076,
+        2.484208345413208
+      ],
+      "expected_probabilities": [
+        0.006679448764771223,
+        0.9933205842971802
+      ],
+      "expected_label": "POSITIVE"
+    },
+    {
+      "id": "refund-friction",
+      "text": "Getting a refund was frustrating and took far too long.",
+      "tokens": [
+        "getting",
+        "a",
+        "refund",
+        "was",
+        "frustrating",
+        "and",
+        "took",
+        "far",
+        "too",
+        "long",
+        "."
+      ],
+      "input_ids": [
+        40,
+        2,
+        75,
+        109,
+        38,
+        6,
+        100,
+        29,
+        99,
+        55,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        4.4867448806762695,
+        -3.679182529449463
+      ],
+      "expected_probabilities": [
+        0.9997158646583557,
+        0.00028409212245605886
+      ],
+      "expected_label": "NEGATIVE"
+    },
+    {
+      "id": "easy-setup",
+      "text": "Setup was simple and everything worked on the first try.",
+      "tokens": [
+        "setup",
+        "was",
+        "simple",
+        "and",
+        "everything",
+        "worked",
+        "on",
+        "the",
+        "first",
+        "try",
+        "."
+      ],
+      "input_ids": [
+        81,
+        109,
+        82,
+        6,
+        24,
+        115,
+        67,
+        94,
+        34,
+        102,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        1.0937252044677734,
+        -0.9218478798866272
+      ],
+      "expected_probabilities": [
+        0.8824224472045898,
+        0.11757751554250717
+      ],
+      "expected_label": "NEGATIVE"
+    },
+    {
+      "id": "buggy-release",
+      "text": "The new release feels buggy, unstable, and unfinished.",
+      "tokens": [
+        "the",
+        "new",
+        "release",
+        "feels",
+        "buggy",
+        ",",
+        "unstable",
+        ",",
+        "and",
+        "unfinished",
+        "."
+      ],
+      "input_ids": [
+        94,
+        63,
+        76,
+        32,
+        12,
+        0,
+        105,
+        0,
+        6,
+        104,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        4.522103309631348,
+        -3.676309585571289
+      ],
+      "expected_probabilities": [
+        0.9997249245643616,
+        0.00027501414297148585
+      ],
+      "expected_label": "NEGATIVE"
+    },
+    {
+      "id": "lovely-staff",
+      "text": "The staff were friendly, patient, and genuinely helpful.",
+      "tokens": [
+        "the",
+        "staff",
+        "were",
+        "friendly",
+        ",",
+        "patient",
+        ",",
+        "and",
+        "genuinely",
+        "helpful",
+        "."
+      ],
+      "input_ids": [
+        94,
+        86,
+        113,
+        37,
+        0,
+        71,
+        0,
+        6,
+        39,
+        42,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -4.152962684631348,
+        4.452367305755615
+      ],
+      "expected_probabilities": [
+        0.00018309368169866502,
+        0.9998169541358948
+      ],
+      "expected_label": "POSITIVE"
+    },
+    {
+      "id": "battery-drain",
+      "text": "This update drained my battery and slowed down my phone.",
+      "tokens": [
+        "this",
+        "update",
+        "drained",
+        "my",
+        "battery",
+        "and",
+        "slowed",
+        "down",
+        "my",
+        "phone",
+        "."
+      ],
+      "input_ids": [
+        95,
+        107,
+        20,
+        62,
+        9,
+        6,
+        83,
+        19,
+        62,
+        72,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        3.7589073181152344,
+        -3.0427470207214355
+      ],
+      "expected_probabilities": [
+        0.9988892674446106,
+        0.0011106990277767181
+      ],
+      "expected_label": "NEGATIVE"
+    },
+    {
+      "id": "clear-instructions",
+      "text": "The instructions were clear and saved me a lot of time.",
+      "tokens": [
+        "the",
+        "instructions",
+        "were",
+        "clear",
+        "and",
+        "saved",
+        "me",
+        "a",
+        "lot",
+        "of",
+        "time",
+        "."
+      ],
+      "input_ids": [
+        94,
+        46,
+        113,
+        14,
+        6,
+        79,
+        59,
+        2,
+        56,
+        65,
+        97,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -3.284968137741089,
+        3.397106170654297
+      ],
+      "expected_probabilities": [
+        0.0012516070855781436,
+        0.9987484216690063
+      ],
+      "expected_label": "POSITIVE"
+    },
+    {
+      "id": "wasted-time",
+      "text": "I spent hours on this and still got nowhere.",
+      "tokens": [
+        "i",
+        "spent",
+        "hours",
+        "on",
+        "this",
+        "and",
+        "still",
+        "got",
+        "nowhere",
+        "."
+      ],
+      "input_ids": [
+        44,
+        85,
+        43,
+        67,
+        95,
+        6,
+        88,
+        41,
+        64,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        4.394618034362793,
+        -3.606738567352295
+      ],
+      "expected_probabilities": [
+        0.9996651411056519,
+        0.0003348958562128246
+      ],
+      "expected_label": "NEGATIVE"
+    },
+    {
+      "id": "sturdy-design",
+      "text": "The design feels sturdy and well thought out.",
+      "tokens": [
+        "the",
+        "design",
+        "feels",
+        "sturdy",
+        "and",
+        "well",
+        "thought",
+        "out",
+        "."
+      ],
+      "input_ids": [
+        94,
+        17,
+        32,
+        89,
+        6,
+        112,
+        96,
+        69,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -4.249569892883301,
+        4.59088134765625
+      ],
+      "expected_probabilities": [
+        0.00014473646297119558,
+        0.9998552799224854
+      ],
+      "expected_label": "POSITIVE"
+    },
+    {
+      "id": "cold-food",
+      "text": "The meal arrived cold and tasted bland.",
+      "tokens": [
+        "the",
+        "meal",
+        "arrived",
+        "cold",
+        "and",
+        "tasted",
+        "bland",
+        "."
+      ],
+      "input_ids": [
+        94,
+        60,
+        8,
+        15,
+        6,
+        91,
+        10,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        4.516077041625977,
+        -3.6713738441467285
+      ],
+      "expected_probabilities": [
+        0.9997219443321228,
+        0.000278044753940776
+      ],
+      "expected_label": "NEGATIVE"
+    },
+    {
+      "id": "smooth-onboarding",
+      "text": "Onboarding was smooth and made the product easy to trust.",
+      "tokens": [
+        "onboarding",
+        "was",
+        "smooth",
+        "and",
+        "made",
+        "the",
+        "product",
+        "easy",
+        "to",
+        "trust",
+        "."
+      ],
+      "input_ids": [
+        68,
+        109,
+        84,
+        6,
+        57,
+        94,
+        73,
+        22,
+        98,
+        101,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -3.8132174015045166,
+        3.9544272422790527
+      ],
+      "expected_probabilities": [
+        0.00042302979272790253,
+        0.999576985836029
+      ],
+      "expected_label": "POSITIVE"
+    },
+    {
+      "id": "broken-login",
+      "text": "The login flow kept breaking and locked me out twice.",
+      "tokens": [
+        "the",
+        "login",
+        "flow",
+        "kept",
+        "breaking",
+        "and",
+        "locked",
+        "me",
+        "out",
+        "twice",
+        "."
+      ],
+      "input_ids": [
+        94,
+        54,
+        35,
+        50,
+        11,
+        6,
+        53,
+        59,
+        69,
+        103,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        1.0468487739562988,
+        -0.7179685831069946
+      ],
+      "expected_probabilities": [
+        0.8538119792938232,
+        0.14618802070617676
+      ],
+      "expected_label": "NEGATIVE"
+    },
+    {
+      "id": "exceeded-expectations",
+      "text": "It exceeded my expectations in almost every way.",
+      "tokens": [
+        "it",
+        "exceeded",
+        "my",
+        "expectations",
+        "in",
+        "almost",
+        "every",
+        "way",
+        "."
+      ],
+      "input_ids": [
+        49,
+        25,
+        62,
+        27,
+        45,
+        5,
+        23,
+        110,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -3.7289304733276367,
+        3.984391689300537
+      ],
+      "expected_probabilities": [
+        0.0004466349782887846,
+        0.999553382396698
+      ],
+      "expected_label": "POSITIVE"
+    },
+    {
+      "id": "poor-documentation",
+      "text": "The documentation was confusing and missed key steps.",
+      "tokens": [
+        "the",
+        "documentation",
+        "was",
+        "confusing",
+        "and",
+        "missed",
+        "key",
+        "steps",
+        "."
+      ],
+      "input_ids": [
+        94,
+        18,
+        109,
+        16,
+        6,
+        61,
+        51,
+        87,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        4.57322883605957,
+        -3.704617738723755
+      ],
+      "expected_probabilities": [
+        0.9997460246086121,
+        0.00025401930906809866
+      ],
+      "expected_label": "NEGATIVE"
+    },
+    {
+      "id": "quick-resolution",
+      "text": "Support resolved the issue quickly and followed up afterward.",
+      "tokens": [
+        "support",
+        "resolved",
+        "the",
+        "issue",
+        "quickly",
+        "and",
+        "followed",
+        "up",
+        "afterward",
+        "."
+      ],
+      "input_ids": [
+        90,
+        78,
+        94,
+        48,
+        74,
+        6,
+        36,
+        106,
+        4,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        -2.122750759124756,
+        2.1142425537109375
+      ],
+      "expected_probabilities": [
+        0.014245118945837021,
+        0.9857548475265503
+      ],
+      "expected_label": "POSITIVE"
+    },
+    {
+      "id": "cheap-materials",
+      "text": "The materials felt cheap and wore out after a week.",
+      "tokens": [
+        "the",
+        "materials",
+        "felt",
+        "cheap",
+        "and",
+        "wore",
+        "out",
+        "after",
+        "a",
+        "week",
+        "."
+      ],
+      "input_ids": [
+        94,
+        58,
+        33,
+        13,
+        6,
+        114,
+        69,
+        3,
+        2,
+        111,
+        1
+      ],
+      "attention_mask": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expected_logits": [
+        4.6449294090271,
+        -3.7903640270233154
+      ],
+      "expected_probabilities": [
+        0.9997829794883728,
+        0.00021702234516851604
+      ],
+      "expected_label": "NEGATIVE"
+    }
+  ]
+}

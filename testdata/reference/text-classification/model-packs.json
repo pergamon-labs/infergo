@@ -48,6 +48,20 @@
           "mode": "embedding-masked-avg-pool"
         }
       ]
+    },
+    {
+      "key": "infergo-basic-sst2",
+      "model_id": "infergo/basic-sst2-sentiment",
+      "reference_builder": "basic-tokenizer-projection",
+      "source_reference_path": "testdata/reference/text-classification/distilbert-sst2-reference.json",
+      "reference_path": "testdata/reference/text-classification/infergo-basic-sst2-reference.json",
+      "native_bundles": [
+        {
+          "key": "embedding-masked-avg-pool",
+          "output_dir": "testdata/native/text-classification/infergo-basic-sst2-embedding-masked-avg-pool",
+          "mode": "embedding-masked-avg-pool"
+        }
+      ]
     }
   ]
 }

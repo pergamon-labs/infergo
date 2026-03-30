@@ -24,6 +24,7 @@ without a documented export path, backend, and parity test story.
   - native text classification over the manifest-backed public model packs listed in `testdata/reference/text-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
   - native token classification over the manifest-backed public model packs listed in `testdata/reference/token-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
   - curated text-pack prediction via `examples/bionet-classifier`
+  - first truly native raw-text text prediction via the checked-in `infergo-basic-sst2` pack
   - curated token-pack prediction via `examples/token-http-server`
   - text classification served through `examples/http-server`
   - token classification served through `examples/token-http-server`
@@ -39,6 +40,7 @@ without a documented export path, backend, and parity test story.
     - checked-in token packs can be loaded and queried by pack key
     - piece-aware prediction helpers are supported for checked-in packs whose tokenizer-piece to id mapping is validated from the public-safe reference data
     - raw-text prediction is only supported when a pack explicitly validates a checked-in tokenizer helper
+    - current raw-text-capable pack: `infergo-basic-sst2`
 
 ## v1 stretch path
 

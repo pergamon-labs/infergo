@@ -26,7 +26,7 @@ type predictResponse struct {
 
 func main() {
 	addr := flag.String("addr", ":8080", "http listen address")
-	packKey := flag.String("pack", "distilbert-sst2", "supported checked-in text pack key")
+	packKey := flag.String("pack", "infergo-basic-sst2", "supported checked-in text pack key")
 	flag.Parse()
 
 	pack, err := packs.LoadTextPack(*packKey)
@@ -105,8 +105,8 @@ func main() {
 	if strings.HasPrefix(curlAddr, ":") {
 		curlAddr = "127.0.0.1" + curlAddr
 	}
+	log.Printf("Try raw text: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"text\":\"This product is excellent and reliable.\"}' | jq", curlAddr)
 	log.Printf("Try tokens: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"tokens\":[\"this\",\"product\",\"is\",\"excellent\",\"and\",\"reliable\",\".\"]}' | jq", curlAddr)
-	log.Printf("Try raw text only if the chosen pack supports it")
 	log.Printf("Try a checked-in case: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"case_id\":\"positive-review\"}' | jq", curlAddr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal(err)

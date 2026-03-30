@@ -271,23 +271,37 @@ func buildTextEncoder(reference parity.TransformersTextClassificationReference) 
 		if len(item.Tokens) != len(item.InputIDs) || len(item.InputIDs) != len(item.AttentionMask) {
 			return nil, nil, nil, nil, 0, fmt.Errorf("reference case %q has inconsistent token/input lengths", item.ID)
 		}
-		if len(item.Tokens) < 2 {
-			return nil, nil, nil, nil, 0, fmt.Errorf("reference case %q is too short to infer boundary tokens", item.ID)
+		basicTokens := runtimeTokenizer.BasicTokenizer(item.Text, len(item.Tokens)+8)
+		contentTokens := item.Tokens
+		contentIDs := item.InputIDs
+		casePrefixIDs := []int64{}
+		caseSuffixIDs := []int64{}
+
+		switch {
+		case slices.Equal(basicTokens, item.Tokens):
+			// Native raw-text pack with no boundary wrappers.
+		case len(item.Tokens) >= 2 && slices.Equal(basicTokens, item.Tokens[1:len(item.Tokens)-1]):
+			contentTokens = item.Tokens[1 : len(item.Tokens)-1]
+			contentIDs = item.InputIDs[1 : len(item.InputIDs)-1]
+			casePrefixIDs = []int64{int64(item.InputIDs[0])}
+			caseSuffixIDs = []int64{int64(item.InputIDs[len(item.InputIDs)-1])}
+		default:
+			if len(item.Tokens) >= 2 {
+				contentTokens = item.Tokens[1 : len(item.Tokens)-1]
+				contentIDs = item.InputIDs[1 : len(item.InputIDs)-1]
+				casePrefixIDs = []int64{int64(item.InputIDs[0])}
+				caseSuffixIDs = []int64{int64(item.InputIDs[len(item.InputIDs)-1])}
+			}
+			rawTextSupported = false
 		}
 
-		casePrefixIDs := []int64{int64(item.InputIDs[0])}
-		caseSuffixIDs := []int64{int64(item.InputIDs[len(item.InputIDs)-1])}
 		if caseIdx == 0 {
 			prefixIDs = casePrefixIDs
 			suffixIDs = caseSuffixIDs
-		} else {
-			if !slices.Equal(prefixIDs, casePrefixIDs) || !slices.Equal(suffixIDs, caseSuffixIDs) {
-				return nil, nil, nil, nil, 0, fmt.Errorf("reference case %q uses inconsistent boundary tokens", item.ID)
-			}
+		} else if !slices.Equal(prefixIDs, casePrefixIDs) || !slices.Equal(suffixIDs, caseSuffixIDs) {
+			return nil, nil, nil, nil, 0, fmt.Errorf("reference case %q uses inconsistent boundary tokens", item.ID)
 		}
 
-		contentTokens := item.Tokens[1 : len(item.Tokens)-1]
-		contentIDs := item.InputIDs[1 : len(item.InputIDs)-1]
 		if len(contentTokens) > maxContentTokens {
 			maxContentTokens = len(contentTokens)
 		}

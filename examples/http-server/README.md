@@ -17,7 +17,17 @@ Run it from the repo root:
 go run ./examples/http-server
 ```
 
-Then call it with token pieces:
+By default it uses the checked-in raw-text-capable `infergo-basic-sst2` pack.
+
+Then call it with raw text:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"This product is excellent and reliable."}'
+```
+
+Or call it with token pieces:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8080/predict \

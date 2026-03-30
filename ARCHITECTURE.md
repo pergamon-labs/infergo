@@ -20,9 +20,10 @@ Those APIs intentionally expose checked-in native bundle behavior without
 forcing callers to know about `backends/bionet`.
 
 The `infer/packs` package is the curated convenience layer above that stable
-bundle API. It is where checked-in manifests, reference-aware helpers, and
-piece-aware prediction paths live. This keeps repo-shipped pack workflows out
-of the lower-level stable surface.
+bundle API. It is where checked-in manifests, reference-aware helpers,
+piece-aware prediction paths, and the first truly native raw-text text pack
+live. This keeps repo-shipped pack workflows out of the lower-level stable
+surface.
 
 ## Backend boundaries
 
@@ -78,6 +79,11 @@ The checked-in pack manifests are the public-facing contract for supported
 proof packs. They drive both contributor workflows and the curated `infer/packs`
 helper layer, so pack-specific conveniences stay tied to explicit parity-backed
 artifacts instead of leaking into generic runtime claims.
+
+The first raw-text-capable text pack uses a native BasicTokenizer projection of
+the SST-2 proof set. That is intentionally narrower than claiming generic raw
+text support across the whole manifest, but it gives InferGo one fully honest
+end-to-end raw-text serving path.
 
 ## Extraction mapping from screening
 

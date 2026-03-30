@@ -9,8 +9,15 @@ Run it from the repo root:
 go run ./examples/bionet-classifier
 ```
 
-By default it loads the checked-in `distilbert-sst2` pack and runs the
+By default it loads the checked-in `infergo-basic-sst2` pack and runs the
 `positive-review` reference case through the pack helper.
+
+It also supports the repo's first honest raw-text flow out of the box:
+
+```bash
+go run ./examples/bionet-classifier \
+  -text "This product is excellent and reliable."
+```
 
 You can point it at another pack or case:
 
@@ -20,6 +27,3 @@ go run ./examples/bionet-classifier \
   -reference ./testdata/reference/text-classification/twitter-roberta-sentiment-reference.json \
   -case-id support-praise
 ```
-
-If a future checked-in pack validates a native raw-text helper, the same entry
-point can also accept `-text`.

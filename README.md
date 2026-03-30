@@ -85,9 +85,13 @@ Use the curated pack helper layer for a checked-in text pack:
 go run ./examples/bionet-classifier
 ```
 
-That example defaults to the checked-in `distilbert-sst2` pack and a reference
-case. If a future pack honestly supports raw-text tokenization, the same entry
-point can use `-text`.
+That example now defaults to the checked-in native raw-text pack
+`infergo-basic-sst2`, so this works out of the box too:
+
+```bash
+go run ./examples/bionet-classifier \
+  -text "This product is excellent and reliable."
+```
 
 ### Run token classification
 
@@ -114,8 +118,9 @@ If you want the text-classification HTTP example instead, use:
 go run ./examples/http-server
 ```
 
-That HTTP example accepts pack tokens by default and only accepts raw text when
-the chosen checked-in pack supports it honestly.
+That HTTP example now defaults to the checked-in raw-text-capable
+`infergo-basic-sst2` pack, while still accepting token pieces and reference
+case ids.
 
 Current scaffold highlights:
 
@@ -142,17 +147,18 @@ Current scaffold highlights:
 - [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 - the public text-classification packs are now validated against an English DistilBERT SST-2 path, an English RoBERTa sentiment path, and a first non-English multilingual sentiment path
+- the public text-classification packs now also include a first truly native raw-text-capable pack, `infergo-basic-sst2`, derived from a public-safe BasicTokenizer projection of the SST-2 proof set
 - the native `bionet` path now includes both a widened multilingual token-classification pack through `Davlan/xlm-roberta-base-ner-hrl` and a French-specific token pack through `cmarkea/distilcamembert-base-ner`
 - the native `bionet` path is now validated on the supported token-classification model packs listed in [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json), without `libtorch`
 - the text-classification parity path now follows the same manifest-backed contributor workflow as token classification
 - [`examples/bionet-classifier`](./examples/bionet-classifier), [`examples/http-server`](./examples/http-server), and [`examples/token-http-server`](./examples/token-http-server) now show honest, runnable usage through the stable public `infer` and curated `infer/packs` packages
 - the curated `infer/packs` layer now lets callers list/load checked-in packs, predict checked-in reference cases, and submit tokenizer-piece arrays without hand-wiring manifest paths
-- raw-text prediction is intentionally conditional; InferGo only exposes it for packs whose checked-in tokenizer behavior validates against the public-safe pack data
+- raw-text prediction is intentionally narrow; InferGo currently exposes it only for the checked-in `infergo-basic-sst2` pack whose tokenizer behavior is fully native and validated from public-safe pack data
 - the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
 - layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 
 Next milestone:
 
-1. decide whether the next curated pack pass should add a native raw-text-capable text pack instead of only piece-aware pack helpers
+1. decide whether the next curated pack pass should add a second raw-text-capable native text pack or keep raw-text support intentionally narrow
 2. decide whether the next language-specific proof should stay in French-adjacent workflows or add another language-specific pack
 3. keep the optional TorchScript bridge healthy without letting it drive the core roadmap

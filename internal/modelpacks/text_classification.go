@@ -17,11 +17,13 @@ type TextClassificationManifest struct {
 // TextClassificationManifestEntry describes one supported pack plus the native
 // bundles we keep checked in for it.
 type TextClassificationManifestEntry struct {
-	Key           string                           `json:"key"`
-	ModelID       string                           `json:"model_id"`
-	InputSetPath  string                           `json:"input_set_path,omitempty"`
-	ReferencePath string                           `json:"reference_path"`
-	NativeBundles []TextClassificationNativeBundle `json:"native_bundles"`
+	Key                 string                           `json:"key"`
+	ModelID             string                           `json:"model_id"`
+	InputSetPath        string                           `json:"input_set_path,omitempty"`
+	ReferencePath       string                           `json:"reference_path"`
+	ReferenceBuilder    string                           `json:"reference_builder,omitempty"`
+	SourceReferencePath string                           `json:"source_reference_path,omitempty"`
+	NativeBundles       []TextClassificationNativeBundle `json:"native_bundles"`
 }
 
 // TextClassificationNativeBundle describes one checked-in InferGo-native text
@@ -75,6 +77,15 @@ func LoadTextClassificationManifest(path string) (TextClassificationManifest, er
 		}
 		if pack.ReferencePath == "" {
 			return TextClassificationManifest{}, fmt.Errorf("decode text-classification pack manifest: pack %q missing reference_path", pack.Key)
+		}
+		switch pack.ReferenceBuilder {
+		case "", "transformers":
+		case "basic-tokenizer-projection":
+			if pack.SourceReferencePath == "" {
+				return TextClassificationManifest{}, fmt.Errorf("decode text-classification pack manifest: pack %q missing source_reference_path for %q", pack.Key, pack.ReferenceBuilder)
+			}
+		default:
+			return TextClassificationManifest{}, fmt.Errorf("decode text-classification pack manifest: pack %q unsupported reference_builder %q", pack.Key, pack.ReferenceBuilder)
 		}
 		if len(pack.NativeBundles) == 0 {
 			return TextClassificationManifest{}, fmt.Errorf("decode text-classification pack manifest: pack %q missing native_bundles", pack.Key)
