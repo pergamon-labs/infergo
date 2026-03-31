@@ -15,6 +15,8 @@ Current stable surfaces:
 - `infer.LoadTokenClassifier(...)`
 - typed `TextInput` / `TextPrediction`
 - typed `TokenInput` / `TokenPrediction`
+- `infer/httpserver.NewTextPackMux(...)`
+- `infer/httpserver.NewTokenPackMux(...)`
 
 Those APIs intentionally expose checked-in native bundle behavior without
 forcing callers to know about `backends/bionet`.
@@ -24,6 +26,17 @@ bundle API. It is where checked-in manifests, reference-aware helpers,
 piece-aware prediction paths, and the first truly native raw-text text pack
 live. This keeps repo-shipped pack workflows out of the lower-level stable
 surface.
+
+The `infer/httpserver` package is the first stable REST serving layer above the
+curated pack API. It keeps the current HTTP contract small and explicit:
+
+- `GET /healthz`
+- `GET /metadata`
+- `POST /predict`
+
+The `cmd/infergo-serve` command is a thin wrapper on top of that package. It is
+the current supported command-line entrypoint for serving curated text and token
+packs over HTTP without forcing callers to copy the example binaries directly.
 
 ## Backend boundaries
 
@@ -83,6 +96,11 @@ artifacts instead of leaking into generic runtime claims.
 `cmd/infergo-packs` sits on top of that same contract. It gives developers one
 discovery path for the curated pack surface, including which text packs support
 raw text today, without forcing them to inspect manifests by hand.
+
+`cmd/infergo-serve` sits beside it as the first supported serving path for the
+same curated pack surface. That makes InferGo's REST story more product-like
+than the old example-only approach while still keeping the HTTP contract narrow
+and parity-backed.
 
 The first raw-text-capable text pack uses a native BasicTokenizer projection of
 the SST-2 proof set. That is intentionally narrower than claiming generic raw

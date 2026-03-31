@@ -14,6 +14,8 @@ Current prerelease: [`v0.1.0-prealpha.1`](https://github.com/pergamon-labs/infer
 - CPU-first native runtime path with narrow, explicit support claims
 - Stable public Go APIs in [`infer/`](./infer) and curated pack helpers in
   [`infer/packs/`](./infer/packs)
+- A first-class REST surface through [`infer/httpserver/`](./infer/httpserver)
+  and [`cmd/infergo-serve/`](./cmd/infergo-serve)
 - Parity-driven validation against public reference implementations
 - Honest non-goals: not a training framework, not a blanket `.pt` loader, and
   not a general transformer runtime
@@ -56,7 +58,7 @@ go run ./examples/bionet-classifier \
 3. Run the first raw-text token-classification HTTP example:
 
 ```bash
-go run ./examples/token-http-server
+go run ./cmd/infergo-serve -task token
 ```
 
 Then call it:
@@ -79,7 +81,8 @@ go run ./cmd/infergo-parity \
 ## Use as a library
 
 InferGo's stable public package surface starts in [`infer/`](./infer) and
-[`infer/packs/`](./infer/packs).
+[`infer/packs/`](./infer/packs). The stable REST surface starts in
+[`infer/httpserver/`](./infer/httpserver).
 
 For the easiest curated path, load a checked-in pack:
 
@@ -117,13 +120,12 @@ See also:
 
 ## Serve over HTTP
 
-InferGo's current REST story is example-based while the serving surface
-stabilizes.
+InferGo now ships a first-class HTTP serving entrypoint:
 
 Text classification:
 
 ```bash
-go run ./examples/http-server
+go run ./cmd/infergo-serve -task text
 ```
 
 Then call it:
@@ -137,7 +139,7 @@ curl -s -X POST http://127.0.0.1:8080/predict \
 Token classification:
 
 ```bash
-go run ./examples/token-http-server
+go run ./cmd/infergo-serve -task token
 ```
 
 Then call it:
@@ -150,6 +152,8 @@ curl -s -X POST http://127.0.0.1:8081/predict \
 
 See also:
 
+- [`cmd/infergo-serve/`](./cmd/infergo-serve)
+- [`infer/httpserver/`](./infer/httpserver)
 - [`examples/http-server/`](./examples/http-server)
 - [`examples/token-http-server/`](./examples/token-http-server)
 
@@ -165,6 +169,8 @@ InferGo is intentionally narrow in `v0.1.0-prealpha.1`.
 | Raw-text token prediction | Supported for curated validated packs only |
 | Pack discovery CLI | Supported via [`cmd/infergo-packs/`](./cmd/infergo-packs) |
 | Parity CLI | Supported via [`cmd/infergo-parity/`](./cmd/infergo-parity) |
+| REST serving CLI | Supported via [`cmd/infergo-serve/`](./cmd/infergo-serve) |
+| Stable HTTP handler package | Supported via [`infer/httpserver/`](./infer/httpserver) |
 | Optional TorchScript bridge | Experimental / backend-specific |
 | gRPC serving surface | Not yet |
 
@@ -213,4 +219,5 @@ Non-goals for this release line:
 - [`CHANGELOG.md`](./CHANGELOG.md)
 - [`RELEASING.md`](./RELEASING.md)
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- [`cmd/infergo-serve/README.md`](./cmd/infergo-serve/README.md)
 - [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)

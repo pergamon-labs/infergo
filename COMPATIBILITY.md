@@ -19,8 +19,10 @@ without a documented export path, backend, and parity test story.
 - Public APIs:
   - stable bundle API: `infer.LoadTextClassifier` and `infer.LoadTokenClassifier`
   - curated pack API: `infer/packs.LoadTextPack` and `infer/packs.LoadTokenPack`
+  - stable HTTP handler API: `infer/httpserver.NewTextPackMux` and `infer/httpserver.NewTokenPackMux`
 - Current validated examples:
   - curated pack discovery through `cmd/infergo-packs`
+  - stable REST serving through `cmd/infergo-serve`
   - benchmark suite for current checked-in raw-text text/token paths through `go test ./infer/packs -run '^$' -bench . -benchmem`
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
   - native text classification over the manifest-backed public model packs listed in `testdata/reference/text-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
@@ -29,8 +31,8 @@ without a documented export path, backend, and parity test story.
   - first truly native raw-text text prediction via the checked-in `infergo-basic-sst2` pack
   - curated token-pack prediction via `examples/token-http-server`
   - first truly native raw-text token prediction via the checked-in `infergo-basic-french-ner` pack
-  - text classification served through `examples/http-server`
-  - token classification served through `examples/token-http-server`
+  - text classification served through `infer/httpserver` and `cmd/infergo-serve -task text`
+  - token classification served through `infer/httpserver` and `cmd/infergo-serve -task token`
   - the token-classification manifest now includes a first non-English multilingual NER pack through `Davlan/xlm-roberta-base-ner-hrl`
   - the token-classification manifest now also includes a French-specific NER pack through `cmarkea/distilcamembert-base-ner`
   - checked-in native bundle shapes:
@@ -85,3 +87,4 @@ A backend should only be called supported when:
 4. known unsupported features are documented
 5. parity or golden tests exist
 6. a normal Go server example exists
+7. the stable HTTP surface is documented if REST serving is claimed
