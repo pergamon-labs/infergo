@@ -32,12 +32,13 @@ type curatedTokenPack struct {
 	ModelID         string `json:"model_id"`
 	NativeBundleDir string `json:"native_bundle_dir"`
 	ReferencePath   string `json:"reference_path"`
+	SupportsRawText bool   `json:"supports_raw_text"`
 }
 
 func main() {
 	task := flag.String("task", "all", "which pack family to print: all, text, or token")
 	jsonOutput := flag.Bool("json", false, "print machine-readable JSON instead of a table")
-	rawTextOnly := flag.Bool("raw-text-only", false, "only print text packs that support raw text")
+	rawTextOnly := flag.Bool("raw-text-only", false, "only print packs that support raw text")
 	flag.Parse()
 
 	if *task != "all" && *task != "text" && *task != "token" {
@@ -67,6 +68,14 @@ func main() {
 			}
 		}
 		textPacks = filtered
+
+		filteredToken := make([]curatedpacks.TokenPackInfo, 0, len(tokenPacks))
+		for _, item := range tokenPacks {
+			if item.SupportsRawText {
+				filteredToken = append(filteredToken, item)
+			}
+		}
+		tokenPacks = filteredToken
 	}
 
 	if *jsonOutput {
@@ -104,6 +113,7 @@ func writeJSON(dst io.Writer, cwd, task string, textPacks []curatedpacks.TextPac
 				ModelID:         item.ModelID,
 				NativeBundleDir: displayPath(cwd, item.NativeBundleDir),
 				ReferencePath:   displayPath(cwd, item.ReferencePath),
+				SupportsRawText: item.SupportsRawText,
 			})
 		}
 	}
@@ -137,9 +147,13 @@ func writeTable(dst io.Writer, cwd, task string, textPacks []curatedpacks.TextPa
 			fmt.Fprintln(writer)
 		}
 		fmt.Fprintln(writer, "TOKEN PACKS")
-		fmt.Fprintln(writer, "KEY\tMODEL ID\tNATIVE BUNDLE\tREFERENCE")
+		fmt.Fprintln(writer, "KEY\tMODEL ID\tRAW TEXT\tNATIVE BUNDLE\tREFERENCE")
 		for _, item := range tokenPacks {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", item.Key, item.ModelID, displayPath(cwd, item.NativeBundleDir), displayPath(cwd, item.ReferencePath))
+			rawText := "no"
+			if item.SupportsRawText {
+				rawText = "yes"
+			}
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", item.Key, item.ModelID, rawText, displayPath(cwd, item.NativeBundleDir), displayPath(cwd, item.ReferencePath))
 		}
 		if len(tokenPacks) == 0 {
 			fmt.Fprintln(writer, "(none)")

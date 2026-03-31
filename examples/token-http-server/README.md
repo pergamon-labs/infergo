@@ -7,8 +7,9 @@ It will:
 
 - load a checked-in InferGo-native token-classification pack through `infer/packs`
 - expose a `/predict` HTTP endpoint
+- accept raw text for packs that support native tokenization
 - accept either a known `case_id` from a checked-in reference file or explicit
-  tokenizer pieces that match the chosen pack
+  tokens that match the chosen pack
 
 Run it from the repo root:
 
@@ -16,7 +17,15 @@ Run it from the repo root:
 go run ./examples/token-http-server
 ```
 
-Then call it with a checked-in French demo case:
+Then call it with raw text:
+
+```bash
+curl -s -X POST http://127.0.0.1:8081/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Sophie Tremblay a parlé avec Hydro-Québec à Montréal."}'
+```
+
+Or call it with a checked-in French demo case:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8081/predict \
@@ -29,5 +38,5 @@ Or call it with token pieces directly:
 ```bash
 curl -s -X POST http://127.0.0.1:8081/predict \
   -H 'Content-Type: application/json' \
-  -d '{"tokens":["▁Jean","▁Dupont","▁a","▁rencontré","▁Air","bus","▁à","▁Paris"]}'
+  -d '{"tokens":["jean","dupont","a","rencontré","airbus","à","paris"]}'
 ```

@@ -30,8 +30,8 @@ native token-classification assets.
 go test ./...
 ```
 
-3. See which curated packs are checked in and which text packs support raw
-   text:
+3. See which curated packs are checked in and which text or token packs support
+   raw text:
 
 ```bash
 go run ./cmd/infergo-packs
@@ -126,7 +126,7 @@ go run ./examples/http-server
 ```
 
 That HTTP example now defaults to the checked-in raw-text-capable
-`infergo-basic-sst2` pack, while still accepting token pieces and reference
+`infergo-basic-french-ner` pack, while still accepting tokens and reference
 case ids.
 
 Current scaffold highlights:
@@ -140,7 +140,7 @@ Current scaffold highlights:
 - [`backends/torchscript/`](./backends/torchscript) is reserved for a narrow, parity-tested backend path
 - [`docs/parity-spike-01.md`](./docs/parity-spike-01.md) defines the first concrete parity spike
 - [`cmd/infergo-parity/`](./cmd/infergo-parity) runs the current parity harness
-- [`cmd/infergo-packs/`](./cmd/infergo-packs) lists the curated checked-in packs and highlights which text packs support raw text
+- [`cmd/infergo-packs/`](./cmd/infergo-packs) lists the curated checked-in packs and highlights which text and token packs support raw text
 - [`testdata/parity/text-classification/`](./testdata/parity/text-classification) contains the first public-safe artifact fixture
 - [`scripts/transformers_text_classification_reference.py`](./scripts/transformers_text_classification_reference.py) generates the first external Transformers reference file
 - [`scripts/build_text_classification_reference_pack.py`](./scripts/build_text_classification_reference_pack.py) regenerates checked-in text-classification reference packs from the manifest
@@ -156,13 +156,14 @@ Current scaffold highlights:
 - [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
 - the public text-classification packs are now validated against an English DistilBERT SST-2 path, an English RoBERTa sentiment path, and a first non-English multilingual sentiment path
 - the public text-classification packs now also include a first truly native raw-text-capable pack, `infergo-basic-sst2`, derived from a public-safe BasicTokenizer projection of the SST-2 proof set
+- the public token-classification packs now also include a first truly native raw-text-capable pack, `infergo-basic-french-ner`, derived from a public-safe BasicTokenizer projection of the French NER proof set
 - the native `bionet` path now includes both a widened multilingual token-classification pack through `Davlan/xlm-roberta-base-ner-hrl` and a French-specific token pack through `cmarkea/distilcamembert-base-ner`
 - the native `bionet` path is now validated on the supported token-classification model packs listed in [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json), without `libtorch`
 - the text-classification parity path now follows the same manifest-backed contributor workflow as token classification
 - [`examples/bionet-classifier`](./examples/bionet-classifier), [`examples/http-server`](./examples/http-server), and [`examples/token-http-server`](./examples/token-http-server) now show honest, runnable usage through the stable public `infer` and curated `infer/packs` packages
-- the curated `infer/packs` layer now lets callers list/load checked-in packs, predict checked-in reference cases, and submit tokenizer-piece arrays without hand-wiring manifest paths
+- the curated `infer/packs` layer now lets callers list/load checked-in packs, predict checked-in reference cases, and submit either raw text or explicit tokens when a pack validates that path
 - `cmd/infergo-packs` now gives developers a first-class discovery path before they pick a pack or try raw text
-- raw-text prediction is intentionally narrow; InferGo currently exposes it only for the checked-in `infergo-basic-sst2` pack whose tokenizer behavior is fully native and validated from public-safe pack data
+- raw-text prediction is intentionally narrow; InferGo currently exposes it only for the checked-in `infergo-basic-sst2` and `infergo-basic-french-ner` packs whose tokenizer behavior is fully native and validated from public-safe pack data
 - the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
 - layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 

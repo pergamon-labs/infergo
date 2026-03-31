@@ -12,6 +12,7 @@ import (
 
 type predictRequest struct {
 	CaseID string   `json:"case_id,omitempty"`
+	Text   string   `json:"text,omitempty"`
 	Tokens []string `json:"tokens,omitempty"`
 }
 
@@ -28,7 +29,7 @@ type predictResponse struct {
 
 func main() {
 	addr := flag.String("addr", ":8081", "http listen address")
-	packKey := flag.String("pack", "distilcamembert-french-ner", "supported checked-in token pack key")
+	packKey := flag.String("pack", "infergo-basic-french-ner", "supported checked-in token pack key")
 	flag.Parse()
 
 	pack, err := packs.LoadTokenPack(*packKey)
@@ -64,6 +65,19 @@ func main() {
 				TokenLabels: result.TokenLabels,
 				TokenLogits: result.TokenLogits,
 			}
+		} else if req.Text != "" {
+			result, err := pack.PredictText(req.Text)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			prediction = predictResponse{
+				Backend:     result.Backend,
+				ModelID:     result.ModelID,
+				Labels:      result.Labels,
+				TokenLabels: result.TokenLabels,
+				TokenLogits: result.TokenLogits,
+			}
 		} else if len(req.Tokens) > 0 {
 			result, err := pack.PredictTokens(req.Tokens)
 			if err != nil {
@@ -79,7 +93,7 @@ func main() {
 			}
 			tokens = append([]string(nil), req.Tokens...)
 		} else {
-			http.Error(w, "provide tokens or a valid case_id", http.StatusBadRequest)
+			http.Error(w, "provide text, tokens, or a valid case_id", http.StatusBadRequest)
 			return
 		}
 
@@ -101,7 +115,8 @@ func main() {
 	if strings.HasPrefix(curlAddr, ":") {
 		curlAddr = "127.0.0.1" + curlAddr
 	}
-	log.Printf("Try pieces: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"tokens\":[\"▁Jean\",\"▁Dupont\",\"▁a\",\"▁rencontré\",\"▁Air\",\"bus\",\"▁à\",\"▁Paris\"]}' | jq", curlAddr)
+	log.Printf("Try raw text: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"text\":\"Sophie Tremblay a parlé avec Hydro-Québec à Montréal.\"}' | jq", curlAddr)
+	log.Printf("Try pieces: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"tokens\":[\"jean\",\"dupont\",\"a\",\"rencontré\",\"airbus\",\"à\",\"paris\"]}' | jq", curlAddr)
 	log.Printf("Try a checked-in case: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"case_id\":\"frca-003\"}' | jq", curlAddr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal(err)

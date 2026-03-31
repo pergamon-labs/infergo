@@ -3,7 +3,9 @@ package packs
 import (
 	"fmt"
 	"slices"
+	"unicode"
 
+	runtimeTokenizer "github.com/pergamon-labs/infergo/backends/bionet/runtime/tokenizer"
 	"github.com/pergamon-labs/infergo/infer"
 	"github.com/pergamon-labs/infergo/internal/modelpacks"
 	"github.com/pergamon-labs/infergo/internal/parity"
@@ -15,6 +17,7 @@ type TokenPackInfo struct {
 	ModelID         string `json:"model_id"`
 	ReferencePath   string `json:"reference_path"`
 	NativeBundleDir string `json:"native_bundle_dir"`
+	SupportsRawText bool   `json:"supports_raw_text"`
 }
 
 // TokenPack wraps a supported checked-in token pack with convenience helpers.
@@ -27,6 +30,8 @@ type TokenPack struct {
 	suffixIDs        []int64
 	prefixLen        int
 	suffixLen        int
+	rawTokenizer     runtimeTokenizer.Tokenizer
+	maxContentTokens int
 }
 
 // ListTokenPacks returns the supported checked-in token packs.
@@ -38,11 +43,21 @@ func ListTokenPacks() ([]TokenPackInfo, error) {
 
 	infos := make([]TokenPackInfo, 0, len(manifest.Packs))
 	for _, entry := range manifest.Packs {
+		reference, err := parity.LoadTransformersTokenClassificationReference(modulePath(entry.ReferencePath))
+		if err != nil {
+			return nil, fmt.Errorf("list token packs: load reference for %q: %w", entry.Key, err)
+		}
+		_, _, _, _, _, rawTokenizer, _, err := buildTokenEncoder(reference)
+		if err != nil {
+			return nil, fmt.Errorf("list token packs: build encoder for %q: %w", entry.Key, err)
+		}
+
 		infos = append(infos, TokenPackInfo{
 			Key:             entry.Key,
 			ModelID:         entry.ModelID,
 			ReferencePath:   modulePath(entry.ReferencePath),
 			NativeBundleDir: modulePath(entry.NativeBundleDir),
+			SupportsRawText: rawTokenizer != nil,
 		})
 	}
 
@@ -80,7 +95,7 @@ func LoadTokenPack(key string) (*TokenPack, error) {
 		return nil, fmt.Errorf("load token pack %q reference: %w", key, err)
 	}
 
-	contentTokenToID, prefixIDs, suffixIDs, prefixLen, suffixLen, err := buildTokenEncoder(reference)
+	contentTokenToID, prefixIDs, suffixIDs, prefixLen, suffixLen, rawTokenizer, maxContentTokens, err := buildTokenEncoder(reference)
 	if err != nil {
 		_ = classifier.Close()
 		return nil, fmt.Errorf("load token pack %q encoder: %w", key, err)
@@ -97,6 +112,7 @@ func LoadTokenPack(key string) (*TokenPack, error) {
 			ModelID:         entry.ModelID,
 			ReferencePath:   modulePath(entry.ReferencePath),
 			NativeBundleDir: modulePath(entry.NativeBundleDir),
+			SupportsRawText: rawTokenizer != nil,
 		},
 		classifier:       classifier,
 		caseByID:         caseByID,
@@ -105,6 +121,8 @@ func LoadTokenPack(key string) (*TokenPack, error) {
 		suffixIDs:        suffixIDs,
 		prefixLen:        prefixLen,
 		suffixLen:        suffixLen,
+		rawTokenizer:     rawTokenizer,
+		maxContentTokens: maxContentTokens,
 	}, nil
 }
 
@@ -122,6 +140,12 @@ func (p *TokenPack) ModelID() string {
 		return ""
 	}
 	return p.info.ModelID
+}
+
+// SupportsRawText reports whether this pack can honestly tokenize raw text
+// with the checked-in native tokenizer helper.
+func (p *TokenPack) SupportsRawText() bool {
+	return p != nil && p.rawTokenizer != nil
 }
 
 // PredictReferenceCase runs inference for one checked-in reference case id and
@@ -184,6 +208,25 @@ func (p *TokenPack) PredictTokens(tokens []string) (infer.TokenPrediction, error
 	return trimPredictionWindow(prediction, p.prefixLen, p.suffixLen), nil
 }
 
+// PredictText tokenizes and predicts one raw text input when the checked-in
+// pack supports a native tokenizer helper.
+func (p *TokenPack) PredictText(text string) (infer.TokenPrediction, error) {
+	if p == nil {
+		return infer.TokenPrediction{}, fmt.Errorf("predict text: token pack is not initialized")
+	}
+	if p.rawTokenizer == nil {
+		return infer.TokenPrediction{}, fmt.Errorf("predict text: pack %q does not support raw-text tokenization", p.info.Key)
+	}
+
+	tokens := p.rawTokenizer(text, p.maxContentTokens+8)
+	tokens = trimUnscoredEdgeTokens(tokens)
+	if len(tokens) == 0 {
+		return infer.TokenPrediction{}, fmt.Errorf("predict text: tokenizer produced no scored tokens")
+	}
+
+	return p.PredictTokens(tokens)
+}
+
 // Close releases the underlying classifier.
 func (p *TokenPack) Close() error {
 	if p == nil || p.classifier == nil {
@@ -192,16 +235,18 @@ func (p *TokenPack) Close() error {
 	return p.classifier.Close()
 }
 
-func buildTokenEncoder(reference parity.TransformersTokenClassificationReference) (map[string]int64, []int64, []int64, int, int, error) {
+func buildTokenEncoder(reference parity.TransformersTokenClassificationReference) (map[string]int64, []int64, []int64, int, int, runtimeTokenizer.Tokenizer, int, error) {
 	tokenToID := make(map[string]int64)
 	var prefixIDs []int64
 	var suffixIDs []int64
 	prefixLen := -1
 	suffixLen := -1
+	rawTextSupported := true
+	maxContentTokens := 0
 
 	for _, item := range reference.Cases {
 		if len(item.Tokens) != len(item.InputIDs) || len(item.InputIDs) != len(item.AttentionMask) || len(item.InputIDs) != len(item.ScoringMask) {
-			return nil, nil, nil, 0, 0, fmt.Errorf("reference case %q has inconsistent token/input lengths", item.ID)
+			return nil, nil, nil, 0, 0, nil, 0, fmt.Errorf("reference case %q has inconsistent token/input lengths", item.ID)
 		}
 
 		firstScored := -1
@@ -219,31 +264,45 @@ func buildTokenEncoder(reference parity.TransformersTokenClassificationReference
 			}
 		}
 		if firstScored == -1 || lastScored == -1 || lastScored < firstScored {
-			return nil, nil, nil, 0, 0, fmt.Errorf("reference case %q has no scored tokens", item.ID)
+			return nil, nil, nil, 0, 0, nil, 0, fmt.Errorf("reference case %q has no scored tokens", item.ID)
 		}
 
 		casePrefixIDs := intsToInt64(item.InputIDs[:firstScored])
 		caseSuffixIDs := intsToInt64(item.InputIDs[lastScored+1:])
+		contentTokens := append([]string(nil), item.Tokens[firstScored:lastScored+1]...)
 		if prefixLen == -1 {
 			prefixLen = len(casePrefixIDs)
 			suffixLen = len(caseSuffixIDs)
 			prefixIDs = casePrefixIDs
 			suffixIDs = caseSuffixIDs
 		} else if prefixLen != len(casePrefixIDs) || suffixLen != len(caseSuffixIDs) || !slices.Equal(prefixIDs, casePrefixIDs) || !slices.Equal(suffixIDs, caseSuffixIDs) {
-			return nil, nil, nil, 0, 0, fmt.Errorf("reference case %q uses inconsistent boundary tokens", item.ID)
+			return nil, nil, nil, 0, 0, nil, 0, fmt.Errorf("reference case %q uses inconsistent boundary tokens", item.ID)
+		}
+
+		basicTokens := trimUnscoredEdgeTokens(runtimeTokenizer.BasicTokenizer(item.Text, len(item.Tokens)+8))
+		if len(basicTokens) > maxContentTokens {
+			maxContentTokens = len(basicTokens)
+		}
+		if !slices.Equal(basicTokens, contentTokens) {
+			rawTextSupported = false
 		}
 
 		for idx := firstScored; idx <= lastScored; idx++ {
 			token := item.Tokens[idx]
 			tokenID := int64(item.InputIDs[idx])
 			if existing, ok := tokenToID[token]; ok && existing != tokenID {
-				return nil, nil, nil, 0, 0, fmt.Errorf("token %q maps to multiple ids (%d, %d)", token, existing, tokenID)
+				return nil, nil, nil, 0, 0, nil, 0, fmt.Errorf("token %q maps to multiple ids (%d, %d)", token, existing, tokenID)
 			}
 			tokenToID[token] = tokenID
 		}
 	}
 
-	return tokenToID, prefixIDs, suffixIDs, prefixLen, suffixLen, nil
+	var rawTokenizer runtimeTokenizer.Tokenizer
+	if rawTextSupported {
+		rawTokenizer = runtimeTokenizer.BasicTokenizer
+	}
+
+	return tokenToID, prefixIDs, suffixIDs, prefixLen, suffixLen, rawTokenizer, maxContentTokens, nil
 }
 
 func trimPredictionForScoringMask(prediction infer.TokenPrediction, scoringMask []int) infer.TokenPrediction {
@@ -285,4 +344,27 @@ func intsToInt64(values []int) []int64 {
 		output[i] = int64(value)
 	}
 	return output
+}
+
+func trimUnscoredEdgeTokens(tokens []string) []string {
+	start := 0
+	for start < len(tokens) && !shouldScoreToken(tokens[start]) {
+		start++
+	}
+
+	end := len(tokens)
+	for end > start && !shouldScoreToken(tokens[end-1]) {
+		end--
+	}
+
+	return append([]string(nil), tokens[start:end]...)
+}
+
+func shouldScoreToken(token string) bool {
+	for _, r := range token {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			return true
+		}
+	}
+	return false
 }

@@ -45,6 +45,16 @@
       "reference_path": "testdata/reference/token-classification/distilcamembert-french-ner-reference.json",
       "native_bundle_dir": "testdata/native/token-classification/distilcamembert-french-ner-windowed-embedding-linear",
       "native_mode": "windowed-embedding-linear"
+    },
+    {
+      "key": "infergo-basic-french-ner",
+      "model_id": "infergo/basic-french-ner",
+      "input_set_path": "testdata/reference/token-classification/french-ner-inputs.json",
+      "reference_builder": "basic-tokenizer-projection",
+      "source_reference_path": "testdata/reference/token-classification/distilcamembert-french-ner-reference.json",
+      "reference_path": "testdata/reference/token-classification/infergo-basic-french-ner-reference.json",
+      "native_bundle_dir": "testdata/native/token-classification/infergo-basic-french-ner-windowed-embedding-linear",
+      "native_mode": "windowed-embedding-linear"
     }
   ]
 }

@@ -15,10 +15,12 @@ To show only text packs:
 go run ./cmd/infergo-packs -task text
 ```
 
-To show only raw-text-capable text packs:
+To show only raw-text-capable packs for the selected task:
 
 ```bash
 go run ./cmd/infergo-packs -task text -raw-text-only
+
+go run ./cmd/infergo-packs -task token -raw-text-only
 ```
 
 To get machine-readable output:

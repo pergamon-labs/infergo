@@ -13,6 +13,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MANIFEST_PATH = REPO_ROOT / "testdata/reference/token-classification/model-packs.json"
 REFERENCE_SCRIPT = REPO_ROOT / "scripts/transformers_token_classification_reference.py"
+BASIC_PROJECTION_TOOL = "./internal/tools/basictokenpackgen"
 
 
 def parse_args() -> argparse.Namespace:
@@ -75,20 +76,40 @@ def main() -> None:
     for pack in selected:
         input_path = pack.get("input_set_path", default_input_path)
         print(f'building token-classification pack {pack["key"]} ({pack["model_id"]})')
-        run(
-            [
-                sys.executable,
-                str(REFERENCE_SCRIPT),
-                "--model-id",
-                pack["model_id"],
-                "--input",
-                input_path,
-                "--output",
-                pack["reference_path"],
-                "--max-length",
-                str(args.max_length),
-            ]
-        )
+        builder = pack.get("reference_builder", "transformers")
+        if builder == "transformers":
+            run(
+                [
+                    sys.executable,
+                    str(REFERENCE_SCRIPT),
+                    "--model-id",
+                    pack["model_id"],
+                    "--input",
+                    input_path,
+                    "--output",
+                    pack["reference_path"],
+                    "--max-length",
+                    str(args.max_length),
+                ]
+            )
+        elif builder == "basic-tokenizer-projection":
+            run(
+                [
+                    "go",
+                    "run",
+                    BASIC_PROJECTION_TOOL,
+                    "-source-reference",
+                    pack["source_reference_path"],
+                    "-output",
+                    pack["reference_path"],
+                    "-model-id",
+                    pack["model_id"],
+                    "-name",
+                    f'{pack["key"]} BasicTokenizer Projection',
+                ]
+            )
+        else:
+            raise SystemExit(f'unsupported reference_builder for {pack["key"]}: {builder}')
         run(
             [
                 "go",

@@ -89,6 +89,11 @@ the SST-2 proof set. That is intentionally narrower than claiming generic raw
 text support across the whole manifest, but it gives InferGo one fully honest
 end-to-end raw-text serving path.
 
+The first raw-text-capable token pack follows the same pattern through a
+BasicTokenizer projection of the French NER proof set. That keeps the token
+serving story honest too: raw text is supported where the checked-in tokenizer
+behavior is native and validated, not as a blanket promise across every pack.
+
 ## Extraction mapping from screening
 
 Extract early:

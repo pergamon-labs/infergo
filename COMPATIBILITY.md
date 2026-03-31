@@ -27,6 +27,7 @@ without a documented export path, backend, and parity test story.
   - curated text-pack prediction via `examples/bionet-classifier`
   - first truly native raw-text text prediction via the checked-in `infergo-basic-sst2` pack
   - curated token-pack prediction via `examples/token-http-server`
+  - first truly native raw-text token prediction via the checked-in `infergo-basic-french-ner` pack
   - text classification served through `examples/http-server`
   - token classification served through `examples/token-http-server`
   - the token-classification manifest now includes a first non-English multilingual NER pack through `Davlan/xlm-roberta-base-ner-hrl`
@@ -41,7 +42,7 @@ without a documented export path, backend, and parity test story.
     - checked-in token packs can be loaded and queried by pack key
     - piece-aware prediction helpers are supported for checked-in packs whose tokenizer-piece to id mapping is validated from the public-safe reference data
     - raw-text prediction is only supported when a pack explicitly validates a checked-in tokenizer helper
-    - current raw-text-capable pack: `infergo-basic-sst2`
+    - current raw-text-capable packs: `infergo-basic-sst2`, `infergo-basic-french-ner`
 
 ## v1 stretch path
 

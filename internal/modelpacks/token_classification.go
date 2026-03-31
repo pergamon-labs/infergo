@@ -17,12 +17,14 @@ type TokenClassificationManifest struct {
 // TokenClassificationManifestEntry describes one supported token-classification
 // reference pack.
 type TokenClassificationManifestEntry struct {
-	InputSetPath    string `json:"input_set_path,omitempty"`
-	Key             string `json:"key"`
-	ModelID         string `json:"model_id"`
-	ReferencePath   string `json:"reference_path"`
-	NativeBundleDir string `json:"native_bundle_dir"`
-	NativeMode      string `json:"native_mode"`
+	InputSetPath        string `json:"input_set_path,omitempty"`
+	Key                 string `json:"key"`
+	ModelID             string `json:"model_id"`
+	ReferenceBuilder    string `json:"reference_builder,omitempty"`
+	SourceReferencePath string `json:"source_reference_path,omitempty"`
+	ReferencePath       string `json:"reference_path"`
+	NativeBundleDir     string `json:"native_bundle_dir"`
+	NativeMode          string `json:"native_mode"`
 }
 
 // LoadTokenClassificationManifest loads the supported token-classification
