@@ -2,6 +2,10 @@
 
 This scaffold is intentionally small and extraction-oriented.
 
+InferGo is currently preparing for a first public pre-alpha release. Please
+keep contributions aligned with the narrow, explicitly documented support
+surface.
+
 Current contribution priorities:
 
 1. keep the public API small and honest

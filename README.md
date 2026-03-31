@@ -2,6 +2,10 @@
 
 InferGo is a Go-native inference and model-serving toolkit for backend services.
 
+InferGo is currently preparing its first public pre-alpha release.
+
+Recommended first public tag: `v0.1.0-prealpha.1`
+
 This repository is the early public home for InferGo under the Pergamon Labs GitHub organization. The initial v1 story is intentionally narrow:
 
 - CPU-first inference for small models
@@ -17,6 +21,23 @@ What InferGo is not in v1:
 - an LLM platform
 - a GPU-first system
 - a model zoo; checked-in packs are curated proofs of backend and artifact support
+
+## Status
+
+InferGo is not trying to be a generic transformer runtime yet. The current
+public story is:
+
+- CPU-first native inference in Go
+- stable public APIs in `infer` and `infer/packs`
+- curated parity-backed support, not blanket model compatibility
+- narrow raw-text support for explicitly validated packs only
+
+Release-oriented docs:
+
+- [`CHANGELOG.md`](./CHANGELOG.md)
+- [`RELEASING.md`](./RELEASING.md)
+- [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)
+- [`BENCHMARKS.md`](./BENCHMARKS.md)
 
 ## Quickstart
 
@@ -87,6 +108,21 @@ uv run --with torch==2.10.0 --with transformers==5.3.0 \
 ```bash
 go test ./infer/packs -run '^$' -bench . -benchmem
 ```
+
+## Benchmark snapshot
+
+Example snapshot from one local run on `darwin/arm64` with an Apple M3 Max:
+
+| Benchmark | Result |
+| --- | --- |
+| `LoadTextPack(infergo-basic-sst2)` | about `0.34 ms/op`, `166924 B/op`, `2265 allocs/op` |
+| `PredictText(infergo-basic-sst2)` | about `1.6 µs/op`, `1616 B/op`, `57 allocs/op` |
+| `LoadTokenPack(infergo-basic-french-ner)` | about `0.61 ms/op`, `260465 B/op`, `2927 allocs/op` |
+| `PredictText(infergo-basic-french-ner)` | about `7.3 µs/op`, `11464 B/op`, `229 allocs/op` |
+| `PredictTokens(infergo-basic-french-ner)` | about `5.8 µs/op`, `9656 B/op`, `191 allocs/op` |
+
+These numbers are only a point-in-time example. Use
+[`BENCHMARKS.md`](./BENCHMARKS.md) to reproduce the suite on your own hardware.
 
 ## Supported usage paths
 
