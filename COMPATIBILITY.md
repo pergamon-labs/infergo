@@ -20,9 +20,12 @@ without a documented export path, backend, and parity test story.
   - stable bundle API: `infer.LoadTextClassifier` and `infer.LoadTokenClassifier`
   - curated pack API: `infer/packs.LoadTextPack` and `infer/packs.LoadTokenPack`
   - stable HTTP handler API: `infer/httpserver.NewTextPackMux` and `infer/httpserver.NewTokenPackMux`
+  - stable server config API: `infer/httpserver.DefaultServerConfig` and `infer/httpserver.NewServer`
 - Current validated examples:
   - curated pack discovery through `cmd/infergo-packs`
   - stable REST serving through `cmd/infergo-serve`
+  - structured JSON error responses from the stable HTTP surface
+  - graceful shutdown and timeout-driven HTTP serving through `cmd/infergo-serve`
   - benchmark suite for current checked-in raw-text text/token paths and the stable HTTP handler surface through `go test ./infer/packs ./infer/httpserver -run '^$' -bench . -benchmem`
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
   - native text classification over the manifest-backed public model packs listed in `testdata/reference/text-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`

@@ -3,6 +3,7 @@ package httpserver
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -55,7 +56,8 @@ func TestNewTextPackMuxMethodNotAllowed(t *testing.T) {
 	require.Equal(t, http.StatusMethodNotAllowed, rec.Code)
 	var payload ErrorResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &payload))
-	require.Contains(t, payload.Error, "expected POST")
+	require.Equal(t, "method_not_allowed", payload.Error.Code)
+	require.Contains(t, payload.Error.Message, "expected POST")
 }
 
 func TestNewTokenPackMuxPredictText(t *testing.T) {
@@ -92,5 +94,58 @@ func TestNewTokenPackMuxRawTextUnsupported(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, rec.Code)
 	var payload ErrorResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &payload))
-	require.Contains(t, payload.Error, "does not support raw-text tokenization")
+	require.Equal(t, "invalid_request", payload.Error.Code)
+	require.Contains(t, payload.Error.Message, "does not support raw-text tokenization")
+}
+
+func TestNewTextPackMuxRejectsMultipleInputs(t *testing.T) {
+	pack, err := packs.LoadTextPack("infergo-basic-sst2")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, pack.Close()) })
+
+	req := httptest.NewRequest(http.MethodPost, "/predict", bytes.NewBufferString(`{"text":"good","tokens":["good"]}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	NewTextPackMux(pack).ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	var payload ErrorResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &payload))
+	require.Equal(t, "invalid_request", payload.Error.Code)
+	require.Contains(t, payload.Error.Message, "exactly one")
+}
+
+func TestNewTextPackMuxNotFoundIsJSON(t *testing.T) {
+	pack, err := packs.LoadTextPack("infergo-basic-sst2")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, pack.Close()) })
+
+	req := httptest.NewRequest(http.MethodGet, "/unknown", nil)
+	rec := httptest.NewRecorder()
+
+	NewTextPackMux(pack).ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusNotFound, rec.Code)
+	var payload ErrorResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &payload))
+	require.Equal(t, "not_found", payload.Error.Code)
+}
+
+func TestNewTextPackMuxRequestLogging(t *testing.T) {
+	pack, err := packs.LoadTextPack("infergo-basic-sst2")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, pack.Close()) })
+
+	var buf bytes.Buffer
+	logger := log.New(&buf, "", 0)
+
+	req := httptest.NewRequest(http.MethodGet, "/metadata", nil)
+	rec := httptest.NewRecorder()
+
+	NewTextPackMux(pack, WithLogger(logger), WithRequestLogging(true)).ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Contains(t, buf.String(), "route=metadata")
+	require.Contains(t, buf.String(), "status=200")
 }

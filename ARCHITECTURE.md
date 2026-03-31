@@ -34,9 +34,17 @@ curated pack API. It keeps the current HTTP contract small and explicit:
 - `GET /metadata`
 - `POST /predict`
 
+It also owns the first stable operational serving knobs:
+
+- structured JSON API errors
+- request logging hooks
+- reusable `ServerConfig` for read, write, idle, and shutdown timeouts
+
 The `cmd/infergo-serve` command is a thin wrapper on top of that package. It is
 the current supported command-line entrypoint for serving curated text and token
 packs over HTTP without forcing callers to copy the example binaries directly.
+It now supports env-driven defaults and graceful shutdown on common process
+signals.
 
 ## Backend boundaries
 

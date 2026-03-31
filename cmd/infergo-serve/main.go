@@ -1,20 +1,47 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"strconv"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/pergamon-labs/infergo/infer/httpserver"
 	"github.com/pergamon-labs/infergo/infer/packs"
 )
 
 func main() {
-	addr := flag.String("addr", ":8080", "http listen address")
-	task := flag.String("task", "text", "which serving task to expose: text or token")
-	packKey := flag.String("pack", "", "supported checked-in pack key")
+	serverCfg := httpserver.DefaultServerConfig()
+
+	addr := flag.String("addr", envString("INFERGO_SERVE_ADDR", serverCfg.Addr), "http listen address")
+	task := flag.String("task", envString("INFERGO_SERVE_TASK", "text"), "which serving task to expose: text or token")
+	packKey := flag.String("pack", envString("INFERGO_SERVE_PACK", ""), "supported checked-in pack key")
+	logRequests := flag.Bool("log-requests", envBool("INFERGO_SERVE_LOG_REQUESTS", true), "log one line per request")
+	readTimeout := flag.Duration("read-timeout", envDuration("INFERGO_SERVE_READ_TIMEOUT", serverCfg.ReadTimeout), "http read timeout")
+	readHeaderTimeout := flag.Duration("read-header-timeout", envDuration("INFERGO_SERVE_READ_HEADER_TIMEOUT", serverCfg.ReadHeaderTimeout), "http read-header timeout")
+	writeTimeout := flag.Duration("write-timeout", envDuration("INFERGO_SERVE_WRITE_TIMEOUT", serverCfg.WriteTimeout), "http write timeout")
+	idleTimeout := flag.Duration("idle-timeout", envDuration("INFERGO_SERVE_IDLE_TIMEOUT", serverCfg.IdleTimeout), "http idle timeout")
+	shutdownTimeout := flag.Duration("shutdown-timeout", envDuration("INFERGO_SERVE_SHUTDOWN_TIMEOUT", serverCfg.ShutdownTimeout), "graceful shutdown timeout")
 	flag.Parse()
+
+	serverCfg.Addr = *addr
+	serverCfg.ReadTimeout = *readTimeout
+	serverCfg.ReadHeaderTimeout = *readHeaderTimeout
+	serverCfg.WriteTimeout = *writeTimeout
+	serverCfg.IdleTimeout = *idleTimeout
+	serverCfg.ShutdownTimeout = *shutdownTimeout
+
+	options := []httpserver.Option{
+		httpserver.WithLogger(log.Default()),
+		httpserver.WithRequestLogging(*logRequests),
+	}
 
 	switch *task {
 	case "text":
@@ -28,11 +55,8 @@ func main() {
 		}
 		defer pack.Close()
 
-		mux := httpserver.NewTextPackMux(pack)
-		logServeHints(*addr, "text", key)
-		if err := http.ListenAndServe(*addr, mux); err != nil {
-			log.Fatal(err)
-		}
+		mux := httpserver.NewTextPackMux(pack, options...)
+		serve(serverCfg, mux, "text", key)
 	case "token":
 		key := *packKey
 		if key == "" {
@@ -44,22 +68,51 @@ func main() {
 		}
 		defer pack.Close()
 
-		mux := httpserver.NewTokenPackMux(pack)
-		logServeHints(*addr, "token", key)
-		if err := http.ListenAndServe(*addr, mux); err != nil {
-			log.Fatal(err)
-		}
+		mux := httpserver.NewTokenPackMux(pack, options...)
+		serve(serverCfg, mux, "token", key)
 	default:
 		log.Fatalf("unsupported task %q; expected text or token", *task)
 	}
 }
 
-func logServeHints(addr, task, pack string) {
+func serve(cfg httpserver.ServerConfig, handler http.Handler, task, pack string) {
+	server := httpserver.NewServer(handler, cfg)
+	logServeHints(cfg, task, pack)
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.ListenAndServe()
+	}()
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	select {
+	case err := <-errCh:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	case <-ctx.Done():
+		log.Printf("InferGo shutting down after signal: %v", ctx.Err())
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+		defer cancel()
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Fatalf("graceful shutdown failed: %v", err)
+		}
+		if err := <-errCh; err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	}
+}
+
+func logServeHints(cfg httpserver.ServerConfig, task, pack string) {
+	addr := cfg.Addr
 	curlAddr := addr
 	if strings.HasPrefix(curlAddr, ":") {
 		curlAddr = "127.0.0.1" + curlAddr
 	}
 	log.Printf("InferGo serving %s pack %q on %s", task, pack, addr)
+	log.Printf("Timeouts: read=%s read-header=%s write=%s idle=%s shutdown=%s", cfg.ReadTimeout, cfg.ReadHeaderTimeout, cfg.WriteTimeout, cfg.IdleTimeout, cfg.ShutdownTimeout)
 	log.Printf("Health: curl -s http://%s/healthz | jq", curlAddr)
 	log.Printf("Metadata: curl -s http://%s/metadata | jq", curlAddr)
 	switch task {
@@ -68,4 +121,35 @@ func logServeHints(addr, task, pack string) {
 	case "token":
 		log.Printf("Predict: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"text\":\"Sophie Tremblay a parlé avec Hydro-Québec à Montréal.\"}' | jq", curlAddr)
 	}
+}
+
+func envString(key, fallback string) string {
+	if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+		return value
+	}
+	return fallback
+}
+
+func envBool(key string, fallback bool) bool {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		log.Fatalf("parse %s as bool: %v", key, err)
+	}
+	return parsed
+}
+
+func envDuration(key string, fallback time.Duration) time.Duration {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := time.ParseDuration(value)
+	if err != nil {
+		log.Fatalf("parse %s as duration: %v", key, err)
+	}
+	return parsed
 }

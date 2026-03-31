@@ -2,8 +2,10 @@ package httpserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/pergamon-labs/infergo/infer/packs"
 )
@@ -16,9 +18,15 @@ type PredictRequest struct {
 	Tokens []string `json:"tokens,omitempty"`
 }
 
+// ErrorDetail describes one structured API error.
+type ErrorDetail struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
 // ErrorResponse is returned for JSON API errors.
 type ErrorResponse struct {
-	Error string `json:"error"`
+	Error ErrorDetail `json:"error"`
 }
 
 // HealthResponse is returned from /healthz.
@@ -60,16 +68,17 @@ type TokenPredictResponse struct {
 }
 
 // NewTextPackMux builds an HTTP mux for a loaded curated text pack.
-func NewTextPackMux(pack *packs.TextPack) *http.ServeMux {
+func NewTextPackMux(pack *packs.TextPack, options ...Option) *http.ServeMux {
+	cfg := applyOptions(options)
 	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/healthz", withLogging("healthz", cfg, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			writeMethodNotAllowed(w, http.MethodGet)
 			return
 		}
 		writeJSON(w, http.StatusOK, HealthResponse{Status: "ok"})
-	})
-	mux.HandleFunc("/metadata", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	mux.HandleFunc("/metadata", withLogging("metadata", cfg, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			writeMethodNotAllowed(w, http.MethodGet)
 			return
@@ -81,8 +90,8 @@ func NewTextPackMux(pack *packs.TextPack) *http.ServeMux {
 			SupportsRawText: pack.SupportsRawText(),
 			Endpoints:       []string{"/healthz", "/metadata", "/predict"},
 		})
-	})
-	mux.HandleFunc("/predict", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	mux.HandleFunc("/predict", withLogging("predict", cfg, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeMethodNotAllowed(w, http.MethodPost)
 			return
@@ -90,7 +99,11 @@ func NewTextPackMux(pack *packs.TextPack) *http.ServeMux {
 
 		var req PredictRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid json body")
+			writeError(w, http.StatusBadRequest, "invalid_json", "invalid json body")
+			return
+		}
+		if err := validatePredictRequest(req); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
 			return
 		}
 
@@ -98,7 +111,7 @@ func NewTextPackMux(pack *packs.TextPack) *http.ServeMux {
 		case req.Text != "":
 			result, err := pack.PredictText(req.Text)
 			if err != nil {
-				writeError(w, http.StatusBadRequest, err.Error())
+				writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
 				return
 			}
 			writeJSON(w, http.StatusOK, TextPredictResponse{
@@ -111,7 +124,7 @@ func NewTextPackMux(pack *packs.TextPack) *http.ServeMux {
 		case len(req.Tokens) > 0:
 			result, err := pack.PredictTokens(req.Tokens)
 			if err != nil {
-				writeError(w, http.StatusBadRequest, err.Error())
+				writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
 				return
 			}
 			writeJSON(w, http.StatusOK, TextPredictResponse{
@@ -125,7 +138,7 @@ func NewTextPackMux(pack *packs.TextPack) *http.ServeMux {
 		case req.CaseID != "":
 			result, err := pack.PredictReferenceCase(req.CaseID)
 			if err != nil {
-				writeError(w, http.StatusBadRequest, err.Error())
+				writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
 				return
 			}
 			writeJSON(w, http.StatusOK, TextPredictResponse{
@@ -137,23 +150,27 @@ func NewTextPackMux(pack *packs.TextPack) *http.ServeMux {
 				ReferenceCase:  req.CaseID,
 			})
 		default:
-			writeError(w, http.StatusBadRequest, "provide text, tokens, or a valid case_id")
+			writeError(w, http.StatusBadRequest, "invalid_request", "provide exactly one of text, tokens, or case_id")
 		}
-	})
+	}))
+	mux.HandleFunc("/", withLogging("not_found", cfg, func(w http.ResponseWriter, r *http.Request) {
+		writeError(w, http.StatusNotFound, "not_found", "route not found")
+	}))
 	return mux
 }
 
 // NewTokenPackMux builds an HTTP mux for a loaded curated token pack.
-func NewTokenPackMux(pack *packs.TokenPack) *http.ServeMux {
+func NewTokenPackMux(pack *packs.TokenPack, options ...Option) *http.ServeMux {
+	cfg := applyOptions(options)
 	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/healthz", withLogging("healthz", cfg, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			writeMethodNotAllowed(w, http.MethodGet)
 			return
 		}
 		writeJSON(w, http.StatusOK, HealthResponse{Status: "ok"})
-	})
-	mux.HandleFunc("/metadata", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	mux.HandleFunc("/metadata", withLogging("metadata", cfg, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			writeMethodNotAllowed(w, http.MethodGet)
 			return
@@ -165,8 +182,8 @@ func NewTokenPackMux(pack *packs.TokenPack) *http.ServeMux {
 			SupportsRawText: pack.SupportsRawText(),
 			Endpoints:       []string{"/healthz", "/metadata", "/predict"},
 		})
-	})
-	mux.HandleFunc("/predict", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	mux.HandleFunc("/predict", withLogging("predict", cfg, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeMethodNotAllowed(w, http.MethodPost)
 			return
@@ -174,7 +191,11 @@ func NewTokenPackMux(pack *packs.TokenPack) *http.ServeMux {
 
 		var req PredictRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid json body")
+			writeError(w, http.StatusBadRequest, "invalid_json", "invalid json body")
+			return
+		}
+		if err := validatePredictRequest(req); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
 			return
 		}
 
@@ -182,7 +203,7 @@ func NewTokenPackMux(pack *packs.TokenPack) *http.ServeMux {
 		case req.CaseID != "":
 			result, err := pack.PredictReferenceCase(req.CaseID)
 			if err != nil {
-				writeError(w, http.StatusBadRequest, err.Error())
+				writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
 				return
 			}
 			writeJSON(w, http.StatusOK, TokenPredictResponse{
@@ -196,7 +217,7 @@ func NewTokenPackMux(pack *packs.TokenPack) *http.ServeMux {
 		case req.Text != "":
 			result, err := pack.PredictText(req.Text)
 			if err != nil {
-				writeError(w, http.StatusBadRequest, err.Error())
+				writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
 				return
 			}
 			writeJSON(w, http.StatusOK, TokenPredictResponse{
@@ -209,7 +230,7 @@ func NewTokenPackMux(pack *packs.TokenPack) *http.ServeMux {
 		case len(req.Tokens) > 0:
 			result, err := pack.PredictTokens(req.Tokens)
 			if err != nil {
-				writeError(w, http.StatusBadRequest, err.Error())
+				writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
 				return
 			}
 			writeJSON(w, http.StatusOK, TokenPredictResponse{
@@ -221,9 +242,12 @@ func NewTokenPackMux(pack *packs.TokenPack) *http.ServeMux {
 				TokenLogits: clone2D(result.TokenLogits),
 			})
 		default:
-			writeError(w, http.StatusBadRequest, "provide text, tokens, or a valid case_id")
+			writeError(w, http.StatusBadRequest, "invalid_request", "provide exactly one of text, tokens, or case_id")
 		}
-	})
+	}))
+	mux.HandleFunc("/", withLogging("not_found", cfg, func(w http.ResponseWriter, r *http.Request) {
+		writeError(w, http.StatusNotFound, "not_found", "route not found")
+	}))
 	return mux
 }
 
@@ -233,12 +257,17 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
-func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, ErrorResponse{Error: message})
+func writeError(w http.ResponseWriter, status int, code, message string) {
+	writeJSON(w, status, ErrorResponse{
+		Error: ErrorDetail{
+			Code:    code,
+			Message: message,
+		},
+	})
 }
 
 func writeMethodNotAllowed(w http.ResponseWriter, expected string) {
-	writeError(w, http.StatusMethodNotAllowed, "method not allowed; expected "+expected)
+	writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed; expected "+expected)
 }
 
 func clone2D(values [][]float64) [][]float64 {
@@ -247,4 +276,49 @@ func clone2D(values [][]float64) [][]float64 {
 		out[i] = slices.Clone(values[i])
 	}
 	return out
+}
+
+func validatePredictRequest(req PredictRequest) error {
+	var count int
+	if req.CaseID != "" {
+		count++
+	}
+	if req.Text != "" {
+		count++
+	}
+	if len(req.Tokens) > 0 {
+		count++
+	}
+	if count != 1 {
+		return fmt.Errorf("provide exactly one of text, tokens, or case_id")
+	}
+	return nil
+}
+
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *statusRecorder) WriteHeader(status int) {
+	r.status = status
+	r.ResponseWriter.WriteHeader(status)
+}
+
+func (r *statusRecorder) Write(data []byte) (int, error) {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+	return r.ResponseWriter.Write(data)
+}
+
+func withLogging(route string, cfg Config, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rec := &statusRecorder{ResponseWriter: w}
+		started := time.Now()
+		next(rec, r)
+		if cfg.LogRequests && cfg.Logger != nil {
+			cfg.Logger.Printf("infergo http route=%s method=%s status=%d duration=%s", route, r.Method, rec.status, time.Since(started).Round(time.Microsecond))
+		}
+	}
 }

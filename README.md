@@ -142,6 +142,13 @@ Token classification:
 go run ./cmd/infergo-serve -task token
 ```
 
+`infergo-serve` now supports:
+
+- structured JSON errors
+- graceful shutdown on `SIGINT` and `SIGTERM`
+- configurable read, write, idle, and shutdown timeouts
+- env-driven defaults through `INFERGO_SERVE_*`
+
 Then call it:
 
 ```bash
@@ -171,6 +178,8 @@ InferGo is intentionally narrow in `v0.1.0-prealpha.1`.
 | Parity CLI | Supported via [`cmd/infergo-parity/`](./cmd/infergo-parity) |
 | REST serving CLI | Supported via [`cmd/infergo-serve/`](./cmd/infergo-serve) |
 | Stable HTTP handler package | Supported via [`infer/httpserver/`](./infer/httpserver) |
+| Structured JSON error responses | Supported |
+| Graceful shutdown and timeout config | Supported via `infer/httpserver.ServerConfig` and `cmd/infergo-serve` |
 | Optional TorchScript bridge | Experimental / backend-specific |
 | gRPC serving surface | Not yet |
 
