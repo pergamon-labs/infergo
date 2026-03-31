@@ -21,6 +21,7 @@ without a documented export path, backend, and parity test story.
   - curated pack API: `infer/packs.LoadTextPack` and `infer/packs.LoadTokenPack`
 - Current validated examples:
   - curated pack discovery through `cmd/infergo-packs`
+  - benchmark suite for current checked-in raw-text text/token paths through `go test ./infer/packs -run '^$' -bench . -benchmem`
   - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
   - native text classification over the manifest-backed public model packs listed in `testdata/reference/text-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
   - native token classification over the manifest-backed public model packs listed in `testdata/reference/token-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`

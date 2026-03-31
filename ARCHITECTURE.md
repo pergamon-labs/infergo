@@ -94,6 +94,11 @@ BasicTokenizer projection of the French NER proof set. That keeps the token
 serving story honest too: raw text is supported where the checked-in tokenizer
 behavior is native and validated, not as a blanket promise across every pack.
 
+The benchmark story follows that same principle. The repo benchmarks the stable
+public `infer/packs` surface for the currently honest raw-text-capable text and
+token paths, rather than claiming generalized runtime performance across every
+possible backend or artifact shape.
+
 ## Extraction mapping from screening
 
 Extract early:

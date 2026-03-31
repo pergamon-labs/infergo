@@ -82,6 +82,12 @@ uv run --with torch==2.10.0 --with transformers==5.3.0 \
   python ./scripts/build_text_classification_reference_pack.py
 ```
 
+9. If you want a first benchmark pass for startup, latency, and allocations:
+
+```bash
+go test ./infer/packs -run '^$' -bench . -benchmem
+```
+
 ## Supported usage paths
 
 ### Run text classification
@@ -141,6 +147,7 @@ Current scaffold highlights:
 - [`docs/parity-spike-01.md`](./docs/parity-spike-01.md) defines the first concrete parity spike
 - [`cmd/infergo-parity/`](./cmd/infergo-parity) runs the current parity harness
 - [`cmd/infergo-packs/`](./cmd/infergo-packs) lists the curated checked-in packs and highlights which text and token packs support raw text
+- [`BENCHMARKS.md`](./BENCHMARKS.md) explains the repo’s current startup/latency/allocation benchmark suite
 - [`testdata/parity/text-classification/`](./testdata/parity/text-classification) contains the first public-safe artifact fixture
 - [`scripts/transformers_text_classification_reference.py`](./scripts/transformers_text_classification_reference.py) generates the first external Transformers reference file
 - [`scripts/build_text_classification_reference_pack.py`](./scripts/build_text_classification_reference_pack.py) regenerates checked-in text-classification reference packs from the manifest
@@ -164,6 +171,7 @@ Current scaffold highlights:
 - the curated `infer/packs` layer now lets callers list/load checked-in packs, predict checked-in reference cases, and submit either raw text or explicit tokens when a pack validates that path
 - `cmd/infergo-packs` now gives developers a first-class discovery path before they pick a pack or try raw text
 - raw-text prediction is intentionally narrow; InferGo currently exposes it only for the checked-in `infergo-basic-sst2` and `infergo-basic-french-ner` packs whose tokenizer behavior is fully native and validated from public-safe pack data
+- the repo now includes a small benchmark story around the public `infer/packs` surface so backend teams can measure startup, steady-state latency, and allocations on their own hardware
 - the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
 - layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 
