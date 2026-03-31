@@ -188,6 +188,9 @@ Example snapshot from one local run on `darwin/arm64` with an Apple M3 Max:
 | `LoadTokenPack(infergo-basic-french-ner)` | about `0.61 ms/op`, `260463 B/op`, `2927 allocs/op` |
 | `PredictText(infergo-basic-french-ner)` | about `7.5 µs/op`, `11464 B/op`, `229 allocs/op` |
 | `PredictTokens(infergo-basic-french-ner)` | about `5.7 µs/op`, `9656 B/op`, `191 allocs/op` |
+| `HTTP metadata (infergo-basic-sst2)` | about `4.1 µs/op`, `6386 B/op`, `20 allocs/op` |
+| `HTTP predict text (infergo-basic-sst2)` | about `10.7 µs/op`, `9528 B/op`, `90 allocs/op` |
+| `HTTP predict text (infergo-basic-french-ner)` | about `28.2 µs/op`, `21432 B/op`, `273 allocs/op` |
 
 These numbers are only a point-in-time example. To reproduce them on your own
 hardware, see [`BENCHMARKS.md`](./BENCHMARKS.md).

@@ -2,6 +2,12 @@
 
 `infergo-serve` is the current first-class HTTP serving entrypoint for InferGo.
 
+To benchmark the current handler path:
+
+```bash
+go test ./infer/httpserver -run '^$' -bench . -benchmem
+```
+
 Run a text-classification pack:
 
 ```bash
