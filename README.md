@@ -2,9 +2,9 @@
 
 InferGo is a Go-native inference and model-serving toolkit for backend services.
 
-InferGo is currently preparing its first public pre-alpha release.
+InferGo is now publicly available as a prerelease.
 
-Recommended first public tag: `v0.1.0-prealpha.1`
+Current prerelease: [`v0.1.0-prealpha.1`](https://github.com/pergamon-labs/infergo/releases/tag/v0.1.0-prealpha.1)
 
 This repository is the early public home for InferGo under the Pergamon Labs GitHub organization. The initial v1 story is intentionally narrow:
 
@@ -115,11 +115,11 @@ Example snapshot from one local run on `darwin/arm64` with an Apple M3 Max:
 
 | Benchmark | Result |
 | --- | --- |
-| `LoadTextPack(infergo-basic-sst2)` | about `0.34 ms/op`, `166924 B/op`, `2265 allocs/op` |
+| `LoadTextPack(infergo-basic-sst2)` | about `0.36 ms/op`, `166925 B/op`, `2265 allocs/op` |
 | `PredictText(infergo-basic-sst2)` | about `1.6 µs/op`, `1616 B/op`, `57 allocs/op` |
-| `LoadTokenPack(infergo-basic-french-ner)` | about `0.61 ms/op`, `260465 B/op`, `2927 allocs/op` |
-| `PredictText(infergo-basic-french-ner)` | about `7.3 µs/op`, `11464 B/op`, `229 allocs/op` |
-| `PredictTokens(infergo-basic-french-ner)` | about `5.8 µs/op`, `9656 B/op`, `191 allocs/op` |
+| `LoadTokenPack(infergo-basic-french-ner)` | about `0.61 ms/op`, `260463 B/op`, `2927 allocs/op` |
+| `PredictText(infergo-basic-french-ner)` | about `7.5 µs/op`, `11464 B/op`, `229 allocs/op` |
+| `PredictTokens(infergo-basic-french-ner)` | about `5.7 µs/op`, `9656 B/op`, `191 allocs/op` |
 
 These numbers are only a point-in-time example. Use
 [`BENCHMARKS.md`](./BENCHMARKS.md) to reproduce the suite on your own hardware.
@@ -171,7 +171,7 @@ That HTTP example now defaults to the checked-in raw-text-capable
 `infergo-basic-french-ner` pack, while still accepting tokens and reference
 case ids.
 
-Current scaffold highlights:
+Current repo highlights:
 
 - [`infer/`](./infer) is the stable public API layer
 - [`infer/packs`](./infer/packs) is the curated convenience layer for checked-in public-safe packs
@@ -211,8 +211,9 @@ Current scaffold highlights:
 - the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
 - layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
 
-Next milestone:
+## Next up
 
-1. decide whether the next curated pack pass should add a second raw-text-capable native text pack or keep raw-text support intentionally narrow
-2. decide whether the next language-specific proof should stay in French-adjacent workflows or add another language-specific pack
-3. keep the optional TorchScript bridge healthy without letting it drive the core roadmap
+1. turn the next roadmap slice into public GitHub issues
+2. improve tokenizer and raw-text pack ergonomics without broadening support claims too quickly
+3. strengthen the benchmark and contributor workflow story for the next pre-alpha cut
+4. keep the optional TorchScript bridge healthy without letting it drive the core roadmap
