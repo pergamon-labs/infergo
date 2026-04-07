@@ -232,4 +232,5 @@ Non-goals for this release line:
 - [`RELEASING.md`](./RELEASING.md)
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 - [`cmd/infergo-serve/README.md`](./cmd/infergo-serve/README.md)
+- [`docs/alpha-roadmap.md`](./docs/alpha-roadmap.md)
 - [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)
