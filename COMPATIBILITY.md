@@ -46,6 +46,7 @@ without a documented export path, backend, and parity test story.
   - first truly native raw-text text prediction via the checked-in `infergo-basic-sst2` pack
   - curated token-pack prediction via `examples/token-http-server`
   - first truly native raw-text token prediction via the checked-in `infergo-basic-french-ner` pack
+  - token classification remains a curated-pack and sample-service path for alpha, not a public BYOM export/import claim
   - tokenization helpers for raw-text-capable checked-in token packs through
     `TokenPack.TokenizeText(...)`
   - text classification served through `infer/httpserver` and `cmd/infergo-serve -task text`

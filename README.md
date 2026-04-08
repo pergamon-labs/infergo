@@ -251,6 +251,7 @@ InferGo is intentionally narrow in `v0.1.0-prealpha.1`.
 | Stable HTTP handler package | Supported via [`infer/httpserver/`](./infer/httpserver) |
 | Family-1 alpha exporter | Experimental via [`scripts/export_encoder_text_bundle.py`](./scripts/export_encoder_text_bundle.py) |
 | Exported family-1 bundle serving | Experimental via [`cmd/infergo-serve -bundle`](./cmd/infergo-serve), with tokenizer-backed raw text for supported exported bundles |
+| Token-classification BYOM export/import | Not part of alpha; token classification remains curated-pack and sample-service only |
 | Structured JSON error responses | Supported |
 | Graceful shutdown and timeout config | Supported via `infer/httpserver.ServerConfig` and `cmd/infergo-serve` |
 | Optional TorchScript bridge | Experimental / backend-specific |

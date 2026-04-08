@@ -106,6 +106,14 @@ Why this matters:
 - it validates that InferGo is becoming a toolkit, not a one-off entity
   resolution wrapper
 
+Alpha scope decision:
+
+- token classification remains a curated-pack and sample-service validation path
+  for alpha
+- it is not the second public BYOM family yet
+- a later public token-classification export family can be evaluated after the
+  family-1 and family-2 alpha-hardening work is complete
+
 ### 3. Public alpha target: supported PyTorch-origin model family
 
 Public alpha should expose:
@@ -348,8 +356,9 @@ Deliverables:
 1. Close or consciously defer the gaps listed in
    [`alpha-gaps-and-missing-primitives.md`](./alpha-gaps-and-missing-primitives.md)
    before cutting alpha.
-2. Decide whether token classification remains a curated-pack/sample-service
-   alpha story or becomes a second public BYOM family later.
+2. Keep token classification as a curated-pack/sample-service alpha story and
+   only revisit a second public BYOM family after the current alpha hardening
+   work lands.
 3. Validate the family-2 `entres` runbook with another engineer or service
    owner so the dogfood bridge is not single-operator only.
 4. Tighten the family-1 exporter and tokenizer story until a stranger can

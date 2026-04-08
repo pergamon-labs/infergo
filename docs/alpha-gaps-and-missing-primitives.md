@@ -30,6 +30,17 @@ The following are already true:
 - token classification is now validated in a realistic sample Go service via
   [`examples/ner-service/`](../examples/ner-service)
 
+## Current alpha decision
+
+For alpha:
+
+- family 1 remains the only public BYOM family
+- token classification remains a curated-pack and sample-service story
+- token classification export/import is deferred to a later public family
+
+This keeps the alpha claim narrow while preserving the realistic NER validation
+path we already have.
+
 ## Must close before alpha
 
 These are the gaps that still matter for calling InferGo a credible alpha
@@ -72,7 +83,7 @@ Why this matters:
 - tokenizer assumptions are part of the product contract, not an implementation
   footnote
 
-### 3. Token classification does not yet have a self-serve BYOM path
+### 3. Token classification intentionally does not have a self-serve BYOM path yet
 
 Current state:
 
@@ -82,9 +93,8 @@ Current state:
 
 Needed:
 
-- a clear alpha decision:
-  - keep token classification out of the first public BYOM family
-  - or define a second public export family later
+- keep this boundary explicit in the docs and support matrix
+- avoid language that implies token-classification BYOM is already part of alpha
 
 Why this matters:
 
@@ -191,13 +201,9 @@ These should stay out of alpha planning unless the roadmap changes on purpose.
 
 Before cutting alpha, InferGo should answer these clearly:
 
-1. Is family 1 the only public BYOM family at alpha, or are we adding another
-   public family?
-2. Is token classification explicitly "curated-pack/sample-service only" at
-   alpha?
-3. Are token-level spans enough for alpha NER, or do we need character offsets
+1. Are token-level spans enough for alpha NER, or do we need character offsets
    first?
-4. Is the current tokenizer support boundary documented clearly enough that
+2. Is the current tokenizer support boundary documented clearly enough that
    users will not over-assume?
-5. Has family-2 been validated by at least one additional internal consumer or
+3. Has family-2 been validated by at least one additional internal consumer or
    service owner?
