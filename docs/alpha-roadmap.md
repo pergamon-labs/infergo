@@ -39,6 +39,30 @@ The alpha goal is not universal model compatibility. The alpha goal is a
 credible, repeatable export/import workflow for a narrow but useful set of
 PyTorch-origin inference model families.
 
+## Hugging Face position
+
+Hugging Face can be part of the alpha roadmap, but only in a constrained way.
+
+Good alpha interpretation:
+
+- support export/import for supported PyTorch/Hugging Face-origin model families
+- document a workflow for converting supported Hugging Face-style models into
+  InferGo-native artifacts
+- keep Hugging Face as a source ecosystem, not a blanket runtime support claim
+
+Bad alpha interpretation:
+
+- "InferGo directly loads any Hugging Face repo"
+- "InferGo supports Hugging Face models" without explicit constraints
+
+So yes, Hugging Face can be included in alpha, but the wording should remain:
+
+- documented export/import for supported Hugging Face-origin model families
+
+and not:
+
+- general direct runtime support for arbitrary Hugging Face models
+
 ## Anchor use cases
 
 ### 1. Internal anchor: entity resolution
