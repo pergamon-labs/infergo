@@ -20,6 +20,9 @@ claims beyond what InferGo is actually proving.
 
 The following are already true:
 
+- family-1 export now has an installable `infergo-export` CLI
+- family-1 export can start from a generated single-text or paired-text input
+  template instead of repo-local fixture files
 - family-1 exported bundles can load in Go
 - family-1 exported bundles can serve raw text for the currently supported
   BERT-style WordPiece tokenizer-json subset
@@ -50,20 +53,19 @@ toolkit.
 
 Current state:
 
-- the family-1 exporter is a Python-first script
-- it works, but it is still a repo-tooling experience more than a polished user
-  workflow
+- the family-1 exporter is now an installable CLI
+- it no longer requires a repo checkout
+- it can write starter input templates for single-text and paired-text flows
 
 Needed:
 
-- clearer argument and failure messaging
-- a more obvious install/run story for exporter dependencies
-- better documentation of what source model layouts are supported and rejected
+- one more pass on failure messaging from a stranger's point of view
+- clearer troubleshooting for missing `uv` or unsupported source-model layouts
+- confirmation that the supported path feels obvious outside current maintainers
 
 Why this matters:
 
-- a backend engineer should not need to reverse-engineer exporter expectations
-  from repo internals
+- the remaining risk is now usability polish, not exporter viability
 
 ### 2. Tokenizer support is still narrow
 
@@ -143,12 +145,15 @@ Why this matters:
 Current state:
 
 - family-2 is repeatable for the team through the internal runbook
+- a generic repo-side validation checklist now exists in
+  [`alpha-family-2-validation-checklist.md`](./alpha-family-2-validation-checklist.md)
 - it still depends on local internal artifacts and fixture generation steps
+- the remaining missing piece is validation by another engineer or service owner
 
 Needed:
 
-- one more pass on internal handoff clarity
-- ideally validate the runbook with another engineer or service owner
+- a clean handoff packet for another engineer or service owner
+- one real run through that packet by someone other than the current operator
 
 Why this matters:
 

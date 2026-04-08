@@ -193,8 +193,9 @@ The first concrete exporter contract for that workstream now lives in:
 
 Current implementation note:
 
-- the first family-1 exporter is a projection-based, Python-first workflow for
-  **single-text and paired-text classification**
+- the first family-1 exporter is now an installable `infergo-export` command
+  with a projection-based, Python-first export bridge for **single-text and
+  paired-text classification**
 - it emits alpha-format bundles that load and parity-check in Go
 - exported text bundles can now be served through `cmd/infergo-serve -bundle`
   using tokenizer-backed raw text when the staged tokenizer assets match the
@@ -360,6 +361,8 @@ Deliverables:
    only revisit a second public BYOM family after the current alpha hardening
    work lands.
 3. Validate the family-2 `entres` runbook with another engineer or service
-   owner so the dogfood bridge is not single-operator only.
+   owner so the dogfood bridge is not single-operator only. Use
+   [`alpha-family-2-validation-checklist.md`](./alpha-family-2-validation-checklist.md)
+   as the handoff checklist for that step.
 4. Tighten the family-1 exporter and tokenizer story until a stranger can
    follow the supported path without repo archaeology.

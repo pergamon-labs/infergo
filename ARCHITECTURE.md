@@ -85,11 +85,14 @@ That same path now has a higher-level library helper:
 - tokenizer-backed raw-text prediction when the bundle metadata and tokenizer
   assets match the current supported runtime subset
 
-The first concrete family-1 exporter path sits above that loader contract as a
-Python-first orchestration workflow. It currently:
+The first concrete family-1 exporter path sits above that loader contract as an
+installable `infergo-export` workflow with a Python-first export bridge under
+the hood. It currently:
 
 - generates a source Transformers reference over a supplied public-safe input
   set
+- can write a starter single-text or paired-text input template so users do not
+  need repo-local fixture files just to begin
 - supports both single-text and paired-text sequence-classification inputs in
   that reference flow
 - fits the current BIOnet native bundle shape against that reference

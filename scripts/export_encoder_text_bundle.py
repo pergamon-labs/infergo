@@ -270,7 +270,7 @@ def build_alpha_metadata(
         "backend_config": backend_config,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "created_by": {
-            "tool": "scripts/export_encoder_text_bundle.py",
+            "tool": "infergo-export",
             "version": "0.1.0-alpha",
         },
     }

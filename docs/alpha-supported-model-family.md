@@ -160,13 +160,9 @@ The exported InferGo-native bundle should include at minimum:
 - label metadata or score metadata
 - enough task metadata for Go loading and REST serving
 
-The alpha exporter may begin as:
-
-- a documented script
-- an internal tool promoted into a public CLI later
-
-It does not need to start as a polished universal `infergo-export` command, but
-the user workflow must be documented and reproducible.
+The alpha exporter is now an installable `infergo-export` command. It is not a
+universal exporter, but the user workflow is now documented and reproducible
+without requiring a repo checkout.
 
 The first concrete exporter contract now lives in:
 

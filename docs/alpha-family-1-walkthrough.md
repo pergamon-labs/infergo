@@ -32,43 +32,59 @@ Paired-text classification:
 - Go `1.26.1` or newer
 - [`uv`](https://docs.astral.sh/uv/)
 - internet access for the first model download from Hugging Face
+- a writable local workspace for your bundle and input files
 
-Clone the repo and verify the baseline:
+Install the CLI entrypoints:
 
 ```bash
-git clone https://github.com/pergamon-labs/infergo.git
-cd infergo
-go test ./...
+go install github.com/pergamon-labs/infergo/cmd/infergo-export@latest
+go install github.com/pergamon-labs/infergo/cmd/infergo-serve@latest
+go install github.com/pergamon-labs/infergo/cmd/infergo-parity@latest
 ```
 
 ## 1. Export a supported model
 
 ### Single-text example
 
+Write a starter input set:
+
 ```bash
-uv run --with torch==2.10.0 --with transformers==5.3.0 \
-  python ./scripts/export_encoder_text_bundle.py \
-  --model distilbert/distilbert-base-uncased-finetuned-sst-2-english \
-  --input ./testdata/reference/text-classification/sst2-inputs.json \
-  --out ./dist/family1/distilbert-sst2-alpha \
-  --reference-output ./dist/family1/distilbert-sst2-source-reference.json
+infergo-export template -kind single -out ./family1-inputs.json
+```
+
+Then edit `./family1-inputs.json` with a few representative public-safe
+examples and export:
+
+```bash
+infergo-export export \
+  -model distilbert/distilbert-base-uncased-finetuned-sst-2-english \
+  -input ./family1-inputs.json \
+  -out ./artifacts/distilbert-sst2-alpha \
+  -reference-output ./artifacts/distilbert-sst2-source-reference.json
 ```
 
 ### Paired-text example
 
+Write a starter paired-text input set:
+
 ```bash
-uv run --with torch==2.10.0 --with transformers==5.3.0 \
-  python ./scripts/export_encoder_text_bundle.py \
-  --model textattack/bert-base-uncased-MRPC \
-  --input ./testdata/reference/text-classification/mrpc-pairs-inputs.json \
-  --out ./dist/family1/mrpc-alpha \
-  --reference-output ./dist/family1/mrpc-source-reference.json
+infergo-export template -kind pair -out ./family1-pairs.json
+```
+
+Then edit `./family1-pairs.json` and export:
+
+```bash
+infergo-export export \
+  -model textattack/bert-base-uncased-MRPC \
+  -input ./family1-pairs.json \
+  -out ./artifacts/mrpc-alpha \
+  -reference-output ./artifacts/mrpc-source-reference.json
 ```
 
 The exported bundle is an InferGo-native directory with:
 
 ```text
-dist/family1/mrpc-alpha/
+artifacts/mrpc-alpha/
   metadata.json
   labels.json
   model.gob
@@ -96,7 +112,7 @@ import (
 )
 
 func main() {
-	bundle, err := infer.LoadTextBundle("./dist/family1/distilbert-sst2-alpha")
+bundle, err := infer.LoadTextBundle("./artifacts/distilbert-sst2-alpha")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -124,7 +140,7 @@ import (
 )
 
 func main() {
-	bundle, err := infer.LoadTextBundle("./dist/family1/mrpc-alpha")
+bundle, err := infer.LoadTextBundle("./artifacts/mrpc-alpha")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -142,11 +158,11 @@ func main() {
 }
 ```
 
-You can also run the repo example directly:
+If you also cloned the repo, you can run the bundled example directly:
 
 ```bash
 go run ./examples/exported-bundle-classifier \
-  -bundle ./dist/family1/distilbert-sst2-alpha \
+  -bundle ./artifacts/distilbert-sst2-alpha \
   -text "This product is excellent and reliable."
 ```
 
@@ -154,7 +170,7 @@ Or for paired text:
 
 ```bash
 go run ./examples/exported-bundle-classifier \
-  -bundle ./dist/family1/mrpc-alpha \
+  -bundle ./artifacts/mrpc-alpha \
   -text "The company said the deal closed." \
   -text-pair "The acquisition has been completed, the company said."
 ```
@@ -164,10 +180,7 @@ go run ./examples/exported-bundle-classifier \
 ### Single-text bundle
 
 ```bash
-go run ./cmd/infergo-serve \
-  -task text \
-  -bundle ./dist/family1/distilbert-sst2-alpha \
-  -addr 127.0.0.1:8080
+infergo-serve -task text -bundle ./artifacts/distilbert-sst2-alpha -addr 127.0.0.1:8080
 ```
 
 Then call it:
@@ -181,10 +194,7 @@ curl -s -X POST http://127.0.0.1:8080/predict \
 ### Paired-text bundle
 
 ```bash
-go run ./cmd/infergo-serve \
-  -task text \
-  -bundle ./dist/family1/mrpc-alpha \
-  -addr 127.0.0.1:8080
+infergo-serve -task text -bundle ./artifacts/mrpc-alpha -addr 127.0.0.1:8080
 ```
 
 Then call it:
@@ -212,18 +222,18 @@ For the MRPC example, the metadata should include:
 ### Single-text parity
 
 ```bash
-go run ./cmd/infergo-parity \
-  -reference ./dist/family1/distilbert-sst2-source-reference.json \
-  -infergo-bundle-dir ./dist/family1/distilbert-sst2-alpha \
+infergo-parity \
+  -reference ./artifacts/distilbert-sst2-source-reference.json \
+  -infergo-bundle-dir ./artifacts/distilbert-sst2-alpha \
   -tolerance 1e-4
 ```
 
 ### Paired-text parity
 
 ```bash
-go run ./cmd/infergo-parity \
-  -reference ./dist/family1/mrpc-source-reference.json \
-  -infergo-bundle-dir ./dist/family1/mrpc-alpha \
+infergo-parity \
+  -reference ./artifacts/mrpc-source-reference.json \
+  -infergo-bundle-dir ./artifacts/mrpc-alpha \
   -tolerance 1e-4
 ```
 

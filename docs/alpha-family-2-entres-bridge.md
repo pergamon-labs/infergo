@@ -157,6 +157,8 @@ The first implementation path for this is:
 - experimental Go API in `infer/experimental/entres`
 - experimental serving command in `cmd/infergo-entres-serve`
 - experimental bundle scaffolding command in `cmd/infergo-entres-bundle`
+- repo-side validation handoff checklist in
+  [`alpha-family-2-validation-checklist.md`](./alpha-family-2-validation-checklist.md)
 
 The first local dogfood validation has already proven:
 

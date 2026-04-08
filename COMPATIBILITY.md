@@ -29,7 +29,7 @@ without a documented export path, backend, and parity test story.
   - Current validated examples:
   - curated pack discovery through `cmd/infergo-packs`
   - stable REST serving through `cmd/infergo-serve`
-  - experimental family-1 export through `scripts/export_encoder_text_bundle.py`
+  - experimental family-1 export through `cmd/infergo-export`
     for projection-based single-text and paired-text classification bundles
   - tokenizer-backed library use of exported family-1 text bundles through
     `infer.LoadTextBundle`

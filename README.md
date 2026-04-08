@@ -38,6 +38,18 @@ cd infergo
 go test ./...
 ```
 
+Install the main CLIs without cloning the repo:
+
+```bash
+go install github.com/pergamon-labs/infergo/cmd/infergo-export@latest
+go install github.com/pergamon-labs/infergo/cmd/infergo-serve@latest
+go install github.com/pergamon-labs/infergo/cmd/infergo-parity@latest
+```
+
+For BYOM export, `infergo-export` still needs `uv` plus Python-side
+`transformers` dependencies at export time. That dependency does not carry into
+runtime serving once the bundle is built.
+
 ## Quickstart
 
 The fastest path from clone to a real result is:
@@ -215,21 +227,33 @@ The first supported BYOM path is family 1:
 - Hugging Face Transformers-style
 - encoder text classification / paired-text classification
 
-Export a supported model:
+Install the exporter:
 
 ```bash
-uv run --with torch==2.10.0 --with transformers==5.3.0 \
-  python ./scripts/export_encoder_text_bundle.py \
+go install github.com/pergamon-labs/infergo/cmd/infergo-export@latest
+```
+
+Write a starting input template:
+
+```bash
+infergo-export template -kind single -out ./family1-inputs.json
+```
+
+Then export a supported model:
+
+```bash
+infergo-export export \
   --model distilbert/distilbert-base-uncased-finetuned-sst-2-english \
-  --input ./testdata/reference/text-classification/sst2-inputs.json \
-  --out ./dist/family1/distilbert-sst2-alpha
+  --input ./family1-inputs.json \
+  --out ./artifacts/distilbert-sst2-alpha \
+  --reference-output ./artifacts/distilbert-sst2-reference.json
 ```
 
 Then either:
 
 - load it from Go with `infer.LoadTextBundle(...)`
-- serve it with `go run ./cmd/infergo-serve -task text -bundle ...`
-- validate it with `go run ./cmd/infergo-parity ...`
+- serve it with `infergo-serve -task text -bundle ...`
+- validate it with `infergo-parity ...`
 
 For the full supported path, see
 [`docs/alpha-family-1-walkthrough.md`](./docs/alpha-family-1-walkthrough.md).
@@ -249,7 +273,7 @@ InferGo is intentionally narrow in `v0.1.0-prealpha.1`.
 | Parity CLI | Supported via [`cmd/infergo-parity/`](./cmd/infergo-parity) |
 | REST serving CLI | Supported via [`cmd/infergo-serve/`](./cmd/infergo-serve) |
 | Stable HTTP handler package | Supported via [`infer/httpserver/`](./infer/httpserver) |
-| Family-1 alpha exporter | Experimental via [`scripts/export_encoder_text_bundle.py`](./scripts/export_encoder_text_bundle.py) |
+| Family-1 alpha exporter | Experimental via [`cmd/infergo-export/`](./cmd/infergo-export) |
 | Exported family-1 bundle serving | Experimental via [`cmd/infergo-serve -bundle`](./cmd/infergo-serve), with tokenizer-backed raw text for supported exported bundles |
 | Token-classification BYOM export/import | Not part of alpha; token classification remains curated-pack and sample-service only |
 | Structured JSON error responses | Supported |
@@ -305,6 +329,7 @@ Non-goals for this release line:
 - [`CHANGELOG.md`](./CHANGELOG.md)
 - [`RELEASING.md`](./RELEASING.md)
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- [`cmd/infergo-export/README.md`](./cmd/infergo-export/README.md)
 - [`cmd/infergo-serve/README.md`](./cmd/infergo-serve/README.md)
 - [`docs/alpha-roadmap.md`](./docs/alpha-roadmap.md)
 - [`docs/alpha-supported-model-family.md`](./docs/alpha-supported-model-family.md)
@@ -312,5 +337,6 @@ Non-goals for this release line:
 - [`docs/alpha-family-1-exporter-contract.md`](./docs/alpha-family-1-exporter-contract.md)
 - [`docs/alpha-family-1-walkthrough.md`](./docs/alpha-family-1-walkthrough.md)
 - [`docs/alpha-family-2-entres-bridge.md`](./docs/alpha-family-2-entres-bridge.md)
+- [`docs/alpha-family-2-validation-checklist.md`](./docs/alpha-family-2-validation-checklist.md)
 - [`docs/alpha-gaps-and-missing-primitives.md`](./docs/alpha-gaps-and-missing-primitives.md)
 - [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)

@@ -16,7 +16,7 @@ implementation shape that we can run today:
 
 - stage: first concrete implementation
 - support level: experimental, family-1 only
-- implementation form: documented Python-first script
+- implementation form: installable CLI with a Python-first export bridge
 - current task branch: **single-text and paired-text classification**
 
 This is the first operational exporter for family 1, but it is **not yet the
@@ -73,12 +73,13 @@ logits.
 
 The first exporter entrypoint is:
 
-- [`scripts/export_encoder_text_bundle.py`](../scripts/export_encoder_text_bundle.py)
+- [`cmd/infergo-export`](../cmd/infergo-export)
 - end-to-end usage is documented in
   [`docs/alpha-family-1-walkthrough.md`](./alpha-family-1-walkthrough.md)
 
-It is intentionally a Python-first script because the source ecosystem is still
-PyTorch/Transformers.
+It is intentionally an installable CLI instead of a repo-only script so users
+can export without cloning this repository. The actual source-model work is
+still Python-first because the source ecosystem is still PyTorch/Transformers.
 
 ## Input contract
 
@@ -109,60 +110,84 @@ Current input-set shape:
 
 ## CLI shape
 
-Current usage:
+Install the exporter:
 
 ```bash
-uv run --with torch==2.10.0 --with transformers==5.3.0 \
-  python ./scripts/export_encoder_text_bundle.py \
-  --model distilbert/distilbert-base-uncased-finetuned-sst-2-english \
-  --input ./testdata/reference/text-classification/sst2-inputs.json \
-  --out ./dist/family1/distilbert-sst2-alpha
+go install github.com/pergamon-labs/infergo/cmd/infergo-export@latest
+```
+
+Write a starter input template:
+
+```bash
+infergo-export template -kind single -out ./family1-inputs.json
+```
+
+Single-text export:
+
+```bash
+infergo-export export \
+  -model distilbert/distilbert-base-uncased-finetuned-sst-2-english \
+  -input ./family1-inputs.json \
+  -out ./artifacts/distilbert-sst2-alpha
 ```
 
 Paired-text usage:
 
 ```bash
-uv run --with torch==2.10.0 --with transformers==5.3.0 \
-  python ./scripts/export_encoder_text_bundle.py \
-  --model textattack/bert-base-uncased-MRPC \
-  --input ./testdata/reference/text-classification/mrpc-pairs-inputs.json \
-  --out ./dist/family1/mrpc-alpha
+infergo-export template -kind pair -out ./family1-pairs.json
+
+infergo-export export \
+  -model textattack/bert-base-uncased-MRPC \
+  -input ./family1-pairs.json \
+  -out ./artifacts/mrpc-alpha
 ```
 
 Important flags:
 
-- `--model`
+- `template`
+  - writes a public-safe starter JSON file for either `single` or `pair`
+    inputs
+- `export`
+  - exports a supported model into an InferGo-native bundle without a repo
+    checkout
+- `-model`
   - Hugging Face model id or local model directory
-- `--model-id`
+- `-model-id`
   - optional canonical model id to record in the exported bundle metadata
-- `--input`
+- `-input`
   - public-safe calibration/parity input set
   - supports optional `text_pair` per case
-- `--out`
+- `-out`
   - output bundle directory
-- `--feature-mode`
+- `-feature-mode`
   - current BIOnet native bundle mode
-- `--max-length`
+- `-max-length`
   - max tokenizer length passed to the source reference generator
-- `--bundle-version`
+- `-bundle-version`
   - alpha bundle version written into `metadata.json`
+- `-python-runner`
+  - `uv` by default, or `python` if the caller wants to manage Python deps
+    themselves
 
 ## Exporter workflow
 
 The current exporter does the following:
 
-1. load the source model and source tokenizer through `transformers`
-2. generate a source reference JSON over the supplied input set
-3. run the existing native BIOnet bundle generator against that reference
+1. optionally write a starter input template for the user
+2. load the source model and source tokenizer through `transformers`
+3. generate a source reference JSON over the supplied input set
 4. save tokenizer assets into `tokenizer/`
-5. write `labels.json`
-6. write alpha-format `metadata.json`
-7. materialize the final bundle directory
+5. fit the BIOnet native bundle against the generated reference
+6. write `labels.json`
+7. write alpha-format `metadata.json`
+8. print the supported input modes for the exported bundle
 
-Internally, it builds on these existing repo tools:
+Internally, it uses:
 
-- [`scripts/transformers_text_classification_reference.py`](../scripts/transformers_text_classification_reference.py)
-- [`internal/tools/nativebundlegen`](../internal/tools/nativebundlegen)
+- an embedded Python helper for `transformers` reference generation and
+  tokenizer asset export
+- [`internal/nativebundlegen`](../internal/nativebundlegen) for the BIOnet
+  bundle fit
 
 ## Output contract
 
@@ -226,6 +251,8 @@ An exported bundle is considered valid for this milestone when:
    using raw text when `inputs.raw_text_supported=true`
 4. paired-text bundles accept `{"text":"...","text_pair":"..."}` requests when
    `inputs.pair_text_supported=true`
+5. a user can reach those steps through `infergo-export` and
+   `alpha-family-1-walkthrough.md` without needing repo-local fixture paths
 
 This is the first concrete family-1 success bar.
 
