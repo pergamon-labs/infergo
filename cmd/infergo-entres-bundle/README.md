@@ -26,5 +26,6 @@ The generated metadata records:
 - vector/message sizes
 - input layout
 - message strategy
+- message projection
 - score interpretation
 - source framework/format

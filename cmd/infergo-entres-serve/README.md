@@ -33,6 +33,8 @@ See also:
 ## Run
 
 ```bash
+source ./scripts/setup_libtorch_local.sh
+
 go run ./cmd/infergo-entres-serve \
   -bundle ./artifacts/entres-individual
 ```
@@ -40,6 +42,8 @@ go run ./cmd/infergo-entres-serve \
 Or with env-driven defaults:
 
 ```bash
+source ./scripts/setup_libtorch_local.sh
+
 INFERGO_ENTRES_SERVE_BUNDLE=./artifacts/entres-individual \
 go run ./cmd/infergo-entres-serve
 ```

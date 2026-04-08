@@ -11,6 +11,8 @@ family claims.
 ## Usage
 
 ```bash
+source ./scripts/setup_libtorch_local.sh
+
 go run -tags torchscript_native ./cmd/infergo-entres-parity \
   -fixture ./dist/entres/parity/individual-fixture.json \
   -bundle ./dist/entres/individual \
