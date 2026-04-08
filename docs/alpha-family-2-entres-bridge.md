@@ -116,10 +116,11 @@ The first implementation uses:
     "format": "torchscript"
   },
   "inputs": {
-    "vector_size": 128,
-    "message_size": 128,
+    "vector_size": 268,
+    "message_size": 268,
     "input_layout": "stacked_sample_message_channels",
-    "message_strategy": "caller_supplied_consensus_vector"
+    "message_strategy": "caller_supplied_consensus_vector",
+    "message_projection": "legacy_first_value_broadcast"
   },
   "outputs": {
     "kind": "score_vector",
@@ -163,16 +164,20 @@ The first local dogfood validation has already proven:
   bundle
 - that bundle can be loaded through InferGo
 - that bundle can be served from Go and return real scores
+- parity can be captured against the current screening runtime and reproduced
+  locally through `cmd/infergo-entres-parity`
+- the same bridge contract now passes parity for both the individual and
+  organization `core-svc` ER models
 
-## Extra metadata needed before parity
+## Bridge metadata required for parity
 
-Before wiring parity around family 2, the bridge metadata should carry a little
-more than just dimensions:
+The bridge metadata must carry a little more than just dimensions:
 
 - `source.framework`
 - `source.format`
 - `inputs.input_layout`
 - `inputs.message_strategy`
+- `inputs.message_projection`
 - `outputs.interpretation`
 
 Why these fields matter:
@@ -180,6 +185,9 @@ Why these fields matter:
 - parity needs to know the expected tensor assembly contract
 - internal users need to know whether InferGo expects a supplied message vector
   or computes one
+- the current screening runtime has a legacy quirk where the message channel is
+  built by broadcasting `message[0]` across the second channel, and the bridge
+  needs to declare that explicitly instead of hiding it
 - score interpretation needs to be explicit before we compare or threshold
   outputs
 

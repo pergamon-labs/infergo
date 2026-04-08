@@ -67,10 +67,11 @@ func ScaffoldBundle(spec BundleSpec) error {
 			"format":    "torchscript",
 		},
 		"inputs": map[string]any{
-			"vector_size":      vectorSize,
-			"message_size":     vectorSize,
-			"input_layout":     "stacked_sample_message_channels",
-			"message_strategy": "caller_supplied_consensus_vector",
+			"vector_size":        vectorSize,
+			"message_size":       vectorSize,
+			"input_layout":       "stacked_sample_message_channels",
+			"message_strategy":   "caller_supplied_consensus_vector",
+			"message_projection": "legacy_first_value_broadcast",
 		},
 		"outputs": map[string]any{
 			"kind":           "score_vector",

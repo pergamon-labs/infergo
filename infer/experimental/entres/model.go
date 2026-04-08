@@ -23,13 +23,14 @@ type Prediction struct {
 // Metadata describes the validated bundle contract exposed by the experimental
 // family-2 scorer API.
 type Metadata struct {
-	Family      string `json:"family"`
-	Task        string `json:"task"`
-	Backend     string `json:"backend"`
-	ModelID     string `json:"model_id"`
-	ProfileKind string `json:"profile_kind,omitempty"`
-	VectorSize  int    `json:"vector_size"`
-	MessageSize int    `json:"message_size"`
+	Family            string `json:"family"`
+	Task              string `json:"task"`
+	Backend           string `json:"backend"`
+	ModelID           string `json:"model_id"`
+	ProfileKind       string `json:"profile_kind,omitempty"`
+	VectorSize        int    `json:"vector_size"`
+	MessageSize       int    `json:"message_size"`
+	MessageProjection string `json:"message_projection,omitempty"`
 }
 
 // Scorer is the experimental family-2 scorer contract.
@@ -76,13 +77,14 @@ func (m *Model) Metadata() Metadata {
 
 	meta := m.bundle.Metadata()
 	return Metadata{
-		Family:      meta.Family,
-		Task:        meta.Task,
-		Backend:     meta.Backend,
-		ModelID:     meta.ModelID,
-		ProfileKind: meta.ProfileKind,
-		VectorSize:  meta.Inputs.VectorSize,
-		MessageSize: meta.Inputs.MessageSize,
+		Family:            meta.Family,
+		Task:              meta.Task,
+		Backend:           meta.Backend,
+		ModelID:           meta.ModelID,
+		ProfileKind:       meta.ProfileKind,
+		VectorSize:        meta.Inputs.VectorSize,
+		MessageSize:       meta.Inputs.MessageSize,
+		MessageProjection: meta.Inputs.MessageProjection,
 	}
 }
 

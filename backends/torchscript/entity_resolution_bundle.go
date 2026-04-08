@@ -26,12 +26,20 @@ type EntityResolutionBundleMetadata struct {
 	Artifact      string `json:"artifact"`
 	ModelID       string `json:"model_id"`
 	ProfileKind   string `json:"profile_kind,omitempty"`
-	Inputs        struct {
-		VectorSize  int `json:"vector_size"`
-		MessageSize int `json:"message_size"`
+	Source        struct {
+		Framework string `json:"framework"`
+		Format    string `json:"format"`
+	} `json:"source"`
+	Inputs struct {
+		VectorSize        int    `json:"vector_size"`
+		MessageSize       int    `json:"message_size"`
+		InputLayout       string `json:"input_layout"`
+		MessageStrategy   string `json:"message_strategy"`
+		MessageProjection string `json:"message_projection"`
 	} `json:"inputs"`
 	Outputs struct {
-		Kind string `json:"kind"`
+		Kind           string `json:"kind"`
+		Interpretation string `json:"interpretation"`
 	} `json:"outputs"`
 }
 
@@ -75,14 +83,35 @@ func LoadEntityResolutionBundleMetadata(bundleDir string) (EntityResolutionBundl
 	if metadata.ModelID == "" {
 		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: missing model id")
 	}
+	if metadata.ProfileKind != "individual" && metadata.ProfileKind != "organization" {
+		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: unsupported profile kind %q", metadata.ProfileKind)
+	}
+	if metadata.Source.Framework != "pytorch" {
+		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: unsupported source.framework %q", metadata.Source.Framework)
+	}
+	if metadata.Source.Format != "torchscript" {
+		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: unsupported source.format %q", metadata.Source.Format)
+	}
 	if metadata.Inputs.VectorSize <= 0 {
 		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: invalid vector_size")
 	}
 	if metadata.Inputs.MessageSize <= 0 {
 		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: invalid message_size")
 	}
+	if metadata.Inputs.InputLayout != "stacked_sample_message_channels" {
+		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: unsupported inputs.input_layout %q", metadata.Inputs.InputLayout)
+	}
+	if metadata.Inputs.MessageStrategy != "caller_supplied_consensus_vector" {
+		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: unsupported inputs.message_strategy %q", metadata.Inputs.MessageStrategy)
+	}
+	if metadata.Inputs.MessageProjection != "legacy_first_value_broadcast" && metadata.Inputs.MessageProjection != "full_vector" {
+		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: unsupported inputs.message_projection %q", metadata.Inputs.MessageProjection)
+	}
 	if metadata.Outputs.Kind != "score_vector" {
 		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: unsupported outputs.kind %q", metadata.Outputs.Kind)
+	}
+	if metadata.Outputs.Interpretation != "confidence" {
+		return EntityResolutionBundleMetadata{}, fmt.Errorf("decode entity-resolution metadata: unsupported outputs.interpretation %q", metadata.Outputs.Interpretation)
 	}
 
 	return metadata, nil
@@ -125,7 +154,20 @@ func (b *EntityResolutionBundle) PredictBatch(vectors [][]float64, message []flo
 		}
 	}
 
-	return b.module.ForwardFeatureScoring(vectors, message)
+	preparedMessage := message
+	switch b.metadata.Inputs.MessageProjection {
+	case "legacy_first_value_broadcast":
+		preparedMessage = make([]float64, len(message))
+		for i := range preparedMessage {
+			preparedMessage[i] = message[0]
+		}
+	case "full_vector":
+		preparedMessage = append([]float64(nil), message...)
+	default:
+		return nil, fmt.Errorf("predict batch: unsupported message projection %q", b.metadata.Inputs.MessageProjection)
+	}
+
+	return b.module.ForwardFeatureScoring(vectors, preparedMessage)
 }
 
 // Metadata returns a copy of the validated bundle metadata.

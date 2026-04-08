@@ -75,7 +75,14 @@ without a documented export path, backend, and parity test story.
   - bundle loading through `backends/torchscript.LoadEntityResolutionBundle`
   - Go API through `infer/experimental/entres`
   - HTTP serving through `cmd/infergo-entres-serve`
+  - local parity through `cmd/infergo-entres-parity`
 - Intended use: current `entres` entity-resolution model family
+- Current local validation bar:
+  - individual and organization `core-svc` ER models pass local parity against
+    fixtures captured from the current screening runtime
+  - bridge metadata explicitly captures the legacy
+    `message_projection=legacy_first_value_broadcast` behavior needed to match
+    that runtime
 - Non-claim: this does not imply broad TorchScript or arbitrary `.pt` support
 
 ## Native backend note

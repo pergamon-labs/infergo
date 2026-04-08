@@ -17,16 +17,24 @@ func TestLoadEntityResolutionBundleMetadata(t *testing.T) {
   "bundle_version": "1.0",
   "family": "numeric-feature-scoring",
   "task": "entity-resolution-scoring",
-  "backend": "torchscript",
+ "backend": "torchscript",
   "artifact": "model.torchscript.pt",
   "model_id": "pergamon/entres-individual",
   "profile_kind": "individual",
+  "source": {
+    "framework": "pytorch",
+    "format": "torchscript"
+  },
   "inputs": {
     "vector_size": 128,
-    "message_size": 128
+    "message_size": 128,
+    "input_layout": "stacked_sample_message_channels",
+    "message_strategy": "caller_supplied_consensus_vector",
+    "message_projection": "legacy_first_value_broadcast"
   },
   "outputs": {
-    "kind": "score_vector"
+    "kind": "score_vector",
+    "interpretation": "confidence"
   }
 }`
 
@@ -57,15 +65,24 @@ func TestLoadEntityResolutionBundleMetadataRejectsInvalidFamily(t *testing.T) {
   "bundle_version": "1.0",
   "family": "wrong-family",
   "task": "entity-resolution-scoring",
-  "backend": "torchscript",
+ "backend": "torchscript",
   "artifact": "model.torchscript.pt",
   "model_id": "pergamon/entres-individual",
+  "profile_kind": "individual",
+  "source": {
+    "framework": "pytorch",
+    "format": "torchscript"
+  },
   "inputs": {
     "vector_size": 128,
-    "message_size": 128
+    "message_size": 128,
+    "input_layout": "stacked_sample_message_channels",
+    "message_strategy": "caller_supplied_consensus_vector",
+    "message_projection": "legacy_first_value_broadcast"
   },
   "outputs": {
-    "kind": "score_vector"
+    "kind": "score_vector",
+    "interpretation": "confidence"
   }
 }`
 
@@ -78,6 +95,47 @@ func TestLoadEntityResolutionBundleMetadataRejectsInvalidFamily(t *testing.T) {
 		t.Fatal("expected error")
 	}
 	if !strings.Contains(err.Error(), "unsupported family") {
+		t.Fatalf("unexpected error %v", err)
+	}
+}
+
+func TestLoadEntityResolutionBundleMetadataRejectsMissingBridgeFields(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "metadata.json")
+	payload := `{
+  "bundle_format": "infergo-torchscript-bridge",
+  "bundle_version": "1.0",
+  "family": "numeric-feature-scoring",
+  "task": "entity-resolution-scoring",
+  "backend": "torchscript",
+  "artifact": "model.torchscript.pt",
+  "model_id": "pergamon/entres-individual",
+  "profile_kind": "individual",
+  "source": {
+    "framework": "pytorch",
+    "format": "torchscript"
+  },
+  "inputs": {
+    "vector_size": 128,
+    "message_size": 128
+  },
+  "outputs": {
+    "kind": "score_vector",
+    "interpretation": "confidence"
+  }
+}`
+
+	if err := os.WriteFile(path, []byte(payload), 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	_, err := LoadEntityResolutionBundleMetadata(dir)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "inputs.input_layout") {
 		t.Fatalf("unexpected error %v", err)
 	}
 }

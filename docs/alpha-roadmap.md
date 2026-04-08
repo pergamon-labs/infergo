@@ -181,6 +181,15 @@ This workstream is about **family 1**.
 Family 2 may have its own bridge/export conventions, but it should not weaken
 the public family-1 contract.
 
+Current family-2 reality:
+
+- the individual and organization `entres` TorchScript artifacts can both be
+  wrapped in local bridge bundles
+- both bundles now pass local parity against fixtures captured from the current
+  screening runtime
+- the remaining family-2 work is mostly around making that internal validation
+  path easier to repeat and document
+
 ### C. Runtime and backend work
 
 We should keep investing in:

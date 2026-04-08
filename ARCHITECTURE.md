@@ -110,6 +110,8 @@ It exists to:
 - load the numeric-feature TorchScript bridge bundle
 - expose a narrow Go API for `vectors + message -> scores`
 - support a small experimental HTTP serving path for internal dogfooding
+- preserve explicitly documented bridge-compatibility details such as the
+  legacy message projection used by the current screening runtime
 
 It should not be treated as part of the stable public `infer` API yet.
 
@@ -141,6 +143,11 @@ and parity-backed.
 `cmd/infergo-entres-serve` is the parallel experimental command for family 2.
 It is intentionally separate from `cmd/infergo-serve` so the internal dogfood
 bridge does not silently broaden the stable public serving claim.
+
+`cmd/infergo-entres-parity` is the parallel experimental parity command for
+family 2. It exists so InferGo can compare the bridge output against fixtures
+captured from the current screening runtime for the real individual and
+organization ER models without broadening the public parity contract.
 
 The first raw-text-capable text pack uses a native BasicTokenizer projection of
 the SST-2 proof set. That is intentionally narrower than claiming generic raw
