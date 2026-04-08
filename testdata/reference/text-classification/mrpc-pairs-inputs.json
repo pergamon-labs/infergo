@@ -1,0 +1,55 @@
+{
+  "name": "public-safe sentence-pair classification inputs",
+  "cases": [
+    {
+      "id": "billing-duplicate",
+      "text": "The customer asked for a refund after being charged twice.",
+      "text_pair": "A customer requested a refund because they were billed two times."
+    },
+    {
+      "id": "shipping-mismatch",
+      "text": "The order arrived three days earlier than expected.",
+      "text_pair": "The package was delivered a week late."
+    },
+    {
+      "id": "account-duplicate",
+      "text": "I cannot sign in because my password reset link expired.",
+      "text_pair": "My password reset email expired before I could use it, so I still cannot log in."
+    },
+    {
+      "id": "feature-nonmatch",
+      "text": "The dashboard now supports exporting monthly CSV reports.",
+      "text_pair": "The mobile app added dark mode for profile settings."
+    },
+    {
+      "id": "support-paraphrase",
+      "text": "Support resolved the ticket in less than an hour.",
+      "text_pair": "The support team fixed the issue within sixty minutes."
+    },
+    {
+      "id": "quality-nonmatch",
+      "text": "The headphones broke after two weeks of use.",
+      "text_pair": "The store replaced the headphones with a new pair at no charge."
+    },
+    {
+      "id": "onboarding-duplicate",
+      "text": "The setup guide was clear and easy to follow.",
+      "text_pair": "It was easy to follow the installation guide because the instructions were clear."
+    },
+    {
+      "id": "pricing-nonmatch",
+      "text": "The annual plan costs less than paying month to month.",
+      "text_pair": "Customer support is now available twenty four hours a day."
+    },
+    {
+      "id": "meeting-paraphrase",
+      "text": "The team moved the release meeting to Thursday afternoon.",
+      "text_pair": "The release meeting was rescheduled for Thursday later in the day."
+    },
+    {
+      "id": "incident-nonmatch",
+      "text": "The API returned errors for fifteen minutes during the outage.",
+      "text_pair": "Engineers deployed a new metrics dashboard after the outage ended."
+    }
+  ]
+}

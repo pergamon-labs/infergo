@@ -174,10 +174,13 @@ The first concrete exporter contract now lives in:
 
 Current implementation note:
 
-- the first exporter milestone implements the **single-text classification**
-  branch first
-- pair-text classification and pair-scoring remain part of family 1, but they
-  are not yet implemented in the first exporter path
+- the first exporter milestone now implements:
+  - single-text classification
+  - paired-text classification
+- pair-scoring remains part of family 1 when it can be represented by the same
+  sequence-classification style output contract
+- exported family-1 bundles currently serve through tokenized input, not
+  generic raw-text tokenization
 
 ## Runtime assumptions for alpha
 

@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/pergamon-labs/infergo/backends/bionet"
+	"github.com/pergamon-labs/infergo/infer"
 	"github.com/pergamon-labs/infergo/infer/packs"
 	"github.com/stretchr/testify/require"
 )
@@ -30,6 +32,7 @@ func TestNewTextPackMuxMetadataAndPredict(t *testing.T) {
 	require.Equal(t, "text-classification", metadata.Task)
 	require.Equal(t, "infergo-basic-sst2", metadata.PackKey)
 	require.True(t, metadata.SupportsRawText)
+	require.Contains(t, metadata.SupportedInputs, "text")
 
 	body := bytes.NewBufferString(`{"text":"This product is excellent and reliable."}`)
 	resp, err = http.Post(server.URL+"/predict", "application/json", body)
@@ -41,6 +44,66 @@ func TestNewTextPackMuxMetadataAndPredict(t *testing.T) {
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&prediction))
 	require.Equal(t, "POSITIVE", prediction.ObservedLabel)
 	require.NotEmpty(t, prediction.ObservedLogits)
+}
+
+func TestNewTextClassifierMuxPredictTokenizedInput(t *testing.T) {
+	classifier, err := infer.LoadTextClassifier("../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, classifier.Close()) })
+
+	info, err := bionet.InspectTextClassificationBundle("../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool")
+	require.NoError(t, err)
+
+	server := httptest.NewServer(NewTextClassifierMux(classifier, TextClassifierMetadata{
+		ModelID:                info.ModelID,
+		SupportsRawText:        info.SupportsRawText,
+		SupportsPairText:       info.SupportsPairText,
+		SupportsTokenizedInput: info.SupportsTokenizedInput,
+	}))
+	t.Cleanup(server.Close)
+
+	resp, err := http.Get(server.URL + "/metadata")
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var metadata MetadataResponse
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&metadata))
+	require.False(t, metadata.SupportsRawText)
+	require.True(t, metadata.SupportsTokenizedInput)
+	require.Contains(t, metadata.SupportedInputs, "input_ids")
+
+	body := bytes.NewBufferString(`{"input_ids":[101,2023,2003,1037,2742,102],"attention_mask":[1,1,1,1,1,1]}`)
+	resp, err = http.Post(server.URL+"/predict", "application/json", body)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var prediction TextPredictResponse
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&prediction))
+	require.NotEmpty(t, prediction.ObservedLabel)
+	require.NotEmpty(t, prediction.ObservedLogits)
+}
+
+func TestNewTextClassifierMuxRejectsUnsupportedInputMode(t *testing.T) {
+	classifier, err := infer.LoadTextClassifier("../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, classifier.Close()) })
+
+	req := httptest.NewRequest(http.MethodPost, "/predict", bytes.NewBufferString(`{"text":"hello world"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	NewTextClassifierMux(classifier, TextClassifierMetadata{
+		ModelID:                "example/model",
+		SupportsTokenizedInput: true,
+	}).ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	var payload ErrorResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &payload))
+	require.Equal(t, "invalid_request", payload.Error.Code)
+	require.Contains(t, payload.Error.Message, "tokenized input only")
 }
 
 func TestNewTextPackMuxMethodNotAllowed(t *testing.T) {

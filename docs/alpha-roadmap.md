@@ -185,8 +185,10 @@ The first concrete exporter contract for that workstream now lives in:
 Current implementation note:
 
 - the first family-1 exporter is a projection-based, Python-first workflow for
-  **single-text classification**
+  **single-text and paired-text classification**
 - it emits alpha-format bundles that load and parity-check in Go
+- exported text bundles can now be served through `cmd/infergo-serve -bundle`
+  using tokenized input
 - it stages tokenizer assets for future raw-text support, but it does not yet
   claim generic raw-text serving for exported bundles
 

@@ -82,6 +82,8 @@ Python-first orchestration workflow. It currently:
 
 - generates a source Transformers reference over a supplied public-safe input
   set
+- supports both single-text and paired-text sequence-classification inputs in
+  that reference flow
 - fits the current BIOnet native bundle shape against that reference
 - writes the alpha bundle metadata, labels artifact, and tokenizer asset
   manifest
@@ -89,6 +91,14 @@ Python-first orchestration workflow. It currently:
 That exporter is intentionally projection-based for now. It is enough to prove
 export -> load -> parity for the first family-1 milestone without claiming a
 full native encoder runtime yet.
+
+The generic family-1 serving path is now parallel to the curated pack path:
+
+- curated packs still serve through `infer/packs` and the pack-based HTTP muxes
+- exported family-1 text bundles can now serve through the stable
+  `infer/httpserver` package and `cmd/infergo-serve -bundle ...`
+- that non-curated path is currently tokenized-input-only and does not yet
+  claim generic raw-text tokenization for exported bundles
 
 The new token-classification path is intentionally scoped to score non-special,
 non-punctuation tokens from a public-safe reference set. It uses only a tiny

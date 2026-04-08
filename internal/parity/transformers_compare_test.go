@@ -36,6 +36,7 @@ func TestCompareTransformersTextClassification(t *testing.T) {
 			{
 				ID:                    "case-a",
 				Text:                  "excellent support",
+				TextPair:              "the help desk fixed everything",
 				InputIDs:              []int{101, 2001, 102},
 				AttentionMask:         []int{1, 1, 1},
 				ExpectedLogits:        []float64{-1.5, 1.5},
@@ -65,6 +66,7 @@ func TestCompareTransformersTextClassification(t *testing.T) {
 			{
 				ID:                    "case-a",
 				Text:                  "excellent support",
+				TextPair:              "the help desk fixed everything",
 				InputIDs:              []int{101, 2001, 102},
 				AttentionMask:         []int{1, 1, 1},
 				ObservedLogits:        []float64{-1.5, 1.5},
@@ -169,7 +171,7 @@ func TestBuildTextClassificationCandidate(t *testing.T) {
 		Labels:      []string{"NEGATIVE", "POSITIVE"},
 		Cases: []TransformersTextClassificationReferenceCase{
 			{ID: "case-a", Text: "excellent support", InputIDs: []int{101, 2001, 102}, AttentionMask: []int{1, 1, 1}},
-			{ID: "case-b", Text: "terrible experience", InputIDs: []int{101, 2002, 102}, AttentionMask: []int{1, 1, 1}},
+			{ID: "case-b", Text: "terrible experience", TextPair: "the app crashed on launch", InputIDs: []int{101, 2002, 102}, AttentionMask: []int{1, 1, 1}},
 		},
 	}
 
@@ -193,6 +195,9 @@ func TestBuildTextClassificationCandidate(t *testing.T) {
 
 	if candidate.Cases[0].ObservedLabel != "POSITIVE" {
 		t.Fatalf("unexpected observed label %q", candidate.Cases[0].ObservedLabel)
+	}
+	if candidate.Cases[1].TextPair != "the app crashed on launch" {
+		t.Fatalf("unexpected text_pair %q", candidate.Cases[1].TextPair)
 	}
 }
 

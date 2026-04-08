@@ -13,6 +13,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/pergamon-labs/infergo/backends/bionet"
+	"github.com/pergamon-labs/infergo/infer"
 	"github.com/pergamon-labs/infergo/infer/httpserver"
 	"github.com/pergamon-labs/infergo/infer/packs"
 )
@@ -23,6 +25,7 @@ func main() {
 	addr := flag.String("addr", envString("INFERGO_SERVE_ADDR", serverCfg.Addr), "http listen address")
 	task := flag.String("task", envString("INFERGO_SERVE_TASK", "text"), "which serving task to expose: text or token")
 	packKey := flag.String("pack", envString("INFERGO_SERVE_PACK", ""), "supported checked-in pack key")
+	bundleDir := flag.String("bundle", envString("INFERGO_SERVE_BUNDLE", ""), "bundle directory to serve directly without using curated pack manifests")
 	logRequests := flag.Bool("log-requests", envBool("INFERGO_SERVE_LOG_REQUESTS", true), "log one line per request")
 	readTimeout := flag.Duration("read-timeout", envDuration("INFERGO_SERVE_READ_TIMEOUT", serverCfg.ReadTimeout), "http read timeout")
 	readHeaderTimeout := flag.Duration("read-header-timeout", envDuration("INFERGO_SERVE_READ_HEADER_TIMEOUT", serverCfg.ReadHeaderTimeout), "http read-header timeout")
@@ -43,8 +46,34 @@ func main() {
 		httpserver.WithRequestLogging(*logRequests),
 	}
 
+	if *packKey != "" && *bundleDir != "" {
+		log.Fatal("use only one of -pack or -bundle")
+	}
+
 	switch *task {
 	case "text":
+		if *bundleDir != "" {
+			classifier, err := infer.LoadTextClassifier(*bundleDir)
+			if err != nil {
+				log.Fatalf("load text bundle: %v", err)
+			}
+			defer classifier.Close()
+
+			info, err := bionet.InspectTextClassificationBundle(*bundleDir)
+			if err != nil {
+				log.Fatalf("inspect text bundle: %v", err)
+			}
+
+			mux := httpserver.NewTextClassifierMux(classifier, httpserver.TextClassifierMetadata{
+				ModelID:                info.ModelID,
+				SupportsRawText:        info.SupportsRawText,
+				SupportsPairText:       info.SupportsPairText,
+				SupportsTokenizedInput: info.SupportsTokenizedInput,
+			}, options...)
+			serve(serverCfg, mux, "text-bundle", *bundleDir)
+			return
+		}
+
 		key := *packKey
 		if key == "" {
 			key = "infergo-basic-sst2"
@@ -58,6 +87,10 @@ func main() {
 		mux := httpserver.NewTextPackMux(pack, options...)
 		serve(serverCfg, mux, "text", key)
 	case "token":
+		if *bundleDir != "" {
+			log.Fatal("bundle serving is currently implemented only for text-classification bundles")
+		}
+
 		key := *packKey
 		if key == "" {
 			key = "infergo-basic-french-ner"
@@ -118,6 +151,8 @@ func logServeHints(cfg httpserver.ServerConfig, task, pack string) {
 	switch task {
 	case "text":
 		log.Printf("Predict: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"text\":\"This product is excellent and reliable.\"}' | jq", curlAddr)
+	case "text-bundle":
+		log.Printf("Predict: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"input_ids\":[101,2023,2003,1037,2742,102],\"attention_mask\":[1,1,1,1,1,1]}' | jq", curlAddr)
 	case "token":
 		log.Printf("Predict: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"text\":\"Sophie Tremblay a parlé avec Hydro-Québec à Montréal.\"}' | jq", curlAddr)
 	}

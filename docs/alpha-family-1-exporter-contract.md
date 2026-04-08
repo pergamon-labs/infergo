@@ -17,7 +17,7 @@ implementation shape that we can run today:
 - stage: first concrete implementation
 - support level: experimental, family-1 only
 - implementation form: documented Python-first script
-- current task branch: **single-text classification**
+- current task branch: **single-text and paired-text classification**
 
 This is the first operational exporter for family 1, but it is **not yet the
 final alpha export story**.
@@ -52,19 +52,21 @@ The first exporter implementation supports:
 
 - PyTorch-origin models loaded through Hugging Face `transformers`
 - encoder-style **single-text classification**
+- encoder-style **paired-text classification**
 - alpha-format bundle output for the `bionet` backend
 - tokenized-input parity and loading in Go
+- tokenized-input serving through `cmd/infergo-serve -bundle ...`
 - tokenizer asset staging for future raw-text support
 
 It does **not yet** implement:
 
-- paired-text classification export
-- pair-scoring export
 - direct raw-text serving from exported bundles
 - direct transformer-weight execution in the native runtime
+- generic two-string raw-text serving for paired-text bundles
 
-Those remain part of the family-1 roadmap, but not this first exporter
-milestone.
+Pair-scoring is supported in this milestone only when the source model can be
+represented as a paired-text sequence-classification head with ordered label
+logits.
 
 ## Exporter entrypoint
 
@@ -92,6 +94,11 @@ Current input-set shape:
     {
       "id": "case-1",
       "text": "This product is excellent and reliable."
+    },
+    {
+      "id": "pair-1",
+      "text": "The customer asked for a refund after being charged twice.",
+      "text_pair": "A customer requested a refund because they were billed two times."
     }
   ]
 }
@@ -109,6 +116,16 @@ uv run --with torch==2.10.0 --with transformers==5.3.0 \
   --out ./dist/family1/distilbert-sst2-alpha
 ```
 
+Paired-text usage:
+
+```bash
+uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  python ./scripts/export_encoder_text_bundle.py \
+  --model textattack/bert-base-uncased-MRPC \
+  --input ./testdata/reference/text-classification/mrpc-pairs-inputs.json \
+  --out ./dist/family1/mrpc-alpha
+```
+
 Important flags:
 
 - `--model`
@@ -117,6 +134,7 @@ Important flags:
   - optional canonical model id to record in the exported bundle metadata
 - `--input`
   - public-safe calibration/parity input set
+  - supports optional `text_pair` per case
 - `--out`
   - output bundle directory
 - `--feature-mode`
@@ -177,6 +195,8 @@ The first implementation keeps one boundary explicit:
 - exported bundles are currently **tokenized-input capable**
 - tokenizer assets are staged in the bundle
 - raw-text serving through the generic public surfaces is **not claimed yet**
+- paired-text export is supported, but exported bundles still serve through one
+  combined encoded sequence supplied as `input_ids`
 
 So the first exporter currently writes:
 
@@ -194,6 +214,8 @@ An exported bundle is considered valid for this milestone when:
 1. `infer.LoadTextClassifier(...)` can load it
 2. `cmd/infergo-parity -infergo-bundle-dir ...` passes against the generated
    source reference within the documented tolerance
+3. `cmd/infergo-serve -task text -bundle ...` can serve the bundle over HTTP
+   using tokenized input
 
 This is the first concrete family-1 success bar.
 
@@ -210,23 +232,24 @@ The exporter should fail clearly when:
 
 ## First real target model
 
-The first target we should validate with this exporter is:
+The first real targets validated with this exporter are:
 
 - `distilbert/distilbert-base-uncased-finetuned-sst-2-english`
+- `textattack/bert-base-uncased-MRPC`
 
-Why first:
+Why these first:
 
-- stable and widely used
-- already present in the repo's parity/reference flow
-- simple single-text classification shape
-- good fit for the first exporter milestone
+- stable and widely used sequence-classification models
+- cover both single-text and paired-text branches
+- good fit for the first projection-based exporter milestone
 
 ## What comes next
 
 Once this exporter path is working and validated, the next family-1 steps
 should be:
 
-1. paired-text classification input support
-2. pair-scoring export for entity-resolution-style family-1 models
-3. tokenizer-backed raw-text loading/serving for exported bundles
+1. pair-scoring export for entity-resolution-style family-1 models with
+   clearer output semantics
+2. tokenizer-backed raw-text loading/serving for exported bundles
+3. generic two-string serving for paired-text bundles
 4. move from a script-first exporter toward a more polished public CLI

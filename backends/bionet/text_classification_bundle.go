@@ -49,6 +49,18 @@ type TextClassificationBundleMetadata struct {
 	FeatureTokenIDs   []int    `json:"feature_token_ids"`
 }
 
+// TextClassificationBundleInfo describes the input/runtime capabilities
+// exposed by a loaded text-classification bundle.
+type TextClassificationBundleInfo struct {
+	ModelID                string
+	Task                   string
+	Labels                 []string
+	BundleFormat           string
+	SupportsRawText        bool
+	SupportsPairText       bool
+	SupportsTokenizedInput bool
+}
+
 // TextClassificationBundle loads a BIOnet-native text classification artifact
 // plus the feature metadata needed to project input token ids into model
 // features.
@@ -176,6 +188,53 @@ func LoadTextClassificationBundleMetadata(bundleDir string) (TextClassificationB
 	}
 
 	return metadata, nil
+}
+
+// InspectTextClassificationBundle reads the bundle metadata and reports the
+// supported input modes without loading the full runtime artifact.
+func InspectTextClassificationBundle(bundleDir string) (TextClassificationBundleInfo, error) {
+	metadataPath := filepath.Join(bundleDir, "metadata.json")
+	raw, err := os.ReadFile(metadataPath)
+	if err != nil {
+		return TextClassificationBundleInfo{}, fmt.Errorf("read bionet text classification metadata: %w", err)
+	}
+
+	var probe textClassificationBundleFormatProbe
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		return TextClassificationBundleInfo{}, fmt.Errorf("decode bionet text classification metadata probe: %w", err)
+	}
+
+	if probe.BundleFormat == alphaNativeBundleFormat {
+		contract, err := loadAlphaTextClassificationBundleContract(bundleDir, raw)
+		if err != nil {
+			return TextClassificationBundleInfo{}, err
+		}
+
+		return TextClassificationBundleInfo{
+			ModelID:                contract.Metadata.ModelID,
+			Task:                   contract.Metadata.Task,
+			Labels:                 append([]string(nil), contract.Labels...),
+			BundleFormat:           contract.Metadata.BundleFormat,
+			SupportsRawText:        contract.Metadata.Inputs.RawTextSupported,
+			SupportsPairText:       contract.Metadata.Inputs.PairTextSupported,
+			SupportsTokenizedInput: contract.Metadata.Inputs.TokenizedInputSupported,
+		}, nil
+	}
+
+	metadata, err := LoadTextClassificationBundleMetadata(bundleDir)
+	if err != nil {
+		return TextClassificationBundleInfo{}, err
+	}
+
+	return TextClassificationBundleInfo{
+		ModelID:                metadata.ModelID,
+		Task:                   metadata.Task,
+		Labels:                 append([]string(nil), metadata.Labels...),
+		BundleFormat:           "legacy",
+		SupportsRawText:        false,
+		SupportsPairText:       false,
+		SupportsTokenizedInput: true,
+	}, nil
 }
 
 // PredictBatch projects token ids into the configured feature vector and runs
