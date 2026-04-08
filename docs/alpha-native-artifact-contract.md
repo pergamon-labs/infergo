@@ -463,6 +463,16 @@ The exporter may begin as:
 
 It does not need to begin life as a universal export framework.
 
+The first concrete exporter contract now lives in:
+
+- [`docs/alpha-family-1-exporter-contract.md`](./alpha-family-1-exporter-contract.md)
+
+Current implementation note:
+
+- the first exporter path is projection-based and single-text-only
+- it writes tokenizer assets into the bundle today
+- it does **not yet** claim generic raw-text serving for exported bundles
+
 ## Relation to current checked-in bundles
 
 The current checked-in native bundles under `testdata/native/` are still useful

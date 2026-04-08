@@ -168,6 +168,17 @@ The alpha exporter may begin as:
 It does not need to start as a polished universal `infergo-export` command, but
 the user workflow must be documented and reproducible.
 
+The first concrete exporter contract now lives in:
+
+- [`docs/alpha-family-1-exporter-contract.md`](./alpha-family-1-exporter-contract.md)
+
+Current implementation note:
+
+- the first exporter milestone implements the **single-text classification**
+  branch first
+- pair-text classification and pair-scoring remain part of family 1, but they
+  are not yet implemented in the first exporter path
+
 ## Runtime assumptions for alpha
 
 The runtime only needs to grow far enough to support the first family

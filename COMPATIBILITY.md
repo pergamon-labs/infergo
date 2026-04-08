@@ -28,6 +28,8 @@ without a documented export path, backend, and parity test story.
   - Current validated examples:
   - curated pack discovery through `cmd/infergo-packs`
   - stable REST serving through `cmd/infergo-serve`
+  - experimental family-1 export through `scripts/export_encoder_text_bundle.py`
+    for projection-based single-text classification bundles
   - structured JSON error responses from the stable HTTP surface
   - graceful shutdown and timeout-driven HTTP serving through `cmd/infergo-serve`
   - benchmark suite for current checked-in raw-text text/token paths and the stable HTTP handler surface through `go test ./infer/packs ./infer/httpserver -run '^$' -bench . -benchmem`
@@ -52,7 +54,10 @@ without a documented export path, backend, and parity test story.
     - checked-in token packs can be loaded and queried by pack key
     - piece-aware prediction helpers are supported for checked-in packs whose tokenizer-piece to id mapping is validated from the public-safe reference data
     - raw-text prediction is only supported when a pack explicitly validates a checked-in tokenizer helper
-    - current raw-text-capable packs: `infergo-basic-sst2`, `infergo-basic-french-ner`
+  - current raw-text-capable packs: `infergo-basic-sst2`, `infergo-basic-french-ner`
+  - first alpha-format exported family-1 bundles can now load through
+    `infer.LoadTextClassifier` and compare through `cmd/infergo-parity`
+    without requiring Python at runtime
 
 ## v1 stretch path
 

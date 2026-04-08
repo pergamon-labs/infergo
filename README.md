@@ -178,6 +178,7 @@ InferGo is intentionally narrow in `v0.1.0-prealpha.1`.
 | Parity CLI | Supported via [`cmd/infergo-parity/`](./cmd/infergo-parity) |
 | REST serving CLI | Supported via [`cmd/infergo-serve/`](./cmd/infergo-serve) |
 | Stable HTTP handler package | Supported via [`infer/httpserver/`](./infer/httpserver) |
+| Family-1 alpha exporter | Experimental via [`scripts/export_encoder_text_bundle.py`](./scripts/export_encoder_text_bundle.py) |
 | Structured JSON error responses | Supported |
 | Graceful shutdown and timeout config | Supported via `infer/httpserver.ServerConfig` and `cmd/infergo-serve` |
 | Optional TorchScript bridge | Experimental / backend-specific |
@@ -235,5 +236,6 @@ Non-goals for this release line:
 - [`docs/alpha-roadmap.md`](./docs/alpha-roadmap.md)
 - [`docs/alpha-supported-model-family.md`](./docs/alpha-supported-model-family.md)
 - [`docs/alpha-native-artifact-contract.md`](./docs/alpha-native-artifact-contract.md)
+- [`docs/alpha-family-1-exporter-contract.md`](./docs/alpha-family-1-exporter-contract.md)
 - [`docs/alpha-family-2-entres-bridge.md`](./docs/alpha-family-2-entres-bridge.md)
 - [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)

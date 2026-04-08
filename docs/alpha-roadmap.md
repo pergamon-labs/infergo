@@ -178,6 +178,18 @@ Desired user story:
 
 This workstream is about **family 1**.
 
+The first concrete exporter contract for that workstream now lives in:
+
+- [`docs/alpha-family-1-exporter-contract.md`](./alpha-family-1-exporter-contract.md)
+
+Current implementation note:
+
+- the first family-1 exporter is a projection-based, Python-first workflow for
+  **single-text classification**
+- it emits alpha-format bundles that load and parity-check in Go
+- it stages tokenizer assets for future raw-text support, but it does not yet
+  claim generic raw-text serving for exported bundles
+
 Family 2 may have its own bridge/export conventions, but it should not weaken
 the public family-1 contract.
 

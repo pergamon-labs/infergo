@@ -77,6 +77,19 @@ text bundles, the loader can validate a versioned `metadata.json`, external
 `labels.json`, and tokenizer manifest references while still keeping legacy
 fixtures working during the transition.
 
+The first concrete family-1 exporter path sits above that loader contract as a
+Python-first orchestration workflow. It currently:
+
+- generates a source Transformers reference over a supplied public-safe input
+  set
+- fits the current BIOnet native bundle shape against that reference
+- writes the alpha bundle metadata, labels artifact, and tokenizer asset
+  manifest
+
+That exporter is intentionally projection-based for now. It is enough to prove
+export -> load -> parity for the first family-1 milestone without claiming a
+full native encoder runtime yet.
+
 The new token-classification path is intentionally scoped to score non-special,
 non-punctuation tokens from a public-safe reference set. It uses only a tiny
 prev/current/next local window, which is enough to fix BIO and nearby-context
