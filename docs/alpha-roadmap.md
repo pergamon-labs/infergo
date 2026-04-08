@@ -1,5 +1,12 @@
 # InferGo Alpha Roadmap
 
+Maintainer-facing note:
+
+If you are evaluating InferGo as a user, start with
+[`README.md`](../README.md),
+[`COMPATIBILITY.md`](../COMPATIBILITY.md), and
+[`alpha-family-1-walkthrough.md`](./alpha-family-1-walkthrough.md).
+
 This document defines the next phase for InferGo from the current public
 pre-alpha state to a credible alpha release.
 

@@ -1,5 +1,12 @@
 # InferGo Alpha Family 2: Numeric-Feature TorchScript ER Bridge
 
+Maintainer-facing note:
+
+This document is for the internal-first family-2 bridge. If you are evaluating
+InferGo as a public alpha user, start with
+[`README.md`](../README.md) and
+[`alpha-family-1-walkthrough.md`](./alpha-family-1-walkthrough.md).
+
 This document defines the **second alpha family track** for InferGo:
 
 - a **numeric-feature TorchScript scorer bridge**

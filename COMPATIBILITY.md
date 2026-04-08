@@ -1,135 +1,112 @@
 # Compatibility
 
-InferGo supports only the explicitly tested artifact types, backends, tasks, and examples documented here and in the README.
+InferGo supports only the artifact types, backends, tasks, and usage paths
+documented here and in the README.
 
-InferGo does not make blanket claims such as:
+InferGo does **not** claim blanket support for:
 
-- "supports `.pt` files"
-- "supports Hugging Face models"
-- "supports PyTorch models"
+- arbitrary `.pt` files
+- arbitrary Hugging Face models
+- arbitrary PyTorch models
 
-without a documented export path, backend, and parity test story.
+## Public alpha support
 
-## v1 launch path
+### Library usage
 
-- Artifact type: InferGo-native BIOnet bundles backed by `.gob` runtime artifacts plus bundle metadata
-- Backend: `bionet`
-- Runtime posture: CPU-first
-- Primary task shape: small classification-style inference in Go services
-- Public APIs:
-  - stable bundle API: `infer.LoadTextClassifier` and `infer.LoadTokenClassifier`
-  - higher-level exported text-bundle API: `infer.LoadTextBundle`
-  - curated pack API: `infer/packs.LoadTextPack` and `infer/packs.LoadTokenPack`
-  - stable HTTP handler API: `infer/httpserver.NewTextPackMux` and `infer/httpserver.NewTokenPackMux`
-  - stable server config API: `infer/httpserver.DefaultServerConfig` and `infer/httpserver.NewServer`
-  - alpha text-bundle loader validation for:
-    - versioned `metadata.json`
-    - external `labels.json`
-    - tokenizer manifest checks for raw-text-capable bundles
-  - Current validated examples:
-  - curated pack discovery through `cmd/infergo-packs`
-  - stable REST serving through `cmd/infergo-serve`
-  - experimental family-1 export through `cmd/infergo-export`
-    for projection-based single-text and paired-text classification bundles
-  - tokenizer-backed library use of exported family-1 text bundles through
-    `infer.LoadTextBundle`
-  - experimental serving of exported family-1 text bundles through
-    `cmd/infergo-serve -task text -bundle ...`, including tokenizer-backed raw
-    text for supported exported bundles
-  - structured JSON error responses from the stable HTTP surface
-  - graceful shutdown and timeout-driven HTTP serving through `cmd/infergo-serve`
-  - benchmark suite for current checked-in raw-text text/token paths and the stable HTTP handler surface through `go test ./infer/packs ./infer/httpserver -run '^$' -bench . -benchmem`
-  - synthetic text classification on dense feature vectors via `cmd/infergo-parity`
-  - native text classification over the manifest-backed public model packs listed in `testdata/reference/text-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
-  - native token classification over the manifest-backed public model packs listed in `testdata/reference/token-classification/model-packs.json` via `cmd/infergo-parity -infergo-bundle-dir ...`
-  - curated text-pack prediction via `examples/bionet-classifier`
-  - first truly native raw-text text prediction via the checked-in `infergo-basic-sst2` pack
-  - curated token-pack prediction via `examples/token-http-server`
-  - first truly native raw-text token prediction via the checked-in `infergo-basic-french-ner` pack
-  - token classification remains a curated-pack and sample-service path for alpha, not a public BYOM export/import claim
-  - tokenization helpers for raw-text-capable checked-in token packs through
-    `TokenPack.TokenizeText(...)`
-  - text classification served through `infer/httpserver` and `cmd/infergo-serve -task text`
-  - token classification served through `infer/httpserver` and `cmd/infergo-serve -task token`
-  - sample named-entity extraction service through `examples/ner-service`
-  - the token-classification manifest now includes a first non-English multilingual NER pack through `Davlan/xlm-roberta-base-ner-hrl`
-  - the token-classification manifest now also includes a French-specific NER pack through `cmarkea/distilcamembert-base-ner`
-  - checked-in native bundle shapes:
-    - `token-id-bag`
-    - `embedding-avg-pool -> linear` with compact dense token embeddings
-    - `embedding-masked-avg-pool -> linear` with compact dense token embeddings
-    - `windowed token embedding -> linear` for narrow token classification parity
-  - curated pack helpers:
-    - checked-in text packs can be loaded and queried by pack key
-    - checked-in token packs can be loaded and queried by pack key
-    - piece-aware prediction helpers are supported for checked-in packs whose tokenizer-piece to id mapping is validated from the public-safe reference data
-    - raw-text prediction is only supported when a pack explicitly validates a checked-in tokenizer helper
-  - current raw-text-capable packs: `infergo-basic-sst2`, `infergo-basic-french-ner`
-  - first alpha-format exported family-1 bundles can now load through
-    `infer.LoadTextClassifier` and compare through `cmd/infergo-parity`
-    without requiring Python at runtime
+| Surface | Status |
+| --- | --- |
+| `infer.LoadTextClassifier(...)` | Supported |
+| `infer.LoadTextBundle(...)` | Supported |
+| `infer.LoadTokenClassifier(...)` | Supported |
+| `infer/packs.LoadTextPack(...)` | Supported |
+| `infer/packs.LoadTokenPack(...)` | Supported |
 
-## v1 stretch path
+### HTTP usage
 
-- Artifact type: exported TorchScript artifacts through a documented export flow
-- Backend: `torchscript`
-- Runtime posture: CPU-first initially
-- Support bar: parity-tested on fixed public inputs against a Python reference implementation
-- Current external reference paths:
-  - the checked-in text-classification model packs listed in `testdata/reference/text-classification/model-packs.json`
-  - the checked-in token-classification model packs listed in `testdata/reference/token-classification/model-packs.json` for native parity through the `bionet` backend
-- Current local comparison path: TorchScript export plus native Go candidate generation through `cmd/infergo-parity -torchscript-bundle-dir ...`
+| Surface | Status |
+| --- | --- |
+| `infer/httpserver` | Supported |
+| `cmd/infergo-serve` for curated text packs | Supported |
+| `cmd/infergo-serve` for curated token packs | Supported |
+| `cmd/infergo-serve -bundle ...` for exported family-1 text bundles | Experimental |
 
-## Internal dogfood bridge
+### BYOM
 
-- Artifact type: `infergo-torchscript-bridge` bundle for numeric-feature
-  scoring
-- Backend: `torchscript`
-- Support posture: experimental and internal-first
-- Current experimental surfaces:
-  - bundle loading through `backends/torchscript.LoadEntityResolutionBundle`
-  - Go API through `infer/experimental/entres`
-  - HTTP serving through `cmd/infergo-entres-serve`
-  - local parity through `cmd/infergo-entres-parity`
-- Intended use: current `entres` entity-resolution model family
-- Current local validation bar:
-  - individual and organization `core-svc` ER models pass local parity against
-    fixtures captured from the current screening runtime
-  - bridge metadata explicitly captures the legacy
-    `message_projection=legacy_first_value_broadcast` behavior needed to match
-    that runtime
-- Non-claim: this does not imply broad TorchScript or arbitrary `.pt` support
+| Surface | Status |
+| --- | --- |
+| `cmd/infergo-export` for family-1 text classification | Experimental |
+| Exported family-1 bundles loaded in Go without Python runtime | Experimental |
+| Exported family-1 bundles served over HTTP | Experimental |
+| Token-classification BYOM export/import | Not part of alpha |
 
-## Native backend note
+## Supported task shape
 
-- The native `torchscript` backend currently requires `CGO_ENABLED=1`, the `torchscript_native` build tag, and a libtorch install exposed through `CGO_CXXFLAGS` and `CGO_LDFLAGS`.
-- On machines without that setup, InferGo builds cleanly but returns a descriptive runtime error if the native backend path is invoked.
+### Family 1
 
-## Not supported in v1
+Public BYOM family:
 
-- arbitrary `.pt` files without a documented export path
-- arbitrary numeric-feature TorchScript scorers beyond the documented family-2 bridge
-- direct Hugging Face repository loading
-- general transformer execution in the native `bionet` backend
-- token classification beyond the explicitly documented local-window NER path
-- blanket raw-text tokenization support for checked-in packs that do not validate a native tokenizer helper
+- PyTorch-origin
+- Hugging Face Transformers-style
+- encoder text classification
+- paired-text classification
+
+Current raw-text runtime boundary:
+
+- validated BERT-style `tokenizer.json` WordPiece subset only
+
+### Curated token classification
+
+Supported today through checked-in packs and examples:
+
+- native token classification bundles
+- raw-text-capable curated token packs where tokenizer behavior is validated
+- sample NER extraction service via
+  [`examples/ner-service/`](./examples/ner-service)
+
+This is **not** yet a public BYOM export/import claim.
+
+### Family 2
+
+Internal-first bridge only:
+
+- numeric-feature TorchScript scorer for the `entres` use case
+- experimental
+- not part of the public alpha BYOM contract
+
+## Backends
+
+| Backend | Status |
+| --- | --- |
+| `bionet` | Primary native backend |
+| `torchscript` | Experimental, backend-specific, internal-first |
+
+## Runtime posture
+
+- CPU-first
+- Go-native runtime for supported `bionet` bundles
+- no Python required at runtime for exported family-1 bundles
+- Python/Transformers tooling required only at export time for family 1
+
+## Not supported in alpha
+
+- arbitrary `.pt` loading without a documented export path
+- direct runtime loading from arbitrary Hugging Face repositories
+- general transformer execution in the native backend
+- token-classification BYOM export/import
 - stable character-offset spans for NER extraction
 - a first-class stable entity-extraction API in `infer/`
-- experimental `-use-layernorm` native bundle generation as a public support claim until it meets the same parity bar as the default path
-- native attention blocks or full encoder stacks
 - ONNX runtime support
-- training, autograd, or optimizer APIs
-- generative text serving
-- multimodal or vision model support
+- gRPC serving
+- training or fine-tuning
+- GPU-first runtime work
 
-## Backend support rule
+## Practical reading guide
 
-A backend should only be called supported when:
+If you are evaluating InferGo today:
 
-1. the artifact/export path is documented
-2. at least one public example works end-to-end
-3. supported task/model shapes are explicit
-4. known unsupported features are documented
-5. parity or golden tests exist
-6. a normal Go server example exists
-7. the stable HTTP surface is documented if REST serving is claimed
+1. start with [README.md](./README.md)
+2. use [cmd/infergo-export/README.md](./cmd/infergo-export/README.md) for BYOM
+3. use [cmd/infergo-serve/README.md](./cmd/infergo-serve/README.md) only if you
+   want a standalone HTTP process
+4. use [docs/alpha-family-1-walkthrough.md](./docs/alpha-family-1-walkthrough.md)
+   for the end-to-end supported alpha path

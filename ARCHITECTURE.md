@@ -1,233 +1,133 @@
 # Architecture
 
-InferGo is structured around a small public API and explicit backend boundaries.
+InferGo is structured around a small public API, explicit backend boundaries,
+and parity-backed artifact contracts.
 
-## Public API
+## Public surfaces
 
-The `infer` package is the stable entrypoint for loading models and running
+### `infer`
+
+The `infer` package is the stable entrypoint for loading bundles and running
 inference from Go code.
 
-The design goal is to keep end-user code focused on serving concerns rather than low-level runtime details.
-
-Current stable surfaces:
+Key surfaces:
 
 - `infer.LoadTextClassifier(...)`
 - `infer.LoadTextBundle(...)`
 - `infer.LoadTokenClassifier(...)`
-- typed `TextInput` / `TextPrediction`
-- typed `TokenInput` / `TokenPrediction`
-- `infer/httpserver.NewTextPackMux(...)`
-- `infer/httpserver.NewTokenPackMux(...)`
+- `TextInput` / `TextPrediction`
+- `TokenInput` / `TokenPrediction`
 
-Those APIs intentionally expose checked-in native bundle behavior without
-forcing callers to know about `backends/bionet`.
+This is the primary product surface.
 
-The `infer/packs` package is the curated convenience layer above that stable
-bundle API. It is where checked-in manifests, reference-aware helpers,
-piece-aware prediction paths, and the first truly native raw-text text pack
-live. This keeps repo-shipped pack workflows out of the lower-level stable
-surface.
+### `infer/packs`
 
-The `infer/httpserver` package is the first stable REST serving layer above the
-curated pack API. It keeps the current HTTP contract small and explicit:
+This is the curated convenience layer for checked-in proof packs.
 
-- `GET /healthz`
-- `GET /metadata`
-- `POST /predict`
+Use it when you want:
 
-It also owns the first stable operational serving knobs:
+- a repo-shipped pack by key
+- curated examples
+- sample NER flows built on validated public-safe fixtures
 
-- structured JSON API errors
-- request logging hooks
-- reusable `ServerConfig` for read, write, idle, and shutdown timeouts
+### `infer/httpserver`
 
-The `cmd/infergo-serve` command is a thin wrapper on top of that package. It is
-the current supported command-line entrypoint for serving curated text and token
-packs over HTTP without forcing callers to copy the example binaries directly.
-It now supports env-driven defaults and graceful shutdown on common process
-signals.
+This is the stable HTTP adapter layer.
 
-## Backend boundaries
+It exists for teams who want:
+
+- a standalone HTTP process
+- quick smoke tests
+- a simple REST boundary around a loaded bundle
+
+It is optional. Most Go teams can embed InferGo directly in their existing
+service code instead.
+
+### CLI entrypoints
+
+- `cmd/infergo-export`
+  - installable family-1 BYOM exporter
+- `cmd/infergo-serve`
+  - installable standalone HTTP server
+- `cmd/infergo-parity`
+  - parity check tool
+- `cmd/infergo-packs`
+  - curated-pack discovery
+
+## Backends
 
 ### `backends/bionet`
 
-This is the first real implementation path. It will absorb the reusable runtime pieces extracted from:
+This is the primary native backend.
 
-- `bionet/tensor`
-- `bionet/functional`
-- `bionet/module`
-- `bionet/initializer`
-- `bionet/embeddings`
-- `bionet/tokenizer` after cleanup or rename
+It currently powers:
 
-The low-level runtime stays under the BIOnet backend boundary until we know which internals are worth stabilizing as public APIs.
+- native text-classification bundles
+- native token-classification bundles
+- exported family-1 text bundles
 
-The first InferGo-native external comparison paths also live here today:
-
-- a simple `token-id-bag -> linear` bundle
-- a more expressive `embedding -> avg pool -> linear` bundle with compact dense token embeddings
-- a sequence-aware `embedding -> masked avg pool -> linear` bundle with compact dense token embeddings
-- a narrow `windowed token embedding -> linear` bundle for token classification against a widened public NER reference set
-
-Those keep the bundle format and Go-only serving loop moving forward without
-claiming general transformer support too early.
-
-The text-classification loader now has an explicit migration path from the
-older checked-in bundle metadata to the newer alpha-era artifact contract. For
-text bundles, the loader can validate a versioned `metadata.json`, external
-`labels.json`, and tokenizer manifest references while still keeping legacy
-fixtures working during the transition.
-
-That same path now has a higher-level library helper:
-
-- `infer.LoadTextBundle(...)` for exported family-1 bundles
-- tokenized prediction through the existing classifier path
-- tokenizer-backed raw-text prediction when the bundle metadata and tokenizer
-  assets match the current supported runtime subset
-
-The first concrete family-1 exporter path sits above that loader contract as an
-installable `infergo-export` workflow with a Python-first export bridge under
-the hood. It currently:
-
-- generates a source Transformers reference over a supplied public-safe input
-  set
-- can write a starter single-text or paired-text input template so users do not
-  need repo-local fixture files just to begin
-- supports both single-text and paired-text sequence-classification inputs in
-  that reference flow
-- fits the current BIOnet native bundle shape against that reference
-- writes the alpha bundle metadata, labels artifact, and tokenizer asset
-  manifest
-
-That exporter is intentionally projection-based for now. It is enough to prove
-export -> load -> parity for the first family-1 milestone without claiming a
-full native encoder runtime yet.
-
-The generic family-1 serving path is now parallel to the curated pack path:
-
-- curated packs still serve through `infer/packs` and the pack-based HTTP muxes
-- exported family-1 text bundles can now serve through the stable
-  `infer/httpserver` package and `cmd/infergo-serve -bundle ...`
-- that non-curated path now accepts tokenizer-backed raw text for supported
-  exported bundles and explicit `text` + `text_pair` requests for paired-text
-  classifiers
-
-The new token-classification path is intentionally scoped to score non-special,
-non-punctuation tokens from a public-safe reference set. It uses only a tiny
-prev/current/next local window, which is enough to fix BIO and nearby-context
-conflicts in the widened NER set without claiming contextual encoder support
-the runtime does not yet have.
-
-Layer normalization is now available in the BIOnet runtime as an activation
-primitive, but it remains experimental in the native bundle generator until it
-meets the same parity bar as the default masked-pooling path.
+It is the main Go-native runtime path for alpha.
 
 ### `backends/torchscript`
 
-This package is reserved for a narrow, parity-tested exported-model path. It should remain a backend-specific boundary around libtorch/TorchScript details instead of leaking into the public API.
+This is an experimental backend-specific bridge.
 
-It now also carries the first **experimental family-2 bridge** for internal
-entity-resolution scoring:
+It exists for the internal family-2 `entres` dogfood path and should not be
+treated as the default InferGo runtime story.
 
-- metadata-validated numeric-feature TorchScript bundles
-- fixed `vectors + message -> scores` contract
-- explicit separation from the public family-1 alpha contract
+## Artifact model
 
-That bridge is allowed to exist because it helps dogfood a real internal use
-case, but it must stay clearly marked as experimental/internal-first.
+InferGo is centered on exported bundle directories, not raw training artifacts.
 
-### `infer/experimental/entres`
+For the public family-1 path, a bundle contains:
 
-This package is the first family-2 experimental API surface.
+- `metadata.json`
+- `labels.json`
+- BIOnet runtime artifacts such as `model.gob`
+- tokenizer assets when raw-text runtime support is available
 
-It exists to:
+The relevant user story is:
 
-- load the numeric-feature TorchScript bridge bundle
-- expose a narrow Go API for `vectors + message -> scores`
-- support a small experimental HTTP serving path for internal dogfooding
-- preserve explicitly documented bridge-compatibility details such as the
-  legacy message projection used by the current screening runtime
+1. export a supported model into a bundle
+2. load the bundle in Go
+3. call it directly or expose it over HTTP
+4. verify parity against the source model
 
-It should not be treated as part of the stable public `infer` API yet.
+## Family split
 
-## Parity tooling
+### Family 1
 
-Parity is a first-class part of the architecture, not a side script.
+Public alpha BYOM contract:
 
-The `internal/parity` package and `cmd/infergo-parity` command are intended to support:
+- PyTorch-origin
+- Hugging Face Transformers-style
+- encoder text classification
+- paired-text classification
 
-- fixed public input sets
-- reference-output capture
-- tolerance-based comparisons
-- layer-by-layer debugging when needed
+### Family 2
 
-The checked-in pack manifests are the public-facing contract for supported
-proof packs. They drive both contributor workflows and the curated `infer/packs`
-helper layer, so pack-specific conveniences stay tied to explicit parity-backed
-artifacts instead of leaking into generic runtime claims.
+Internal-first bridge:
 
-`cmd/infergo-packs` sits on top of that same contract. It gives developers one
-discovery path for the curated pack surface, including which text packs support
-raw text today, without forcing them to inspect manifests by hand.
+- numeric-feature TorchScript scorer
+- current `entres` use case
+- experimental and not part of the public alpha BYOM claim
 
-`cmd/infergo-serve` sits beside it as the first supported serving path for the
-same curated pack surface. That makes InferGo's REST story more product-like
-than the old example-only approach while still keeping the HTTP contract narrow
-and parity-backed.
+## Parity
 
-`cmd/infergo-entres-serve` is the parallel experimental command for family 2.
-It is intentionally separate from `cmd/infergo-serve` so the internal dogfood
-bridge does not silently broaden the stable public serving claim.
+Parity is part of the product, not a side tool.
 
-`cmd/infergo-entres-parity` is the parallel experimental parity command for
-family 2. It exists so InferGo can compare the bridge output against fixtures
-captured from the current screening runtime for the real individual and
-organization ER models without broadening the public parity contract.
+InferGo uses parity to make support claims trustworthy:
 
-The first raw-text-capable text pack uses a native BasicTokenizer projection of
-the SST-2 proof set. That is intentionally narrower than claiming generic raw
-text support across the whole manifest, but it gives InferGo one fully honest
-end-to-end raw-text serving path.
+- exported bundles are compared against a source reference implementation
+- curated proof packs are tied to explicit reference data
+- new support claims should come with parity or golden-test evidence
 
-The first raw-text-capable token pack follows the same pattern through a
-BasicTokenizer projection of the French NER proof set. That keeps the token
-serving story honest too: raw text is supported where the checked-in tokenizer
-behavior is native and validated, not as a blanket promise across every pack.
+## Practical interpretation
 
-That token path is now also validated in a more application-shaped sample
-service through [`examples/ner-service/`](./examples/ner-service), which uses a
-checked-in pack plus token grouping to return extracted entities instead of only
-token labels. The fact that this still lives at the sample layer is deliberate:
-the remaining work before alpha around offsets, reusable entity abstractions,
-and broader tokenizer/runtime support is tracked in
-[`docs/alpha-gaps-and-missing-primitives.md`](./docs/alpha-gaps-and-missing-primitives.md).
+If you are adopting InferGo today:
 
-The benchmark story follows that same principle. The repo benchmarks the stable
-public `infer/packs` surface and the stable `infer/httpserver` surface for the
-currently honest raw-text-capable text and token paths, rather than claiming
-generalized runtime performance across every possible backend or artifact
-shape.
-
-## Extraction mapping from screening
-
-Extract early:
-
-- `bionet/tensor` -> `backends/bionet/runtime/tensor`
-- `bionet/functional` -> `backends/bionet/runtime/functional`
-- `bionet/module` -> `backends/bionet/runtime/module`
-- `bionet/initializer` -> `backends/bionet/runtime/initializer`
-- `bionet/embeddings` -> `backends/bionet/runtime/embeddings`
-
-Extract later or only after cleanup:
-
-- `bionet/tokenizer`
-- `cmd/bionet.go`
-- `torch/*`
-
-Do not extract as-is:
-
-- `services/advmedia/**`
-- `cmd/api.go`
-- `constants/files.go`
-- `services/entres/model.go`
-- private `data/**` artifacts
+- use `infer` first
+- use `infer/httpserver` or `infergo-serve` only when you want a standalone
+  HTTP process
+- treat `bionet` as the primary runtime path
+- treat TorchScript as experimental and internal-first

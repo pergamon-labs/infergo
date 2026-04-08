@@ -2,23 +2,24 @@
 
 InferGo is a Go-native inference toolkit for backend services.
 
-It is built for teams that want to run small inference workloads directly in Go
-without turning Python, PyTorch, or TensorFlow into a required production
-runtime.
+It is built for teams that want to export a supported model once, load it in
+Go, and run predictions without Python in production.
 
-Current prerelease: [`v0.1.0-prealpha.1`](https://github.com/pergamon-labs/infergo/releases/tag/v0.1.0-prealpha.1)
+Current prerelease:
+[`v0.1.0-prealpha.1`](https://github.com/pergamon-labs/infergo/releases/tag/v0.1.0-prealpha.1)
 
-## Why InferGo
+## What InferGo is for
 
-- Go-native inference for backend services
-- CPU-first native runtime path with narrow, explicit support claims
-- Stable public Go APIs in [`infer/`](./infer) and curated pack helpers in
-  [`infer/packs/`](./infer/packs)
-- A first-class REST surface through [`infer/httpserver/`](./infer/httpserver)
-  and [`cmd/infergo-serve/`](./cmd/infergo-serve)
-- Parity-driven validation against public reference implementations
-- Honest non-goals: not a training framework, not a blanket `.pt` loader, and
-  not a general transformer runtime
+- embed small inference workloads directly in Go services
+- optionally expose those same bundles through a standalone HTTP process
+- keep support claims narrow, explicit, and parity-backed
+
+InferGo is **not**:
+
+- a blanket `.pt` loader
+- a general transformer runtime
+- a training framework
+- a model zoo
 
 ## Installation
 
@@ -30,15 +31,7 @@ Add the library to your project:
 go get github.com/pergamon-labs/infergo
 ```
 
-If you want to run the checked-in examples and repo tools, clone the repo:
-
-```bash
-git clone https://github.com/pergamon-labs/infergo.git
-cd infergo
-go test ./...
-```
-
-Install the main CLIs without cloning the repo:
+Install the main CLIs:
 
 ```bash
 go install github.com/pergamon-labs/infergo/cmd/infergo-export@latest
@@ -46,57 +39,34 @@ go install github.com/pergamon-labs/infergo/cmd/infergo-serve@latest
 go install github.com/pergamon-labs/infergo/cmd/infergo-parity@latest
 ```
 
-For BYOM export, `infergo-export` still needs `uv` plus Python-side
-`transformers` dependencies at export time. That dependency does not carry into
-runtime serving once the bundle is built.
+`infergo-export` still needs `uv` plus Python-side `transformers` dependencies
+at export time. That dependency does not carry into runtime serving once the
+bundle is built.
 
-## Quickstart
+## Quickstart: bring your own model
 
-The fastest path from clone to a real result is:
+This is the primary alpha path. It does **not** require cloning this repo.
 
-1. List the curated packs that ship with the repository:
-
-```bash
-go run ./cmd/infergo-packs
-```
-
-2. Run the first raw-text text-classification example:
+1. Write a starter input set:
 
 ```bash
-go run ./examples/bionet-classifier \
-  -text "This product is excellent and reliable."
+infergo-export template -kind single -out ./family1-inputs.json
 ```
 
-3. Run the first raw-text token-classification HTTP example:
+2. Edit `./family1-inputs.json` so it contains a few representative,
+public-safe examples from your task.
+
+3. Export a supported model:
 
 ```bash
-go run ./cmd/infergo-serve -task token
+infergo-export export \
+  -model distilbert/distilbert-base-uncased-finetuned-sst-2-english \
+  -input ./family1-inputs.json \
+  -out ./artifacts/distilbert-sst2-alpha \
+  -reference-output ./artifacts/distilbert-sst2-reference.json
 ```
 
-Then call it:
-
-```bash
-curl -s -X POST http://127.0.0.1:8081/predict \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"Sophie Tremblay a parlé avec Hydro-Québec à Montréal."}'
-```
-
-4. Run a parity check against a checked-in public reference:
-
-```bash
-go run ./cmd/infergo-parity \
-  -reference ./testdata/reference/token-classification/distilbert-ner-reference.json \
-  -infergo-bundle-dir ./testdata/native/token-classification/distilbert-ner-windowed-embedding-linear \
-  -tolerance 1e-3
-```
-
-## Use as a library
-
-InferGo's stable public package surface starts in [`infer/`](./infer) and
-[`infer/packs/`](./infer/packs). The stable REST surface starts in
-[`infer/httpserver/`](./infer/httpserver).
-
-For the easiest curated path, load a checked-in pack:
+4. Use the exported bundle from Go:
 
 ```go
 package main
@@ -105,17 +75,17 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/pergamon-labs/infergo/infer/packs"
+	"github.com/pergamon-labs/infergo/infer"
 )
 
 func main() {
-	pack, err := packs.LoadTextPack("infergo-basic-sst2")
+	bundle, err := infer.LoadTextBundle("./artifacts/distilbert-sst2-alpha")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer pack.Close()
+	defer bundle.Close()
 
-	result, err := pack.PredictText("This product is excellent and reliable.")
+	result, err := bundle.PredictText("This product is excellent and reliable.")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -124,16 +94,27 @@ func main() {
 }
 ```
 
-See also:
+5. Validate parity:
 
-- [`examples/bionet-classifier/`](./examples/bionet-classifier)
-- [`infer/`](./infer)
-- [`infer/packs/`](./infer/packs)
+```bash
+infergo-parity \
+  -reference ./artifacts/distilbert-sst2-reference.json \
+  -infergo-bundle-dir ./artifacts/distilbert-sst2-alpha \
+  -tolerance 1e-4
+```
 
-For exported family-1 bundles, use the higher-level bundle helper:
+For the full supported path, see
+[docs/alpha-family-1-walkthrough.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/alpha-family-1-walkthrough.md).
+
+## Use in your Go app
+
+For most Go teams, this is the normal mode: load the bundle once and call it
+from your existing service code.
+
+Single-text classification:
 
 ```go
-bundle, err := infer.LoadTextBundle("./dist/family1/distilbert-sst2-alpha")
+bundle, err := infer.LoadTextBundle("./artifacts/distilbert-sst2-alpha")
 if err != nil {
 	log.Fatal(err)
 }
@@ -145,19 +126,43 @@ if err != nil {
 }
 ```
 
-See also:
+Paired-text classification:
 
-- [`examples/exported-bundle-classifier/`](./examples/exported-bundle-classifier)
-- [`docs/alpha-family-1-walkthrough.md`](./docs/alpha-family-1-walkthrough.md)
+```go
+result, err := bundle.PredictTextPair(
+	"The company said the deal closed.",
+	"The acquisition has been completed, the company said.",
+)
+if err != nil {
+	log.Fatal(err)
+}
+```
 
-## Serve over HTTP
+If you want repo-based examples too, see:
 
-InferGo now ships a first-class HTTP serving entrypoint:
+- [examples/exported-bundle-classifier/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/examples/exported-bundle-classifier/README.md)
+- [examples/bionet-classifier/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/examples/bionet-classifier/README.md)
 
-Text classification:
+## Serve over HTTP, if you want a standalone model process
+
+Most teams embedding InferGo in an existing Go service will not need this.
+
+Use `infergo-serve` when you want:
+
+- a quick smoke-test surface
+- a separate model process
+- a simple HTTP boundary for non-Go callers
+
+Installed binary:
 
 ```bash
-go run ./cmd/infergo-serve -task text
+infergo-serve -task text -bundle ./artifacts/distilbert-sst2-alpha -addr 127.0.0.1:8080
+```
+
+Repo-local alternative:
+
+```bash
+go run ./cmd/infergo-serve -task text -bundle ./artifacts/distilbert-sst2-alpha -addr 127.0.0.1:8080
 ```
 
 Then call it:
@@ -168,42 +173,7 @@ curl -s -X POST http://127.0.0.1:8080/predict \
   -d '{"text":"This product is excellent and reliable."}'
 ```
 
-Token classification:
-
-```bash
-go run ./cmd/infergo-serve -task token
-```
-
-`infergo-serve` now supports:
-
-- structured JSON errors
-- graceful shutdown on `SIGINT` and `SIGTERM`
-- configurable read, write, idle, and shutdown timeouts
-- env-driven defaults through `INFERGO_SERVE_*`
-
-Then call it:
-
-```bash
-curl -s -X POST http://127.0.0.1:8081/predict \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"Sophie Tremblay a parlé avec Hydro-Québec à Montréal."}'
-```
-
-Exported family-1 text bundle over the non-curated path:
-
-```bash
-go run ./cmd/infergo-serve -task text -bundle ./dist/family1/mrpc-alpha
-```
-
-Single-text exported bundle request:
-
-```bash
-curl -s -X POST http://127.0.0.1:8080/predict \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"This product is excellent and reliable."}'
-```
-
-Paired-text exported bundle request:
+Paired-text exported bundles accept:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8080/predict \
@@ -211,52 +181,33 @@ curl -s -X POST http://127.0.0.1:8080/predict \
   -d '{"text":"The company said the deal closed.","text_pair":"The acquisition has been completed, the company said."}'
 ```
 
-See also:
+## Curated repo examples
 
-- [`cmd/infergo-serve/`](./cmd/infergo-serve)
-- [`infer/httpserver/`](./infer/httpserver)
-- [`examples/http-server/`](./examples/http-server)
-- [`examples/token-http-server/`](./examples/token-http-server)
-- [`examples/ner-service/`](./examples/ner-service)
+If you cloned the repo and want to evaluate the current checked-in fixtures:
 
-## Bring your own model (alpha)
-
-The first supported BYOM path is family 1:
-
-- PyTorch-origin
-- Hugging Face Transformers-style
-- encoder text classification / paired-text classification
-
-Install the exporter:
+- list packs:
 
 ```bash
-go install github.com/pergamon-labs/infergo/cmd/infergo-export@latest
+go run ./cmd/infergo-packs
 ```
 
-Write a starting input template:
+- run a curated text example:
 
 ```bash
-infergo-export template -kind single -out ./family1-inputs.json
+go run ./examples/bionet-classifier -text "This product is excellent and reliable."
 ```
 
-Then export a supported model:
+- run a curated token example:
 
 ```bash
-infergo-export export \
-  --model distilbert/distilbert-base-uncased-finetuned-sst-2-english \
-  --input ./family1-inputs.json \
-  --out ./artifacts/distilbert-sst2-alpha \
-  --reference-output ./artifacts/distilbert-sst2-reference.json
+go run ./cmd/infergo-serve -task token
 ```
 
-Then either:
+- run the sample NER extraction service:
 
-- load it from Go with `infer.LoadTextBundle(...)`
-- serve it with `infergo-serve -task text -bundle ...`
-- validate it with `infergo-parity ...`
-
-For the full supported path, see
-[`docs/alpha-family-1-walkthrough.md`](./docs/alpha-family-1-walkthrough.md).
+```bash
+go run ./examples/ner-service -addr 127.0.0.1:8080
+```
 
 ## Supported today
 
@@ -264,43 +215,15 @@ InferGo is intentionally narrow in `v0.1.0-prealpha.1`.
 
 | Area | Status |
 | --- | --- |
-| Native text-classification bundles | Supported |
-| Native token-classification bundles | Supported |
-| Raw-text text prediction | Supported for curated validated packs only |
-| Raw-text token prediction | Supported for curated validated packs only |
-| Sample NER extraction service | Supported via [`examples/ner-service/`](./examples/ner-service) |
-| Pack discovery CLI | Supported via [`cmd/infergo-packs/`](./cmd/infergo-packs) |
-| Parity CLI | Supported via [`cmd/infergo-parity/`](./cmd/infergo-parity) |
-| REST serving CLI | Supported via [`cmd/infergo-serve/`](./cmd/infergo-serve) |
-| Stable HTTP handler package | Supported via [`infer/httpserver/`](./infer/httpserver) |
-| Family-1 alpha exporter | Experimental via [`cmd/infergo-export/`](./cmd/infergo-export) |
-| Exported family-1 bundle serving | Experimental via [`cmd/infergo-serve -bundle`](./cmd/infergo-serve), with tokenizer-backed raw text for supported exported bundles |
-| Token-classification BYOM export/import | Not part of alpha; token classification remains curated-pack and sample-service only |
-| Structured JSON error responses | Supported |
-| Graceful shutdown and timeout config | Supported via `infer/httpserver.ServerConfig` and `cmd/infergo-serve` |
-| Optional TorchScript bridge | Experimental / backend-specific |
+| Family-1 BYOM export/import for text classification | Experimental |
+| Exported family-1 bundles loaded directly in Go | Experimental |
+| Exported family-1 bundles served over HTTP | Experimental |
+| Curated native text-classification packs | Supported |
+| Curated native token-classification packs | Supported |
+| Sample NER extraction service | Supported |
+| Token-classification BYOM export/import | Not part of alpha |
+| Family-2 `entres` bridge | Experimental and internal-first |
 | gRPC serving surface | Not yet |
-
-For the canonical support contract, see
-[`COMPATIBILITY.md`](./COMPATIBILITY.md).
-
-## Benchmarks
-
-Example snapshot from one local run on `darwin/arm64` with an Apple M3 Max:
-
-| Benchmark | Result |
-| --- | --- |
-| `LoadTextPack(infergo-basic-sst2)` | about `0.36 ms/op`, `166925 B/op`, `2265 allocs/op` |
-| `PredictText(infergo-basic-sst2)` | about `1.6 µs/op`, `1616 B/op`, `57 allocs/op` |
-| `LoadTokenPack(infergo-basic-french-ner)` | about `0.61 ms/op`, `260463 B/op`, `2927 allocs/op` |
-| `PredictText(infergo-basic-french-ner)` | about `7.5 µs/op`, `11464 B/op`, `229 allocs/op` |
-| `PredictTokens(infergo-basic-french-ner)` | about `5.7 µs/op`, `9656 B/op`, `191 allocs/op` |
-| `HTTP metadata (infergo-basic-sst2)` | about `4.1 µs/op`, `6386 B/op`, `20 allocs/op` |
-| `HTTP predict text (infergo-basic-sst2)` | about `10.7 µs/op`, `9528 B/op`, `90 allocs/op` |
-| `HTTP predict text (infergo-basic-french-ner)` | about `28.2 µs/op`, `21432 B/op`, `273 allocs/op` |
-
-These numbers are only a point-in-time example. To reproduce them on your own
-hardware, see [`BENCHMARKS.md`](./BENCHMARKS.md).
 
 ## Project status
 
@@ -309,34 +232,16 @@ InferGo is public, but still pre-alpha.
 Current posture:
 
 - CPU-first native inference in Go
-- parity-backed support for curated public-safe packs
-- BIOnet as the first real native backend path
-- optional TorchScript bridge kept intentionally narrow
+- library-first usage
+- HTTP as an optional deployment mode
+- parity-backed support for documented paths only
 
-Non-goals for this release line:
+## Public docs
 
-- training
-- blanket `.pt` compatibility
-- general transformer execution
-- GPU-first deployment story
-- turning the checked-in packs into a model zoo
-
-## Docs and project files
-
-- [`COMPATIBILITY.md`](./COMPATIBILITY.md)
-- [`ARCHITECTURE.md`](./ARCHITECTURE.md)
-- [`BENCHMARKS.md`](./BENCHMARKS.md)
-- [`CHANGELOG.md`](./CHANGELOG.md)
-- [`RELEASING.md`](./RELEASING.md)
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md)
-- [`cmd/infergo-export/README.md`](./cmd/infergo-export/README.md)
-- [`cmd/infergo-serve/README.md`](./cmd/infergo-serve/README.md)
-- [`docs/alpha-roadmap.md`](./docs/alpha-roadmap.md)
-- [`docs/alpha-supported-model-family.md`](./docs/alpha-supported-model-family.md)
-- [`docs/alpha-native-artifact-contract.md`](./docs/alpha-native-artifact-contract.md)
-- [`docs/alpha-family-1-exporter-contract.md`](./docs/alpha-family-1-exporter-contract.md)
-- [`docs/alpha-family-1-walkthrough.md`](./docs/alpha-family-1-walkthrough.md)
-- [`docs/alpha-family-2-entres-bridge.md`](./docs/alpha-family-2-entres-bridge.md)
-- [`docs/alpha-family-2-validation-checklist.md`](./docs/alpha-family-2-validation-checklist.md)
-- [`docs/alpha-gaps-and-missing-primitives.md`](./docs/alpha-gaps-and-missing-primitives.md)
-- [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)
+- [COMPATIBILITY.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/COMPATIBILITY.md)
+- [ARCHITECTURE.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/ARCHITECTURE.md)
+- [cmd/infergo-export/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/cmd/infergo-export/README.md)
+- [cmd/infergo-serve/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/cmd/infergo-serve/README.md)
+- [docs/alpha-family-1-walkthrough.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/alpha-family-1-walkthrough.md)
+- [BENCHMARKS.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/BENCHMARKS.md)
+- [CONTRIBUTING.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/CONTRIBUTING.md)

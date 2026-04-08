@@ -1,5 +1,11 @@
 # Alpha Gaps and Missing Primitives
 
+Maintainer-facing note:
+
+If you are evaluating InferGo as a user, start with
+[`README.md`](../README.md) and
+[`alpha-family-1-walkthrough.md`](./alpha-family-1-walkthrough.md).
+
 This document captures the remaining gaps between the current public
 pre-alpha state and a credible alpha release.
 

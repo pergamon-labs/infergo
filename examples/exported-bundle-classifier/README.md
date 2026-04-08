@@ -3,11 +3,14 @@
 This example shows the non-HTTP Go library path for an exported family-1 text
 bundle.
 
+For most Go teams, this is the normal InferGo usage mode: load a bundle in your
+existing service and call it directly.
+
 Single-text example:
 
 ```bash
 go run ./examples/exported-bundle-classifier \
-  -bundle ./dist/family1/distilbert-sst2-alpha \
+  -bundle ./artifacts/distilbert-sst2-alpha \
   -text "This product is excellent and reliable."
 ```
 
@@ -15,7 +18,7 @@ Paired-text example:
 
 ```bash
 go run ./examples/exported-bundle-classifier \
-  -bundle ./dist/family1/mrpc-alpha \
+  -bundle ./artifacts/mrpc-alpha \
   -text "The company said the deal closed." \
   -text-pair "The acquisition has been completed, the company said."
 ```

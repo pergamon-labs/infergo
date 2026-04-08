@@ -1,5 +1,10 @@
 # InferGo Alpha Family-1 Walkthrough
 
+If you are evaluating InferGo as a user, start here.
+
+If you are looking for roadmap or maintainer planning notes, use
+[`alpha-roadmap.md`](./alpha-roadmap.md) separately.
+
 This is the **public-safe end-to-end path** for the first supported InferGo
 alpha family.
 
@@ -7,7 +12,7 @@ It shows how to:
 
 1. export a supported PyTorch/Transformers model into an InferGo-native bundle
 2. load the exported bundle from Go
-3. serve the exported bundle over HTTP
+3. optionally serve the exported bundle over HTTP
 4. run parity against the source model
 
 This walkthrough is intentionally narrow and honest:
@@ -97,7 +102,9 @@ artifacts/mrpc-alpha/
 
 ## 2. Load and run the exported bundle from Go
 
-For the higher-level family-1 library path, use `infer.LoadTextBundle(...)`.
+This is the primary runtime story for most Go teams. Use
+`infer.LoadTextBundle(...)` inside your existing service and call the model in
+process.
 
 ### Single-text example
 
@@ -112,7 +119,7 @@ import (
 )
 
 func main() {
-bundle, err := infer.LoadTextBundle("./artifacts/distilbert-sst2-alpha")
+	bundle, err := infer.LoadTextBundle("./artifacts/distilbert-sst2-alpha")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -140,7 +147,7 @@ import (
 )
 
 func main() {
-bundle, err := infer.LoadTextBundle("./artifacts/mrpc-alpha")
+	bundle, err := infer.LoadTextBundle("./artifacts/mrpc-alpha")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -175,7 +182,11 @@ go run ./examples/exported-bundle-classifier \
   -text-pair "The acquisition has been completed, the company said."
 ```
 
-## 3. Serve the exported bundle over HTTP
+## 3. Optionally serve the exported bundle over HTTP
+
+Use `infergo-serve` only when you want a standalone model process or a simple
+HTTP boundary. If you already have a Go service, most of the time you can stop
+after step 2.
 
 ### Single-text bundle
 
@@ -257,7 +268,6 @@ This walkthrough does **not** mean:
 - InferGo loads raw `.pt` files directly
 
 The supported family and contract still live here:
-
 - [alpha-supported-model-family.md](./alpha-supported-model-family.md)
 - [alpha-native-artifact-contract.md](./alpha-native-artifact-contract.md)
 - [alpha-family-1-exporter-contract.md](./alpha-family-1-exporter-contract.md)

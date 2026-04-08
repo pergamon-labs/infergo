@@ -1,29 +1,100 @@
 # InferGo Serve
 
-`infergo-serve` is the current first-class HTTP serving entrypoint for InferGo.
+`infergo-serve` is the optional standalone HTTP entrypoint for InferGo.
 
-To benchmark the current handler path:
+Most Go teams will embed InferGo directly in an existing service. Use
+`infergo-serve` when you want:
 
-```bash
-go test ./infer/httpserver -run '^$' -bench . -benchmem
-```
+- a quick smoke-test surface
+- a separate model process
+- a simple HTTP boundary for non-Go callers
 
-Run a text-classification pack:
-
-```bash
-go run ./cmd/infergo-serve -task text
-```
-
-Run a token-classification pack:
+Install it:
 
 ```bash
-go run ./cmd/infergo-serve -task token
+go install github.com/pergamon-labs/infergo/cmd/infergo-serve@latest
 ```
+
+If you cloned the repo, the same commands can be run with `go run ./cmd/infergo-serve`.
+
+## Serve an exported family-1 bundle
+
+Single-text example:
+
+```bash
+infergo-serve -task text -bundle ./artifacts/distilbert-sst2-alpha -addr 127.0.0.1:8080
+```
+
+Paired-text example:
+
+```bash
+infergo-serve -task text -bundle ./artifacts/mrpc-alpha -addr 127.0.0.1:8080
+```
+
+Health and metadata:
+
+```bash
+curl -s http://127.0.0.1:8080/healthz
+curl -s http://127.0.0.1:8080/metadata
+```
+
+Single-text request:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"This product is excellent and reliable."}'
+```
+
+Paired-text request:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"The company said the deal closed.","text_pair":"The acquisition has been completed, the company said."}'
+```
+
+Exported bundles may also accept explicit tokenized input:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"input_ids":[101,2023,4031,2003,6581,1998,10539,1012,102],"attention_mask":[1,1,1,1,1,1,1,1,1]}'
+```
+
+The bundle path and curated-pack path are mutually exclusive:
+
+- use `-bundle` for exported family-1 text bundles
+- use `-pack` for curated checked-in packs
+
+## Serve curated packs
+
+Curated text pack:
+
+```bash
+infergo-serve -task text
+```
+
+Curated token pack:
+
+```bash
+infergo-serve -task token
+```
+
+Token example request:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Sophie Tremblay a parlé avec Hydro-Québec à Montréal."}'
+```
+
+## Configuration
 
 Useful flags:
 
 ```bash
-go run ./cmd/infergo-serve \
+infergo-serve \
   -task token \
   -pack infergo-basic-french-ner \
   -addr :8081 \
@@ -47,70 +118,6 @@ The same defaults can be set through environment variables:
 - `INFERGO_SERVE_IDLE_TIMEOUT`
 - `INFERGO_SERVE_SHUTDOWN_TIMEOUT`
 
-Check health and metadata:
-
-```bash
-curl -s http://127.0.0.1:8080/healthz
-curl -s http://127.0.0.1:8080/metadata
-```
-
-Run prediction:
-
-```bash
-curl -s -X POST http://127.0.0.1:8080/predict \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"This product is excellent and reliable."}'
-```
-
-Serve an exported family-1 text bundle directly without using curated pack
-manifests:
-
-```bash
-go run ./cmd/infergo-serve \
-  -task text \
-  -bundle ./dist/family1/mrpc-alpha \
-  -addr 127.0.0.1:8080
-```
-
-Then call it with raw text when the exported bundle advertises
-`supports_raw_text=true`:
-
-```bash
-curl -s -X POST http://127.0.0.1:8080/predict \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"This product is excellent and reliable."}'
-```
-
-Paired-text bundles can accept `text` plus `text_pair`:
-
-```bash
-curl -s -X POST http://127.0.0.1:8080/predict \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"The company said the deal closed.","text_pair":"The acquisition has been completed, the company said."}'
-```
-
-The bundle path and curated pack path are mutually exclusive:
-
-- use `-pack` for curated checked-in packs
-- use `-bundle` for directly exported family-1 text bundles
-
-Exported bundles may still accept explicit tokenized input through:
-
-```bash
-curl -s -X POST http://127.0.0.1:8080/predict \
-  -H 'Content-Type: application/json' \
-  -d '{"input_ids":[101,2023,4031,2003,6581,1998,10539,1012,102],"attention_mask":[1,1,1,1,1,1,1,1,1]}'
-```
-
-When `-task token` is used, the default pack is `infergo-basic-french-ner` and
-the default raw-text example is:
-
-```bash
-curl -s -X POST http://127.0.0.1:8080/predict \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"Sophie Tremblay a parlé avec Hydro-Québec à Montréal."}'
-```
-
 Errors are returned as structured JSON:
 
 ```json
@@ -120,4 +127,10 @@ Errors are returned as structured JSON:
     "message": "provide exactly one supported input mode for this bundle"
   }
 }
+```
+
+To benchmark the HTTP handler path:
+
+```bash
+go test ./infer/httpserver -run '^$' -bench . -benchmem
 ```
