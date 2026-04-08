@@ -25,6 +25,16 @@ This is still narrower than:
 - a training framework
 - a Kubernetes serving platform
 
+InferGo now has **two alpha tracks**:
+
+- **Family 1**
+  - the primary public alpha contract
+  - self-serve export/import for a documented supported model family
+- **Family 2**
+  - an internal dogfood bridge for the current `entres` entity-resolution
+    TorchScript scorer
+  - explicitly experimental and internal-first
+
 ## Product rule
 
 InferGo should support **bring your own model for documented model families**.
@@ -70,8 +80,8 @@ and not:
 Primary internal dogfood target:
 
 - host the entity-resolution model in Go
-- interpret or export the existing PyTorch-origin model into an InferGo-native
-  artifact
+- support the current numeric-feature TorchScript scorer through a clearly
+  separate family-2 bridge
 - serve predictions from a small Go service without Python in production
 
 Why this matters:
@@ -104,8 +114,8 @@ Public alpha should expose:
 - one documented supported model family for text-style inference
 - stable HTTP serving and Go loading for that family
 
-The internal entity-resolution story can be the main dogfood driver even if the
-public example model must remain public-safe and reproducible.
+The internal entity-resolution story can be the main dogfood driver even while
+the public alpha story remains narrowly centered on family 1.
 
 ## Alpha definition
 
@@ -140,6 +150,14 @@ This family should be chosen based on:
 - ability to reproduce parity in Go
 - ability to document tokenizer/runtime constraints honestly
 
+That family is now documented in:
+
+- [`docs/alpha-supported-model-family.md`](./alpha-supported-model-family.md)
+
+The internal dogfood bridge family is documented separately in:
+
+- [`docs/alpha-family-2-entres-bridge.md`](./alpha-family-2-entres-bridge.md)
+
 ### B. Export / import workflow
 
 This is the main product unlock.
@@ -158,6 +176,11 @@ Desired user story:
 3. serve it with `infergo-serve`
 4. run parity checks against the source implementation
 
+This workstream is about **family 1**.
+
+Family 2 may have its own bridge/export conventions, but it should not weaken
+the public family-1 contract.
+
 ### C. Runtime and backend work
 
 We should keep investing in:
@@ -173,6 +196,8 @@ We should avoid:
 - pushing TorchScript into the center of the product story
 
 TorchScript can remain a bridge and debugging aid, but not the main alpha path.
+For family 2, TorchScript is allowed as an internal bridge as long as that
+boundary stays explicit.
 
 ### D. Serving and ops
 
@@ -190,7 +215,8 @@ We can add gRPC later, but it should not block alpha.
 
 InferGo should have two private validation tracks running in parallel:
 
-- entity-resolution model in a Go service
+- entity-resolution model in a Go service through the family-2 TorchScript
+  bridge
 - NER in a Go service or sample service
 
 These do not need to all be open-source artifacts, but they should drive the
@@ -232,6 +258,7 @@ Deliverables:
 - required runtime primitives list
 - tokenizer/export requirements
 - clear "supported vs not supported" decision for alpha
+- clear split between public family 1 and internal family 2
 
 ### Phase 2: Self-serve export/import
 
@@ -246,6 +273,8 @@ Deliverables:
 - loader compatibility checks
 - parity workflow for exported artifacts
 
+This phase applies to **family 1**.
+
 ### Phase 3: Internal dogfood validation
 
 Goal:
@@ -254,7 +283,7 @@ Goal:
 
 Deliverables:
 
-- entity-resolution model served from Go without Python runtime dependency
+- entity-resolution model served from Go through the family-2 bridge
 - NER validation in a Go service or sample service
 - documented findings on gaps, failure modes, and missing primitives
 
@@ -286,8 +315,8 @@ Deliverables:
    - see [`docs/alpha-supported-model-family.md`](./alpha-supported-model-family.md)
 2. Specify the native artifact contract needed for that family.
    - see [`docs/alpha-native-artifact-contract.md`](./alpha-native-artifact-contract.md)
-3. Choose the first private internal validation target:
-   - entity resolution first
-   - NER second
-4. Build the first export/import path against that target.
-5. Add the parity and serving story around that exported artifact.
+3. Keep the family split explicit in implementation:
+   - family 1 = public alpha contract
+   - family 2 = internal `entres` bridge
+4. Build the first export/import path for family 1.
+5. Build the first load/serve path for family 2.

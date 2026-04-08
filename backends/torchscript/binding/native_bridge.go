@@ -24,6 +24,11 @@ func (m *Module) ForwardTextClassification(inputIDs, attentionMasks [][]int64) (
 	return m.native.ForwardTextClassification(inputIDs, attentionMasks)
 }
 
+// ForwardFeatureScoring runs a numeric-feature scoring batch through the native binding implementation.
+func (m *Module) ForwardFeatureScoring(vectors [][]float64, message []float64) ([]float64, error) {
+	return m.native.ForwardFeatureScoring(vectors, message)
+}
+
 // Close releases native resources.
 func (m *Module) Close() error {
 	if m == nil || m.native == nil {

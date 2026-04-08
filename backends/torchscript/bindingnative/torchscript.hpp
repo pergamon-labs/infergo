@@ -29,6 +29,15 @@ TorchFloatArray TorchJitForwardTextClassification(
     int seq_dim,
     TorchError* error
 );
+TorchFloatArray TorchJitForwardFeatureScoring(
+    TorchScriptModule module,
+    float* vectors,
+    float* message,
+    int batch_dim,
+    int feature_dim,
+    int message_dim,
+    TorchError* error
+);
 void TorchFreeFloatArray(TorchFloatArray array);
 void TorchFreeCString(char* value);
 

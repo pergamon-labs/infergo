@@ -91,6 +91,28 @@ meets the same parity bar as the default masked-pooling path.
 
 This package is reserved for a narrow, parity-tested exported-model path. It should remain a backend-specific boundary around libtorch/TorchScript details instead of leaking into the public API.
 
+It now also carries the first **experimental family-2 bridge** for internal
+entity-resolution scoring:
+
+- metadata-validated numeric-feature TorchScript bundles
+- fixed `vectors + message -> scores` contract
+- explicit separation from the public family-1 alpha contract
+
+That bridge is allowed to exist because it helps dogfood a real internal use
+case, but it must stay clearly marked as experimental/internal-first.
+
+### `infer/experimental/entres`
+
+This package is the first family-2 experimental API surface.
+
+It exists to:
+
+- load the numeric-feature TorchScript bridge bundle
+- expose a narrow Go API for `vectors + message -> scores`
+- support a small experimental HTTP serving path for internal dogfooding
+
+It should not be treated as part of the stable public `infer` API yet.
+
 ## Parity tooling
 
 Parity is a first-class part of the architecture, not a side script.
@@ -115,6 +137,10 @@ raw text today, without forcing them to inspect manifests by hand.
 same curated pack surface. That makes InferGo's REST story more product-like
 than the old example-only approach while still keeping the HTTP contract narrow
 and parity-backed.
+
+`cmd/infergo-entres-serve` is the parallel experimental command for family 2.
+It is intentionally separate from `cmd/infergo-serve` so the internal dogfood
+bridge does not silently broaden the stable public serving claim.
 
 The first raw-text-capable text pack uses a native BasicTokenizer projection of
 the SST-2 proof set. That is intentionally narrower than claiming generic raw

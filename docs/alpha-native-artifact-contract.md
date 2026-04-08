@@ -7,6 +7,7 @@ It is the bundle-level companion to:
 
 - [`docs/alpha-supported-model-family.md`](./alpha-supported-model-family.md)
 - [`docs/alpha-roadmap.md`](./alpha-roadmap.md)
+- [`docs/alpha-family-2-entres-bridge.md`](./alpha-family-2-entres-bridge.md)
 
 The goal is to make the alpha roadmap operational:
 
@@ -29,6 +30,9 @@ This contract is intentionally narrower than:
 - token classification
 - embeddings-only families
 - ONNX as a primary format
+
+It does **not** apply to the internal family-2 numeric-feature TorchScript
+bridge.
 
 ## Contract status
 

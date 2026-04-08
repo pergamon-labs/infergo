@@ -65,6 +65,19 @@ without a documented export path, backend, and parity test story.
   - the checked-in token-classification model packs listed in `testdata/reference/token-classification/model-packs.json` for native parity through the `bionet` backend
 - Current local comparison path: TorchScript export plus native Go candidate generation through `cmd/infergo-parity -torchscript-bundle-dir ...`
 
+## Internal dogfood bridge
+
+- Artifact type: `infergo-torchscript-bridge` bundle for numeric-feature
+  scoring
+- Backend: `torchscript`
+- Support posture: experimental and internal-first
+- Current experimental surfaces:
+  - bundle loading through `backends/torchscript.LoadEntityResolutionBundle`
+  - Go API through `infer/experimental/entres`
+  - HTTP serving through `cmd/infergo-entres-serve`
+- Intended use: current `entres` entity-resolution model family
+- Non-claim: this does not imply broad TorchScript or arbitrary `.pt` support
+
 ## Native backend note
 
 - The native `torchscript` backend currently requires `CGO_ENABLED=1`, the `torchscript_native` build tag, and a libtorch install exposed through `CGO_CXXFLAGS` and `CGO_LDFLAGS`.
@@ -73,6 +86,7 @@ without a documented export path, backend, and parity test story.
 ## Not supported in v1
 
 - arbitrary `.pt` files without a documented export path
+- arbitrary numeric-feature TorchScript scorers beyond the documented family-2 bridge
 - direct Hugging Face repository loading
 - general transformer execution in the native `bionet` backend
 - token classification beyond the explicitly documented local-window NER path

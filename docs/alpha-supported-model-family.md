@@ -12,6 +12,8 @@ explicitly out of scope for alpha, and what families we should evaluate next.
 - support level: design target, not broad runtime claim
 - primary internal anchor: entity resolution
 - public alpha posture: bring-your-own-model for one documented family
+- internal bridge note: the current `entres` TorchScript scorer is tracked as a
+  separate family-2 bridge, not part of this first public family
 
 ## First supported family
 
@@ -45,13 +47,18 @@ This family is narrow enough to avoid claiming:
 This is the best alpha family because it aligns with both the product north
 star and the internal dogfood target:
 
-- it supports the strongest internal use case: entity resolution in Go without
+- it supports the long-term product shape for entity resolution in Go without
   Python in production
 - it matches common Hugging Face and PyTorch workflows closely enough to be
   useful to outside developers
 - it is simpler to document and validate than starting with token-level or
   generative model families
 - it keeps InferGo focused on credible toolkit breadth, not platform breadth
+
+The current internal `entres` scorer does **not** belong to this family. It is
+tracked separately in:
+
+- [`docs/alpha-family-2-entres-bridge.md`](./alpha-family-2-entres-bridge.md)
 
 ## Source ecosystem in scope
 
