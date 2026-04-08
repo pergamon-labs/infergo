@@ -283,6 +283,7 @@ Deliverables:
 ## Immediate next steps
 
 1. Define the first supported model family in repo terms.
+   - see [`docs/alpha-supported-model-family.md`](./alpha-supported-model-family.md)
 2. Specify the native artifact contract needed for that family.
 3. Choose the first private internal validation target:
    - entity resolution first
