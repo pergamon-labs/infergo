@@ -71,6 +71,12 @@ The first InferGo-native external comparison paths also live here today:
 Those keep the bundle format and Go-only serving loop moving forward without
 claiming general transformer support too early.
 
+The text-classification loader now has an explicit migration path from the
+older checked-in bundle metadata to the newer alpha-era artifact contract. For
+text bundles, the loader can validate a versioned `metadata.json`, external
+`labels.json`, and tokenizer manifest references while still keeping legacy
+fixtures working during the transition.
+
 The new token-classification path is intentionally scoped to score non-special,
 non-punctuation tokens from a public-safe reference set. It uses only a tiny
 prev/current/next local window, which is enough to fix BIO and nearby-context

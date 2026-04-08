@@ -21,7 +21,11 @@ without a documented export path, backend, and parity test story.
   - curated pack API: `infer/packs.LoadTextPack` and `infer/packs.LoadTokenPack`
   - stable HTTP handler API: `infer/httpserver.NewTextPackMux` and `infer/httpserver.NewTokenPackMux`
   - stable server config API: `infer/httpserver.DefaultServerConfig` and `infer/httpserver.NewServer`
-- Current validated examples:
+  - alpha text-bundle loader validation for:
+    - versioned `metadata.json`
+    - external `labels.json`
+    - tokenizer manifest checks for raw-text-capable bundles
+  - Current validated examples:
   - curated pack discovery through `cmd/infergo-packs`
   - stable REST serving through `cmd/infergo-serve`
   - structured JSON error responses from the stable HTTP surface

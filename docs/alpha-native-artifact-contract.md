@@ -86,6 +86,7 @@ It describes:
 - artifact file names
 - tokenizer behavior
 - prediction semantics
+- backend-specific projection config
 
 ### `model.gob`
 
@@ -148,6 +149,11 @@ The alpha contract should require at least these fields:
     "kind": "label_logits",
     "labels_artifact": "labels.json",
     "positive_label": "match"
+  },
+  "backend_config": {
+    "feature_mode": "embedding-masked-avg-pool",
+    "feature_token_ids": [101, 102, 2023],
+    "embedding_artifact": "embeddings.gob"
   },
   "created_at": "2026-04-08T00:00:00Z",
   "created_by": {
@@ -244,6 +250,33 @@ Rules:
 - binary entity-resolution models should still export labels, not a free-form
   scalar-only output
 - `positive_label` is recommended for binary classification and pair scoring
+
+### Backend config
+
+Required:
+
+- `backend_config.feature_mode`
+- `backend_config.feature_token_ids`
+
+Required when the feature mode uses embeddings:
+
+- `backend_config.embedding_artifact`
+
+For the current BIOnet alpha runtime, this backend config is not optional. The
+generic bundle contract must still tell the runtime how token ids are projected
+into feature vectors before the native model head runs.
+
+## Current BIOnet backend config assumptions
+
+For the first alpha family, BIOnet currently expects one of:
+
+- `token-id-bag`
+- `embedding-avg-pool`
+- `embedding-masked-avg-pool`
+
+That backend-specific projection config is part of the alpha contract until the
+native runtime evolves to absorb more of that structure directly into the model
+artifact.
 
 ## `labels.json` contract
 
@@ -378,11 +411,12 @@ When loading a bundle, InferGo should validate at minimum:
 7. `backend_artifact` exists
 8. `labels_artifact` exists and parses
 9. label count matches the output dimension expected by the model head
-10. if `raw_text_supported=true`, tokenizer manifest exists
-11. tokenizer manifest references only files that exist in the bundle
-12. if `pair_text_supported=true`, tokenizer manifest and input contract both
+10. `backend_config` is valid for the selected backend
+11. if `raw_text_supported=true`, tokenizer manifest exists
+12. tokenizer manifest references only files that exist in the bundle
+13. if `pair_text_supported=true`, tokenizer manifest and input contract both
     support paired encoding
-13. if `max_sequence_length` is invalid or missing, fail with a clear message
+14. if `max_sequence_length` is invalid or missing, fail with a clear message
 
 The loader should also reject:
 
