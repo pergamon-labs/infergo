@@ -111,12 +111,19 @@ The first implementation uses:
   "artifact": "model.torchscript.pt",
   "model_id": "pergamon/entres-individual",
   "profile_kind": "individual",
+  "source": {
+    "framework": "pytorch",
+    "format": "torchscript"
+  },
   "inputs": {
     "vector_size": 128,
-    "message_size": 128
+    "message_size": 128,
+    "input_layout": "stacked_sample_message_channels",
+    "message_strategy": "caller_supplied_consensus_vector"
   },
   "outputs": {
-    "kind": "score_vector"
+    "kind": "score_vector",
+    "interpretation": "confidence"
   }
 }
 ```
@@ -148,6 +155,35 @@ The first implementation path for this is:
 - bundle loader in `backends/torchscript`
 - experimental Go API in `infer/experimental/entres`
 - experimental serving command in `cmd/infergo-entres-serve`
+- experimental bundle scaffolding command in `cmd/infergo-entres-bundle`
+
+The first local dogfood validation has already proven:
+
+- a real individual `entres` TorchScript artifact can be wrapped in a family-2
+  bundle
+- that bundle can be loaded through InferGo
+- that bundle can be served from Go and return real scores
+
+## Extra metadata needed before parity
+
+Before wiring parity around family 2, the bridge metadata should carry a little
+more than just dimensions:
+
+- `source.framework`
+- `source.format`
+- `inputs.input_layout`
+- `inputs.message_strategy`
+- `outputs.interpretation`
+
+Why these fields matter:
+
+- parity needs to know the expected tensor assembly contract
+- internal users need to know whether InferGo expects a supplied message vector
+  or computes one
+- score interpretation needs to be explicit before we compare or threshold
+  outputs
+
+The first implementation now emits those fields in bundle metadata.
 
 ## Non-goals for family 2
 

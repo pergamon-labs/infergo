@@ -125,10 +125,26 @@ TorchFloatArray TorchJitForwardFeatureScoring(
         auto& model_ref = *static_cast<torch::jit::script::Module*>(module);
         torch::NoGradGuard no_grad;
 
-        auto vectors_tensor = torch::from_blob(vectors, {batch_dim, feature_dim}, torch::kFloat32).clone();
-        auto message_tensor = torch::from_blob(message, {message_dim}, torch::kFloat32).clone();
+        if (message_dim != feature_dim) {
+            error->message = strdup("message_dim must match feature_dim");
+            return result;
+        }
 
-        std::vector<torch::jit::IValue> inputs = {vectors_tensor, message_tensor};
+        const int64_t total = static_cast<int64_t>(batch_dim) * static_cast<int64_t>(feature_dim);
+        std::vector<float> message_linear(total);
+        for (int batch = 0; batch < batch_dim; ++batch) {
+            std::memcpy(
+                message_linear.data() + (batch * feature_dim),
+                message,
+                sizeof(float) * feature_dim
+            );
+        }
+
+        auto sample_image = torch::from_blob(vectors, {batch_dim, 1, feature_dim}, torch::kFloat32).clone();
+        auto message_image = torch::from_blob(message_linear.data(), {batch_dim, 1, feature_dim}, torch::kFloat32).clone();
+        auto input_image = torch::cat({sample_image, message_image}, 1);
+
+        std::vector<torch::jit::IValue> inputs = {input_image};
         torch::Tensor output_tensor = model_ref.forward(inputs).toTensor().detach().cpu();
 
         if (output_tensor.dim() == 1) {
