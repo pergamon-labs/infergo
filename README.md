@@ -8,6 +8,12 @@ Go, and run predictions without Python in production.
 Current prerelease:
 [`v0.1.0-prealpha.1`](https://github.com/pergamon-labs/infergo/releases/tag/v0.1.0-prealpha.1)
 
+Start here:
+
+- [docs/GETTING_STARTED.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/GETTING_STARTED.md)
+- [docs/USE_CASES.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/USE_CASES.md)
+- [docs/PHILOSOPHY.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/PHILOSOPHY.md)
+
 ## What InferGo is for
 
 - embed small inference workloads directly in Go services
@@ -236,12 +242,25 @@ Current posture:
 - HTTP as an optional deployment mode
 - parity-backed support for documented paths only
 
-## Public docs
+## Documentation
+
+For users:
+
+- [docs/GETTING_STARTED.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/GETTING_STARTED.md)
+- [docs/USE_CASES.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/USE_CASES.md)
+- [docs/PHILOSOPHY.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/PHILOSOPHY.md)
+- [docs/alpha-family-1-walkthrough.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/alpha-family-1-walkthrough.md)
+- [cmd/infergo-export/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/cmd/infergo-export/README.md)
+- [cmd/infergo-serve/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/cmd/infergo-serve/README.md)
+
+Reference:
 
 - [COMPATIBILITY.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/COMPATIBILITY.md)
 - [ARCHITECTURE.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/ARCHITECTURE.md)
-- [cmd/infergo-export/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/cmd/infergo-export/README.md)
-- [cmd/infergo-serve/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/cmd/infergo-serve/README.md)
-- [docs/alpha-family-1-walkthrough.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/alpha-family-1-walkthrough.md)
+- [pkg.go.dev `infer`](https://pkg.go.dev/github.com/pergamon-labs/infergo/infer)
+- [pkg.go.dev `infer/httpserver`](https://pkg.go.dev/github.com/pergamon-labs/infergo/infer/httpserver)
+
+Project:
+
 - [BENCHMARKS.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/BENCHMARKS.md)
 - [CONTRIBUTING.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/CONTRIBUTING.md)
