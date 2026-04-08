@@ -64,13 +64,32 @@ func main() {
 				log.Fatalf("inspect text bundle: %v", err)
 			}
 
+			var rawTextEncoder func(text, textPair string) (infer.TextInput, error)
+			if info.SupportsRawText {
+				encoder, err := bionet.LoadTextClassificationRawTextEncoder(*bundleDir)
+				if err != nil {
+					log.Fatalf("load text raw encoder: %v", err)
+				}
+				rawTextEncoder = func(text, textPair string) (infer.TextInput, error) {
+					inputIDs, attentionMask, err := encoder.Encode(text, textPair)
+					if err != nil {
+						return infer.TextInput{}, err
+					}
+					return infer.TextInput{
+						InputIDs:      inputIDs,
+						AttentionMask: attentionMask,
+					}, nil
+				}
+			}
+
 			mux := httpserver.NewTextClassifierMux(classifier, httpserver.TextClassifierMetadata{
 				ModelID:                info.ModelID,
 				SupportsRawText:        info.SupportsRawText,
 				SupportsPairText:       info.SupportsPairText,
 				SupportsTokenizedInput: info.SupportsTokenizedInput,
+				RawTextEncoder:         rawTextEncoder,
 			}, options...)
-			serve(serverCfg, mux, "text-bundle", *bundleDir)
+			serve(serverCfg, mux, "text-bundle", *bundleDir, info)
 			return
 		}
 
@@ -85,7 +104,7 @@ func main() {
 		defer pack.Close()
 
 		mux := httpserver.NewTextPackMux(pack, options...)
-		serve(serverCfg, mux, "text", key)
+		serve(serverCfg, mux, "text", key, bionet.TextClassificationBundleInfo{})
 	case "token":
 		if *bundleDir != "" {
 			log.Fatal("bundle serving is currently implemented only for text-classification bundles")
@@ -102,15 +121,15 @@ func main() {
 		defer pack.Close()
 
 		mux := httpserver.NewTokenPackMux(pack, options...)
-		serve(serverCfg, mux, "token", key)
+		serve(serverCfg, mux, "token", key, bionet.TextClassificationBundleInfo{})
 	default:
 		log.Fatalf("unsupported task %q; expected text or token", *task)
 	}
 }
 
-func serve(cfg httpserver.ServerConfig, handler http.Handler, task, pack string) {
+func serve(cfg httpserver.ServerConfig, handler http.Handler, task, pack string, bundleInfo bionet.TextClassificationBundleInfo) {
 	server := httpserver.NewServer(handler, cfg)
-	logServeHints(cfg, task, pack)
+	logServeHints(cfg, task, pack, bundleInfo)
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -138,7 +157,7 @@ func serve(cfg httpserver.ServerConfig, handler http.Handler, task, pack string)
 	}
 }
 
-func logServeHints(cfg httpserver.ServerConfig, task, pack string) {
+func logServeHints(cfg httpserver.ServerConfig, task, pack string, bundleInfo bionet.TextClassificationBundleInfo) {
 	addr := cfg.Addr
 	curlAddr := addr
 	if strings.HasPrefix(curlAddr, ":") {
@@ -152,7 +171,15 @@ func logServeHints(cfg httpserver.ServerConfig, task, pack string) {
 	case "text":
 		log.Printf("Predict: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"text\":\"This product is excellent and reliable.\"}' | jq", curlAddr)
 	case "text-bundle":
-		log.Printf("Predict: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"input_ids\":[101,2023,2003,1037,2742,102],\"attention_mask\":[1,1,1,1,1,1]}' | jq", curlAddr)
+		if bundleInfo.SupportsRawText {
+			if bundleInfo.SupportsPairText {
+				log.Printf("Predict: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"text\":\"The company said the deal closed.\",\"text_pair\":\"The acquisition has been completed, the company said.\"}' | jq", curlAddr)
+			} else {
+				log.Printf("Predict: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"text\":\"This product is excellent and reliable.\"}' | jq", curlAddr)
+			}
+		} else {
+			log.Printf("Predict: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"input_ids\":[101,2023,2003,1037,2742,102],\"attention_mask\":[1,1,1,1,1,1]}' | jq", curlAddr)
+		}
 	case "token":
 		log.Printf("Predict: curl -s -X POST http://%s/predict -H 'Content-Type: application/json' -d '{\"text\":\"Sophie Tremblay a parlé avec Hydro-Québec à Montréal.\"}' | jq", curlAddr)
 	}

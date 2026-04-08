@@ -188,9 +188,8 @@ Current implementation note:
   **single-text and paired-text classification**
 - it emits alpha-format bundles that load and parity-check in Go
 - exported text bundles can now be served through `cmd/infergo-serve -bundle`
-  using tokenized input
-- it stages tokenizer assets for future raw-text support, but it does not yet
-  claim generic raw-text serving for exported bundles
+  using tokenizer-backed raw text when the staged tokenizer assets match the
+  currently supported BERT-style tokenizer-json subset
 
 Family 2 may have its own bridge/export conventions, but it should not weaken
 the public family-1 contract.

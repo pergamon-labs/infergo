@@ -163,12 +163,20 @@ Exported family-1 text bundle over the non-curated path:
 go run ./cmd/infergo-serve -task text -bundle ./dist/family1/mrpc-alpha
 ```
 
-Then call it with tokenized input:
+Single-text exported bundle request:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8080/predict \
   -H 'Content-Type: application/json' \
-  -d '{"input_ids":[101,1996,8013,2356,2005,1037,25416,8630,2044,2108,5338,3807,1012,102,1037,8013,7303,1037,25416,8630,2138,2027,2020,14843,2048,2335,1012,102],"attention_mask":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}'
+  -d '{"text":"This product is excellent and reliable."}'
+```
+
+Paired-text exported bundle request:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"The company said the deal closed.","text_pair":"The acquisition has been completed, the company said."}'
 ```
 
 See also:
@@ -193,7 +201,7 @@ InferGo is intentionally narrow in `v0.1.0-prealpha.1`.
 | REST serving CLI | Supported via [`cmd/infergo-serve/`](./cmd/infergo-serve) |
 | Stable HTTP handler package | Supported via [`infer/httpserver/`](./infer/httpserver) |
 | Family-1 alpha exporter | Experimental via [`scripts/export_encoder_text_bundle.py`](./scripts/export_encoder_text_bundle.py) |
-| Exported family-1 bundle serving | Experimental via [`cmd/infergo-serve -bundle`](./cmd/infergo-serve) |
+| Exported family-1 bundle serving | Experimental via [`cmd/infergo-serve -bundle`](./cmd/infergo-serve), with tokenizer-backed raw text for supported exported bundles |
 | Structured JSON error responses | Supported |
 | Graceful shutdown and timeout config | Supported via `infer/httpserver.ServerConfig` and `cmd/infergo-serve` |
 | Optional TorchScript bridge | Experimental / backend-specific |

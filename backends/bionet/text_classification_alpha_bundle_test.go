@@ -95,6 +95,37 @@ func TestLoadTextClassificationBundleAlphaContractRejectsLabelDimensionMismatch(
 	}
 }
 
+func TestLoadTextClassificationRawTextEncoderAlphaContract(t *testing.T) {
+	t.Parallel()
+
+	bundleDir := writeAlphaTextClassificationBundleFixture(t, alphaTextBundleFixtureOptions{
+		rawTextSupported: true,
+	})
+
+	encoder, err := bionet.LoadTextClassificationRawTextEncoder(bundleDir)
+	if err != nil {
+		t.Fatalf("LoadTextClassificationRawTextEncoder() error = %v", err)
+	}
+
+	reference, err := parity.LoadTransformersTextClassificationReference("../../testdata/reference/text-classification/distilbert-sst2-reference.json")
+	if err != nil {
+		t.Fatalf("LoadTransformersTextClassificationReference() error = %v", err)
+	}
+
+	item := reference.Cases[0]
+	inputIDs, attentionMask, err := encoder.Encode(item.Text, "")
+	if err != nil {
+		t.Fatalf("encoder.Encode() error = %v", err)
+	}
+
+	if got, want := inputIDs, intsToInt64(item.InputIDs); !equalInt64s(got, want) {
+		t.Fatalf("encoded input ids = %v, want %v", got, want)
+	}
+	if got, want := attentionMask, intsToInt64(item.AttentionMask); !equalInt64s(got, want) {
+		t.Fatalf("encoded attention mask = %v, want %v", got, want)
+	}
+}
+
 type alphaTextBundleFixtureOptions struct {
 	bundleVersion         string
 	labels                []string
@@ -155,9 +186,7 @@ func writeAlphaTextClassificationBundleFixture(t *testing.T, opts alphaTextBundl
 				"special_tokens_map": "special_tokens_map.json",
 			},
 		})
-		writeJSONForTest(t, filepath.Join(tokenizerDir, "tokenizer.json"), map[string]any{
-			"version": "test",
-		})
+		writeTokenizerJSONForFixture(t, filepath.Join(tokenizerDir, "tokenizer.json"))
 		writeJSONForTest(t, filepath.Join(tokenizerDir, "tokenizer_config.json"), map[string]any{
 			"do_lower_case": true,
 		})
@@ -237,4 +266,81 @@ func copyFileForTest(t *testing.T, src, dst string) {
 	if err := os.WriteFile(dst, raw, 0o644); err != nil {
 		t.Fatalf("WriteFile(%s) error = %v", dst, err)
 	}
+}
+
+func writeTokenizerJSONForFixture(t *testing.T, path string) {
+	t.Helper()
+
+	reference, err := parity.LoadTransformersTextClassificationReference("../../testdata/reference/text-classification/distilbert-sst2-reference.json")
+	if err != nil {
+		t.Fatalf("LoadTransformersTextClassificationReference() error = %v", err)
+	}
+
+	item := reference.Cases[0]
+	vocab := map[string]int{
+		"[PAD]": 0,
+		"[UNK]": 100,
+		"[CLS]": 101,
+		"[SEP]": 102,
+	}
+	for i, token := range item.Tokens {
+		vocab[token] = item.InputIDs[i]
+	}
+
+	writeJSONForTest(t, path, map[string]any{
+		"version": "1.0",
+		"normalizer": map[string]any{
+			"type":                 "BertNormalizer",
+			"clean_text":           true,
+			"handle_chinese_chars": true,
+			"strip_accents":        nil,
+			"lowercase":            true,
+		},
+		"pre_tokenizer": map[string]any{
+			"type": "BertPreTokenizer",
+		},
+		"post_processor": map[string]any{
+			"type": "TemplateProcessing",
+			"single": []map[string]any{
+				{"SpecialToken": map[string]any{"id": "[CLS]", "type_id": 0}},
+				{"Sequence": map[string]any{"id": "A", "type_id": 0}},
+				{"SpecialToken": map[string]any{"id": "[SEP]", "type_id": 0}},
+			},
+			"pair": []map[string]any{
+				{"SpecialToken": map[string]any{"id": "[CLS]", "type_id": 0}},
+				{"Sequence": map[string]any{"id": "A", "type_id": 0}},
+				{"SpecialToken": map[string]any{"id": "[SEP]", "type_id": 0}},
+				{"Sequence": map[string]any{"id": "B", "type_id": 1}},
+				{"SpecialToken": map[string]any{"id": "[SEP]", "type_id": 1}},
+			},
+			"special_tokens": map[string]any{
+				"[CLS]": map[string]any{"id": "[CLS]", "ids": []int{101}, "tokens": []string{"[CLS]"}},
+				"[SEP]": map[string]any{"id": "[SEP]", "ids": []int{102}, "tokens": []string{"[SEP]"}},
+			},
+		},
+		"decoder": map[string]any{
+			"type":    "WordPiece",
+			"prefix":  "##",
+			"cleanup": true,
+		},
+		"model": map[string]any{
+			"type":                      "WordPiece",
+			"unk_token":                 "[UNK]",
+			"continuing_subword_prefix": "##",
+			"max_input_chars_per_word":  100,
+			"vocab":                     vocab,
+		},
+	})
+}
+
+func equalInt64s(left, right []int64) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i] != right[i] {
+			return false
+		}
+	}
+	return true
 }

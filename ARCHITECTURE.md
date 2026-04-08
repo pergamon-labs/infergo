@@ -97,8 +97,9 @@ The generic family-1 serving path is now parallel to the curated pack path:
 - curated packs still serve through `infer/packs` and the pack-based HTTP muxes
 - exported family-1 text bundles can now serve through the stable
   `infer/httpserver` package and `cmd/infergo-serve -bundle ...`
-- that non-curated path is currently tokenized-input-only and does not yet
-  claim generic raw-text tokenization for exported bundles
+- that non-curated path now accepts tokenizer-backed raw text for supported
+  exported bundles and explicit `text` + `text_pair` requests for paired-text
+  classifiers
 
 The new token-classification path is intentionally scoped to score non-special,
 non-punctuation tokens from a public-safe reference set. It uses only a tiny

@@ -106,6 +106,14 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n")
 
 
+def input_set_supports_pairs(path: Path) -> bool:
+    payload = load_json(path)
+    for case in payload.get("cases", []):
+        if case.get("text_pair"):
+            return True
+    return False
+
+
 def resolve_model_id(model_arg: str, model_id_override: str | None) -> str:
     if model_id_override:
         return model_id_override
@@ -140,7 +148,25 @@ def infer_label_overrides(labels: list[str], positive: str | None, negative: str
     return inferred_positive, inferred_negative
 
 
-def save_tokenizer_assets(model: str, target_dir: Path) -> dict[str, Any]:
+def tokenizer_runtime_capabilities(tokenizer_json_path: Path) -> tuple[bool, bool]:
+    spec = load_json(tokenizer_json_path)
+    normalizer = spec.get("normalizer", {})
+    pre_tokenizer = spec.get("pre_tokenizer", {})
+    post_processor = spec.get("post_processor", {})
+    model = spec.get("model", {})
+
+    raw_supported = (
+        normalizer.get("type") == "BertNormalizer"
+        and pre_tokenizer.get("type") == "BertPreTokenizer"
+        and post_processor.get("type") == "TemplateProcessing"
+        and model.get("type") == "WordPiece"
+        and isinstance(model.get("vocab"), dict)
+    )
+    pair_supported = raw_supported and bool(post_processor.get("pair"))
+    return raw_supported, pair_supported
+
+
+def save_tokenizer_assets(model: str, target_dir: Path, *, pair_text_requested: bool) -> dict[str, Any]:
     tokenizer = AutoTokenizer.from_pretrained(model)
     target_dir.mkdir(parents=True, exist_ok=True)
     tokenizer.save_pretrained(target_dir)
@@ -163,6 +189,12 @@ def save_tokenizer_assets(model: str, target_dir: Path) -> dict[str, Any]:
     else:
         raise SystemExit("tokenizer save_pretrained() did not produce a supported tokenizer file set")
 
+    raw_text_supported = False
+    pair_text_supported = False
+    if "tokenizer_json" in files:
+        raw_text_supported, pair_text_supported = tokenizer_runtime_capabilities(target_dir / files["tokenizer_json"])
+        pair_text_supported = pair_text_requested and pair_text_supported
+
     special_tokens = {}
     for key, value in tokenizer.special_tokens_map.items():
         if isinstance(value, str):
@@ -170,8 +202,8 @@ def save_tokenizer_assets(model: str, target_dir: Path) -> dict[str, Any]:
 
     manifest = {
         "kind": kind,
-        "raw_text_supported": False,
-        "pair_text_supported": False,
+        "raw_text_supported": raw_text_supported,
+        "pair_text_supported": pair_text_supported,
         "special_tokens": special_tokens,
         "files": files,
     }
@@ -189,6 +221,8 @@ def build_alpha_metadata(
     labels: list[str],
     positive_label: str | None,
     negative_label: str | None,
+    raw_text_supported: bool,
+    pair_text_supported: bool,
 ) -> dict[str, Any]:
     source: dict[str, Any] = {
         "framework": "pytorch",
@@ -224,8 +258,8 @@ def build_alpha_metadata(
         "model_id": model_id,
         "source": source,
         "inputs": {
-            "raw_text_supported": False,
-            "pair_text_supported": False,
+            "raw_text_supported": raw_text_supported,
+            "pair_text_supported": pair_text_supported,
             "tokenized_input_supported": True,
             "max_sequence_length": max_length,
         },
@@ -255,6 +289,8 @@ def main() -> None:
 
     if not input_path.exists():
         raise SystemExit(f"input set does not exist: {input_path}")
+
+    pair_text_requested = input_set_supports_pairs(input_path)
 
     with tempfile.TemporaryDirectory(prefix="infergo-family1-export-") as temp_dir_raw:
         temp_dir = Path(temp_dir_raw)
@@ -307,7 +343,7 @@ def main() -> None:
 
         tokenizer_dir = output_dir / "tokenizer"
         shutil.rmtree(tokenizer_dir, ignore_errors=True)
-        save_tokenizer_assets(args.model, tokenizer_dir)
+        tokenizer_manifest = save_tokenizer_assets(args.model, tokenizer_dir, pair_text_requested=pair_text_requested)
 
         write_json(output_dir / "labels.json", {"labels": labels})
 
@@ -321,6 +357,8 @@ def main() -> None:
             labels=labels,
             positive_label=positive_label,
             negative_label=negative_label,
+            raw_text_supported=bool(tokenizer_manifest["raw_text_supported"]),
+            pair_text_supported=bool(tokenizer_manifest["pair_text_supported"]),
         )
         write_json(output_dir / "metadata.json", alpha_metadata)
 

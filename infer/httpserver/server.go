@@ -16,6 +16,7 @@ import (
 type PredictRequest struct {
 	CaseID        string   `json:"case_id,omitempty"`
 	Text          string   `json:"text,omitempty"`
+	TextPair      string   `json:"text_pair,omitempty"`
 	Tokens        []string `json:"tokens,omitempty"`
 	InputIDs      []int64  `json:"input_ids,omitempty"`
 	AttentionMask []int64  `json:"attention_mask,omitempty"`
@@ -174,11 +175,13 @@ type TextClassifierMetadata struct {
 	SupportsRawText        bool
 	SupportsPairText       bool
 	SupportsTokenizedInput bool
+	RawTextEncoder         func(text, textPair string) (infer.TextInput, error)
 }
 
 // NewTextClassifierMux builds an HTTP mux for a generic loaded text
 // classifier. It is the first non-curated serving surface for exported
-// family-1 bundles and currently accepts tokenized inputs only.
+// family-1 bundles and supports tokenized input plus tokenizer-backed raw text
+// when the loaded bundle exposes it.
 func NewTextClassifierMux(classifier infer.TextClassifier, metadata TextClassifierMetadata, options ...Option) *http.ServeMux {
 	cfg := applyOptions(options)
 	mux := http.NewServeMux()
@@ -220,10 +223,23 @@ func NewTextClassifierMux(classifier infer.TextClassifier, metadata TextClassifi
 			return
 		}
 
-		result, err := classifier.Predict(infer.TextInput{
-			InputIDs:      slices.Clone(req.InputIDs),
-			AttentionMask: slices.Clone(req.AttentionMask),
-		})
+		var input infer.TextInput
+		switch {
+		case len(req.InputIDs) > 0:
+			input = infer.TextInput{
+				InputIDs:      slices.Clone(req.InputIDs),
+				AttentionMask: slices.Clone(req.AttentionMask),
+			}
+		default:
+			encoded, err := metadata.RawTextEncoder(req.Text, req.TextPair)
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
+				return
+			}
+			input = encoded
+		}
+
+		result, err := classifier.Predict(input)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
 			return
@@ -365,6 +381,10 @@ func clone2D(values [][]float64) [][]float64 {
 }
 
 func validatePredictRequest(req PredictRequest) error {
+	if req.TextPair != "" {
+		return fmt.Errorf("text_pair is not supported on this endpoint")
+	}
+
 	var count int
 	if req.CaseID != "" {
 		count++
@@ -386,20 +406,35 @@ func validateGenericTextPredictRequest(req PredictRequest, metadata TextClassifi
 	if len(req.InputIDs) > 0 {
 		count++
 	}
-	if req.Text != "" || req.CaseID != "" || len(req.Tokens) > 0 {
+	if req.Text != "" || req.TextPair != "" || req.CaseID != "" || len(req.Tokens) > 0 {
 		count++
 	}
 	if count != 1 {
 		return fmt.Errorf("provide exactly one supported input mode for this bundle")
 	}
-	if len(req.InputIDs) == 0 {
+	if req.Text == "" && req.TextPair != "" {
+		return fmt.Errorf("text_pair requires text")
+	}
+	if req.CaseID != "" || len(req.Tokens) > 0 {
+		return fmt.Errorf("this bundle supports only raw text or tokenized input; reference-case and token-piece requests are not available")
+	}
+	if len(req.InputIDs) > 0 {
+		if !metadata.SupportsTokenizedInput {
+			return fmt.Errorf("this bundle does not support tokenized input")
+		}
+		if req.Text != "" || req.TextPair != "" {
+			return fmt.Errorf("provide exactly one supported input mode for this bundle")
+		}
+		if len(req.AttentionMask) > 0 && len(req.AttentionMask) != len(req.InputIDs) {
+			return fmt.Errorf("input_ids and attention_mask length mismatch (%d != %d)", len(req.InputIDs), len(req.AttentionMask))
+		}
+		return nil
+	}
+	if !metadata.SupportsRawText || metadata.RawTextEncoder == nil {
 		return fmt.Errorf("this bundle currently supports tokenized input only; provide input_ids and optional attention_mask")
 	}
-	if !metadata.SupportsTokenizedInput {
-		return fmt.Errorf("this bundle does not support tokenized input")
-	}
-	if len(req.AttentionMask) > 0 && len(req.AttentionMask) != len(req.InputIDs) {
-		return fmt.Errorf("input_ids and attention_mask length mismatch (%d != %d)", len(req.InputIDs), len(req.AttentionMask))
+	if req.TextPair != "" && !metadata.SupportsPairText {
+		return fmt.Errorf("this bundle does not support paired text input")
 	}
 	return nil
 }
@@ -424,6 +459,9 @@ func supportedTextClassifierInputs(metadata TextClassifierMetadata) []string {
 	inputs := make([]string, 0, 2)
 	if metadata.SupportsRawText {
 		inputs = append(inputs, "text")
+		if metadata.SupportsPairText {
+			inputs = append(inputs, "text+text_pair")
+		}
 	}
 	if metadata.SupportsTokenizedInput {
 		inputs = append(inputs, "input_ids")

@@ -55,14 +55,15 @@ The first exporter implementation supports:
 - encoder-style **paired-text classification**
 - alpha-format bundle output for the `bionet` backend
 - tokenized-input parity and loading in Go
-- tokenized-input serving through `cmd/infergo-serve -bundle ...`
-- tokenizer asset staging for future raw-text support
+- tokenizer-backed raw-text serving for supported exported bundles
+- paired-text HTTP requests through `{"text":"...","text_pair":"..."}`
+- tokenizer asset staging inside the exported bundle
 
 It does **not yet** implement:
 
-- direct raw-text serving from exported bundles
 - direct transformer-weight execution in the native runtime
-- generic two-string raw-text serving for paired-text bundles
+- tokenizer-backed serving for arbitrary tokenizer families beyond the current
+  BERT-style WordPiece tokenizer-json subset
 
 Pair-scoring is supported in this milestone only when the source model can be
 represented as a paired-text sequence-classification head with ordered label
@@ -192,20 +193,25 @@ files from `tokenizer/manifest.json`.
 
 The first implementation keeps one boundary explicit:
 
-- exported bundles are currently **tokenized-input capable**
-- tokenizer assets are staged in the bundle
-- raw-text serving through the generic public surfaces is **not claimed yet**
-- paired-text export is supported, but exported bundles still serve through one
-  combined encoded sequence supplied as `input_ids`
+- exported bundles remain **tokenized-input capable**
+- exported bundles can now also support tokenizer-backed raw text when the
+  staged tokenizer assets match the current supported runtime subset
+- paired-text export is supported and exported bundles can now accept paired
+  HTTP requests through `text` + `text_pair`
+- the first runtime-backed raw-text path is intentionally narrow:
+  BERT-style `hf-tokenizer-json` assets with a WordPiece model and Template
+  Processing layout
 
 So the first exporter currently writes:
 
 - `inputs.tokenized_input_supported = true`
-- `inputs.raw_text_supported = false`
-- `inputs.pair_text_supported = false`
+- `inputs.raw_text_supported = true` when the staged tokenizer assets match the
+  supported runtime subset
+- `inputs.pair_text_supported = true` when the input set and tokenizer assets
+  both support paired text
 
-This is intentional. It keeps the first milestone honest while preserving the
-tokenizer assets we will need for later raw-text support.
+This is intentional. It keeps the first milestone honest while enabling a real
+raw-text serving path only for the tokenizer subset we actually support today.
 
 ## Loader and parity expectations
 
@@ -215,7 +221,9 @@ An exported bundle is considered valid for this milestone when:
 2. `cmd/infergo-parity -infergo-bundle-dir ...` passes against the generated
    source reference within the documented tolerance
 3. `cmd/infergo-serve -task text -bundle ...` can serve the bundle over HTTP
-   using tokenized input
+   using raw text when `inputs.raw_text_supported=true`
+4. paired-text bundles accept `{"text":"...","text_pair":"..."}` requests when
+   `inputs.pair_text_supported=true`
 
 This is the first concrete family-1 success bar.
 
@@ -250,6 +258,8 @@ should be:
 
 1. pair-scoring export for entity-resolution-style family-1 models with
    clearer output semantics
-2. tokenizer-backed raw-text loading/serving for exported bundles
-3. generic two-string serving for paired-text bundles
+2. expand tokenizer-backed raw-text loading/serving beyond the current
+   BERT-style tokenizer-json subset
+3. tighten the exported-bundle library path so raw-text serving is not only an
+   HTTP concern
 4. move from a script-first exporter toward a more polished public CLI

@@ -85,6 +85,78 @@ func TestNewTextClassifierMuxPredictTokenizedInput(t *testing.T) {
 	require.NotEmpty(t, prediction.ObservedLogits)
 }
 
+func TestNewTextClassifierMuxPredictRawText(t *testing.T) {
+	classifier := &stubTextClassifier{
+		prediction: infer.TextPrediction{
+			Backend: "bionet",
+			ModelID: "example/model",
+			Labels:  []string{"NEGATIVE", "POSITIVE"},
+			Logits:  []float64{-0.5, 0.8},
+			Label:   "POSITIVE",
+		},
+	}
+
+	server := httptest.NewServer(NewTextClassifierMux(classifier, TextClassifierMetadata{
+		ModelID:                "example/model",
+		SupportsRawText:        true,
+		SupportsTokenizedInput: true,
+		RawTextEncoder: func(text, textPair string) (infer.TextInput, error) {
+			require.Equal(t, "This product is excellent and reliable.", text)
+			require.Empty(t, textPair)
+			return infer.TextInput{
+				InputIDs:      []int64{101, 2023, 4031, 2003, 6581, 1998, 10539, 1012, 102},
+				AttentionMask: []int64{1, 1, 1, 1, 1, 1, 1, 1, 1},
+			}, nil
+		},
+	}))
+	t.Cleanup(server.Close)
+
+	body := bytes.NewBufferString(`{"text":"This product is excellent and reliable."}`)
+	resp, err := http.Post(server.URL+"/predict", "application/json", body)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	require.Equal(t, []infer.TextInput{{
+		InputIDs:      []int64{101, 2023, 4031, 2003, 6581, 1998, 10539, 1012, 102},
+		AttentionMask: []int64{1, 1, 1, 1, 1, 1, 1, 1, 1},
+	}}, classifier.inputs)
+}
+
+func TestNewTextClassifierMuxPredictPairText(t *testing.T) {
+	classifier := &stubTextClassifier{
+		prediction: infer.TextPrediction{
+			Backend: "bionet",
+			ModelID: "example/mrpc",
+			Labels:  []string{"LABEL_0", "LABEL_1"},
+			Logits:  []float64{0.7, -0.2},
+			Label:   "LABEL_0",
+		},
+	}
+
+	server := httptest.NewServer(NewTextClassifierMux(classifier, TextClassifierMetadata{
+		ModelID:                "example/mrpc",
+		SupportsRawText:        true,
+		SupportsPairText:       true,
+		SupportsTokenizedInput: true,
+		RawTextEncoder: func(text, textPair string) (infer.TextInput, error) {
+			require.Equal(t, "The company said the deal closed.", text)
+			require.Equal(t, "The acquisition has been completed, the company said.", textPair)
+			return infer.TextInput{
+				InputIDs:      []int64{101, 207, 208, 209, 207, 210, 211, 206, 102, 207, 212, 213, 214, 215, 216, 207, 208, 102},
+				AttentionMask: []int64{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+			}, nil
+		},
+	}))
+	t.Cleanup(server.Close)
+
+	body := bytes.NewBufferString(`{"text":"The company said the deal closed.","text_pair":"The acquisition has been completed, the company said."}`)
+	resp, err := http.Post(server.URL+"/predict", "application/json", body)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
 func TestNewTextClassifierMuxRejectsUnsupportedInputMode(t *testing.T) {
 	classifier, err := infer.LoadTextClassifier("../../testdata/native/text-classification/distilbert-sst2-embedding-masked-avg-pool")
 	require.NoError(t, err)
@@ -104,6 +176,30 @@ func TestNewTextClassifierMuxRejectsUnsupportedInputMode(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &payload))
 	require.Equal(t, "invalid_request", payload.Error.Code)
 	require.Contains(t, payload.Error.Message, "tokenized input only")
+}
+
+func TestNewTextClassifierMuxRejectsPairTextWhenUnsupported(t *testing.T) {
+	classifier := &stubTextClassifier{}
+
+	req := httptest.NewRequest(http.MethodPost, "/predict", bytes.NewBufferString(`{"text":"The company said the deal closed.","text_pair":"The acquisition has been completed."}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	NewTextClassifierMux(classifier, TextClassifierMetadata{
+		ModelID:                "example/model",
+		SupportsRawText:        true,
+		SupportsPairText:       false,
+		SupportsTokenizedInput: true,
+		RawTextEncoder: func(text, textPair string) (infer.TextInput, error) {
+			return infer.TextInput{}, nil
+		},
+	}).ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	var payload ErrorResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &payload))
+	require.Equal(t, "invalid_request", payload.Error.Code)
+	require.Contains(t, payload.Error.Message, "does not support paired text input")
 }
 
 func TestNewTextPackMuxMethodNotAllowed(t *testing.T) {
@@ -211,4 +307,44 @@ func TestNewTextPackMuxRequestLogging(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Contains(t, buf.String(), "route=metadata")
 	require.Contains(t, buf.String(), "status=200")
+}
+
+type stubTextClassifier struct {
+	inputs     []infer.TextInput
+	prediction infer.TextPrediction
+	predictErr error
+	closeErr   error
+}
+
+func (s *stubTextClassifier) BackendName() string {
+	return "bionet"
+}
+
+func (s *stubTextClassifier) ModelID() string {
+	return s.prediction.ModelID
+}
+
+func (s *stubTextClassifier) Labels() []string {
+	return s.prediction.Labels
+}
+
+func (s *stubTextClassifier) Predict(input infer.TextInput) (infer.TextPrediction, error) {
+	s.inputs = append(s.inputs, input)
+	return s.prediction, s.predictErr
+}
+
+func (s *stubTextClassifier) PredictBatch(inputs []infer.TextInput) ([]infer.TextPrediction, error) {
+	s.inputs = append(s.inputs, inputs...)
+	if s.predictErr != nil {
+		return nil, s.predictErr
+	}
+	output := make([]infer.TextPrediction, len(inputs))
+	for i := range output {
+		output[i] = s.prediction
+	}
+	return output, nil
+}
+
+func (s *stubTextClassifier) Close() error {
+	return s.closeErr
 }

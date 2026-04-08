@@ -72,18 +72,35 @@ go run ./cmd/infergo-serve \
   -addr 127.0.0.1:8080
 ```
 
-Then call it with tokenized input:
+Then call it with raw text when the exported bundle advertises
+`supports_raw_text=true`:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8080/predict \
   -H 'Content-Type: application/json' \
-  -d '{"input_ids":[101,1996,8013,2356,2005,1037,25416,8630,2044,2108,5338,3807,1012,102,1037,8013,7303,1037,25416,8630,2138,2027,2020,14843,2048,2335,1012,102],"attention_mask":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}'
+  -d '{"text":"This product is excellent and reliable."}'
+```
+
+Paired-text bundles can accept `text` plus `text_pair`:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"The company said the deal closed.","text_pair":"The acquisition has been completed, the company said."}'
 ```
 
 The bundle path and curated pack path are mutually exclusive:
 
 - use `-pack` for curated checked-in packs
 - use `-bundle` for directly exported family-1 text bundles
+
+Exported bundles may still accept explicit tokenized input through:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"input_ids":[101,2023,4031,2003,6581,1998,10539,1012,102],"attention_mask":[1,1,1,1,1,1,1,1,1]}'
+```
 
 When `-task token` is used, the default pack is `infergo-basic-french-ner` and
 the default raw-text example is:
@@ -100,7 +117,7 @@ Errors are returned as structured JSON:
 {
   "error": {
     "code": "invalid_request",
-    "message": "provide exactly one of text, tokens, or case_id"
+    "message": "provide exactly one supported input mode for this bundle"
   }
 }
 ```

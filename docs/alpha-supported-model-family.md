@@ -179,8 +179,9 @@ Current implementation note:
   - paired-text classification
 - pair-scoring remains part of family 1 when it can be represented by the same
   sequence-classification style output contract
-- exported family-1 bundles currently serve through tokenized input, not
-  generic raw-text tokenization
+- exported family-1 bundles can now serve through tokenizer-backed raw text
+  when the staged tokenizer assets match the current supported BERT-style
+  WordPiece tokenizer-json subset
 
 ## Runtime assumptions for alpha
 

@@ -472,9 +472,9 @@ Current implementation note:
 - the first exporter path is projection-based and currently supports
   single-text and paired-text sequence classification
 - it writes tokenizer assets into the bundle today
-- it does **not yet** claim generic raw-text serving for exported bundles
-- exported bundles currently serve through tokenized input on the generic
-  family-1 HTTP path
+- exported bundles can now serve through tokenizer-backed raw text on the
+  generic family-1 HTTP path when the staged tokenizer assets match the
+  currently supported BERT-style tokenizer-json subset
 
 ## Relation to current checked-in bundles
 

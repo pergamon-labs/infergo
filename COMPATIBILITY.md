@@ -31,7 +31,8 @@ without a documented export path, backend, and parity test story.
   - experimental family-1 export through `scripts/export_encoder_text_bundle.py`
     for projection-based single-text and paired-text classification bundles
   - experimental serving of exported family-1 text bundles through
-    `cmd/infergo-serve -task text -bundle ...` using tokenized input
+    `cmd/infergo-serve -task text -bundle ...`, including tokenizer-backed raw
+    text for supported exported bundles
   - structured JSON error responses from the stable HTTP surface
   - graceful shutdown and timeout-driven HTTP serving through `cmd/infergo-serve`
   - benchmark suite for current checked-in raw-text text/token paths and the stable HTTP handler surface through `go test ./infer/packs ./infer/httpserver -run '^$' -bench . -benchmem`
