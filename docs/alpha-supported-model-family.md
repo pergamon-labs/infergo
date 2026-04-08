@@ -134,6 +134,10 @@ Alpha should not claim:
 
 InferGo alpha needs a documented export/import workflow for this family.
 
+The bundle-level contract for that workflow is defined in:
+
+- [`docs/alpha-native-artifact-contract.md`](./alpha-native-artifact-contract.md)
+
 The exporter contract should assume:
 
 - the source model is PyTorch-origin

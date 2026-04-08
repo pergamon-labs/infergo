@@ -234,4 +234,5 @@ Non-goals for this release line:
 - [`cmd/infergo-serve/README.md`](./cmd/infergo-serve/README.md)
 - [`docs/alpha-roadmap.md`](./docs/alpha-roadmap.md)
 - [`docs/alpha-supported-model-family.md`](./docs/alpha-supported-model-family.md)
+- [`docs/alpha-native-artifact-contract.md`](./docs/alpha-native-artifact-contract.md)
 - [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)

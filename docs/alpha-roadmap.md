@@ -285,6 +285,7 @@ Deliverables:
 1. Define the first supported model family in repo terms.
    - see [`docs/alpha-supported-model-family.md`](./alpha-supported-model-family.md)
 2. Specify the native artifact contract needed for that family.
+   - see [`docs/alpha-native-artifact-contract.md`](./alpha-native-artifact-contract.md)
 3. Choose the first private internal validation target:
    - entity resolution first
    - NER second
