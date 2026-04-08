@@ -203,6 +203,10 @@ Current family-2 reality:
   screening runtime
 - the remaining family-2 work is mostly around making that internal validation
   path easier to repeat and document
+- the adjacent NER path is now validated in a realistic sample Go service via
+  [`examples/ner-service/`](../examples/ner-service)
+- the remaining alpha gaps are tracked in
+  [`alpha-gaps-and-missing-primitives.md`](./alpha-gaps-and-missing-primitives.md)
 
 ### C. Runtime and backend work
 
@@ -310,6 +314,13 @@ Deliverables:
 - NER validation in a Go service or sample service
 - documented findings on gaps, failure modes, and missing primitives
 
+Current status:
+
+- the family-2 `entres` bridge is validated locally end to end
+- NER is validated in a public-safe sample Go service
+- remaining alpha gaps are now documented in
+  [`alpha-gaps-and-missing-primitives.md`](./alpha-gaps-and-missing-primitives.md)
+
 ### Phase 4: Public alpha hardening
 
 Goal:
@@ -334,12 +345,12 @@ Deliverables:
 
 ## Immediate next steps
 
-1. Define the first supported model family in repo terms.
-   - see [`docs/alpha-supported-model-family.md`](./alpha-supported-model-family.md)
-2. Specify the native artifact contract needed for that family.
-   - see [`docs/alpha-native-artifact-contract.md`](./alpha-native-artifact-contract.md)
-3. Keep the family split explicit in implementation:
-   - family 1 = public alpha contract
-   - family 2 = internal `entres` bridge
-4. Build the first export/import path for family 1.
-5. Build the first load/serve path for family 2.
+1. Close or consciously defer the gaps listed in
+   [`alpha-gaps-and-missing-primitives.md`](./alpha-gaps-and-missing-primitives.md)
+   before cutting alpha.
+2. Decide whether token classification remains a curated-pack/sample-service
+   alpha story or becomes a second public BYOM family later.
+3. Validate the family-2 `entres` runbook with another engineer or service
+   owner so the dogfood bridge is not single-operator only.
+4. Tighten the family-1 exporter and tokenizer story until a stranger can
+   follow the supported path without repo archaeology.

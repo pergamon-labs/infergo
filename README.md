@@ -205,6 +205,7 @@ See also:
 - [`infer/httpserver/`](./infer/httpserver)
 - [`examples/http-server/`](./examples/http-server)
 - [`examples/token-http-server/`](./examples/token-http-server)
+- [`examples/ner-service/`](./examples/ner-service)
 
 ## Bring your own model (alpha)
 
@@ -243,6 +244,7 @@ InferGo is intentionally narrow in `v0.1.0-prealpha.1`.
 | Native token-classification bundles | Supported |
 | Raw-text text prediction | Supported for curated validated packs only |
 | Raw-text token prediction | Supported for curated validated packs only |
+| Sample NER extraction service | Supported via [`examples/ner-service/`](./examples/ner-service) |
 | Pack discovery CLI | Supported via [`cmd/infergo-packs/`](./cmd/infergo-packs) |
 | Parity CLI | Supported via [`cmd/infergo-parity/`](./cmd/infergo-parity) |
 | REST serving CLI | Supported via [`cmd/infergo-serve/`](./cmd/infergo-serve) |
@@ -309,4 +311,5 @@ Non-goals for this release line:
 - [`docs/alpha-family-1-exporter-contract.md`](./docs/alpha-family-1-exporter-contract.md)
 - [`docs/alpha-family-1-walkthrough.md`](./docs/alpha-family-1-walkthrough.md)
 - [`docs/alpha-family-2-entres-bridge.md`](./docs/alpha-family-2-entres-bridge.md)
+- [`docs/alpha-gaps-and-missing-primitives.md`](./docs/alpha-gaps-and-missing-primitives.md)
 - [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)

@@ -46,8 +46,11 @@ without a documented export path, backend, and parity test story.
   - first truly native raw-text text prediction via the checked-in `infergo-basic-sst2` pack
   - curated token-pack prediction via `examples/token-http-server`
   - first truly native raw-text token prediction via the checked-in `infergo-basic-french-ner` pack
+  - tokenization helpers for raw-text-capable checked-in token packs through
+    `TokenPack.TokenizeText(...)`
   - text classification served through `infer/httpserver` and `cmd/infergo-serve -task text`
   - token classification served through `infer/httpserver` and `cmd/infergo-serve -task token`
+  - sample named-entity extraction service through `examples/ner-service`
   - the token-classification manifest now includes a first non-English multilingual NER pack through `Davlan/xlm-roberta-base-ner-hrl`
   - the token-classification manifest now also includes a French-specific NER pack through `cmarkea/distilcamembert-base-ner`
   - checked-in native bundle shapes:
@@ -109,6 +112,8 @@ without a documented export path, backend, and parity test story.
 - general transformer execution in the native `bionet` backend
 - token classification beyond the explicitly documented local-window NER path
 - blanket raw-text tokenization support for checked-in packs that do not validate a native tokenizer helper
+- stable character-offset spans for NER extraction
+- a first-class stable entity-extraction API in `infer/`
 - experimental `-use-layernorm` native bundle generation as a public support claim until it meets the same parity bar as the default path
 - native attention blocks or full encoder stacks
 - ONNX runtime support

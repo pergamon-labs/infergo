@@ -90,10 +90,23 @@ func TestLoadTokenPackPredictText(t *testing.T) {
 	require.Equal(t, expected, actual)
 }
 
+func TestLoadTokenPackTokenizeText(t *testing.T) {
+	pack, err := packs.LoadTokenPack("infergo-basic-french-ner")
+	require.NoError(t, err)
+	defer pack.Close()
+
+	tokens, err := pack.TokenizeText("Sophie Tremblay a parlé avec Hydro-Québec à Montréal.")
+	require.NoError(t, err)
+	require.Equal(t, []string{"sophie", "tremblay", "a", "parlé", "avec", "hydro", "-", "québec", "à", "montréal"}, tokens)
+}
+
 func TestLegacyTokenPackDoesNotOverclaimRawText(t *testing.T) {
 	pack, err := packs.LoadTokenPack("distilcamembert-french-ner")
 	require.NoError(t, err)
 	defer pack.Close()
 
 	require.False(t, pack.SupportsRawText())
+
+	_, err = pack.TokenizeText("Jean Dupont a rencontré Airbus à Paris.")
+	require.Error(t, err)
 }

@@ -3,6 +3,9 @@
 This example demonstrates the stable `infer/httpserver` package for serving a
 checked-in native token-classification pack.
 
+If you want an entity-oriented sample service instead of raw token-label JSON,
+see [`examples/ner-service/`](../ner-service).
+
 For the supported CLI entrypoint, prefer:
 
 ```bash

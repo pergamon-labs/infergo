@@ -191,6 +191,14 @@ BasicTokenizer projection of the French NER proof set. That keeps the token
 serving story honest too: raw text is supported where the checked-in tokenizer
 behavior is native and validated, not as a blanket promise across every pack.
 
+That token path is now also validated in a more application-shaped sample
+service through [`examples/ner-service/`](./examples/ner-service), which uses a
+checked-in pack plus token grouping to return extracted entities instead of only
+token labels. The fact that this still lives at the sample layer is deliberate:
+the remaining work before alpha around offsets, reusable entity abstractions,
+and broader tokenizer/runtime support is tracked in
+[`docs/alpha-gaps-and-missing-primitives.md`](./docs/alpha-gaps-and-missing-primitives.md).
+
 The benchmark story follows that same principle. The repo benchmarks the stable
 public `infer/packs` surface and the stable `infer/httpserver` surface for the
 currently honest raw-text-capable text and token paths, rather than claiming
