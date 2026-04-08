@@ -12,6 +12,7 @@ The design goal is to keep end-user code focused on serving concerns rather than
 Current stable surfaces:
 
 - `infer.LoadTextClassifier(...)`
+- `infer.LoadTextBundle(...)`
 - `infer.LoadTokenClassifier(...)`
 - typed `TextInput` / `TextPrediction`
 - typed `TokenInput` / `TokenPrediction`
@@ -76,6 +77,13 @@ older checked-in bundle metadata to the newer alpha-era artifact contract. For
 text bundles, the loader can validate a versioned `metadata.json`, external
 `labels.json`, and tokenizer manifest references while still keeping legacy
 fixtures working during the transition.
+
+That same path now has a higher-level library helper:
+
+- `infer.LoadTextBundle(...)` for exported family-1 bundles
+- tokenized prediction through the existing classifier path
+- tokenizer-backed raw-text prediction when the bundle metadata and tokenizer
+  assets match the current supported runtime subset
 
 The first concrete family-1 exporter path sits above that loader contract as a
 Python-first orchestration workflow. It currently:

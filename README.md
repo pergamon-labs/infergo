@@ -118,6 +118,26 @@ See also:
 - [`infer/`](./infer)
 - [`infer/packs/`](./infer/packs)
 
+For exported family-1 bundles, use the higher-level bundle helper:
+
+```go
+bundle, err := infer.LoadTextBundle("./dist/family1/distilbert-sst2-alpha")
+if err != nil {
+	log.Fatal(err)
+}
+defer bundle.Close()
+
+result, err := bundle.PredictText("This product is excellent and reliable.")
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+See also:
+
+- [`examples/exported-bundle-classifier/`](./examples/exported-bundle-classifier)
+- [`docs/alpha-family-1-walkthrough.md`](./docs/alpha-family-1-walkthrough.md)
+
 ## Serve over HTTP
 
 InferGo now ships a first-class HTTP serving entrypoint:
@@ -185,6 +205,33 @@ See also:
 - [`infer/httpserver/`](./infer/httpserver)
 - [`examples/http-server/`](./examples/http-server)
 - [`examples/token-http-server/`](./examples/token-http-server)
+
+## Bring your own model (alpha)
+
+The first supported BYOM path is family 1:
+
+- PyTorch-origin
+- Hugging Face Transformers-style
+- encoder text classification / paired-text classification
+
+Export a supported model:
+
+```bash
+uv run --with torch==2.10.0 --with transformers==5.3.0 \
+  python ./scripts/export_encoder_text_bundle.py \
+  --model distilbert/distilbert-base-uncased-finetuned-sst-2-english \
+  --input ./testdata/reference/text-classification/sst2-inputs.json \
+  --out ./dist/family1/distilbert-sst2-alpha
+```
+
+Then either:
+
+- load it from Go with `infer.LoadTextBundle(...)`
+- serve it with `go run ./cmd/infergo-serve -task text -bundle ...`
+- validate it with `go run ./cmd/infergo-parity ...`
+
+For the full supported path, see
+[`docs/alpha-family-1-walkthrough.md`](./docs/alpha-family-1-walkthrough.md).
 
 ## Supported today
 
@@ -260,5 +307,6 @@ Non-goals for this release line:
 - [`docs/alpha-supported-model-family.md`](./docs/alpha-supported-model-family.md)
 - [`docs/alpha-native-artifact-contract.md`](./docs/alpha-native-artifact-contract.md)
 - [`docs/alpha-family-1-exporter-contract.md`](./docs/alpha-family-1-exporter-contract.md)
+- [`docs/alpha-family-1-walkthrough.md`](./docs/alpha-family-1-walkthrough.md)
 - [`docs/alpha-family-2-entres-bridge.md`](./docs/alpha-family-2-entres-bridge.md)
 - [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)

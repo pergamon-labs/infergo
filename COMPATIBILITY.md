@@ -18,6 +18,7 @@ without a documented export path, backend, and parity test story.
 - Primary task shape: small classification-style inference in Go services
 - Public APIs:
   - stable bundle API: `infer.LoadTextClassifier` and `infer.LoadTokenClassifier`
+  - higher-level exported text-bundle API: `infer.LoadTextBundle`
   - curated pack API: `infer/packs.LoadTextPack` and `infer/packs.LoadTokenPack`
   - stable HTTP handler API: `infer/httpserver.NewTextPackMux` and `infer/httpserver.NewTokenPackMux`
   - stable server config API: `infer/httpserver.DefaultServerConfig` and `infer/httpserver.NewServer`
@@ -30,6 +31,8 @@ without a documented export path, backend, and parity test story.
   - stable REST serving through `cmd/infergo-serve`
   - experimental family-1 export through `scripts/export_encoder_text_bundle.py`
     for projection-based single-text and paired-text classification bundles
+  - tokenizer-backed library use of exported family-1 text bundles through
+    `infer.LoadTextBundle`
   - experimental serving of exported family-1 text bundles through
     `cmd/infergo-serve -task text -bundle ...`, including tokenizer-backed raw
     text for supported exported bundles

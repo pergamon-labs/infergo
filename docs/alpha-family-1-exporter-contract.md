@@ -74,6 +74,8 @@ logits.
 The first exporter entrypoint is:
 
 - [`scripts/export_encoder_text_bundle.py`](../scripts/export_encoder_text_bundle.py)
+- end-to-end usage is documented in
+  [`docs/alpha-family-1-walkthrough.md`](./alpha-family-1-walkthrough.md)
 
 It is intentionally a Python-first script because the source ecosystem is still
 PyTorch/Transformers.

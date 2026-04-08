@@ -181,6 +181,7 @@ This workstream is about **family 1**.
 The first concrete exporter contract for that workstream now lives in:
 
 - [`docs/alpha-family-1-exporter-contract.md`](./alpha-family-1-exporter-contract.md)
+- [`docs/alpha-family-1-walkthrough.md`](./alpha-family-1-walkthrough.md)
 
 Current implementation note:
 
