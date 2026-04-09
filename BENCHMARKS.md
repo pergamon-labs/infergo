@@ -16,6 +16,31 @@ These benchmarks are meant to answer the first backend-team questions:
 InferGo does not check machine-specific benchmark numbers into the repo. Run the
 suite on your own hardware and compare deltas over time.
 
+## Current reference snapshot
+
+Latest local snapshot on `Darwin arm64` with an `Apple M3 Max`:
+
+- `BenchmarkLoadTextPackInfergoBasicSST2`: `345450 ns/op`, `167900 B/op`,
+  `2284 allocs/op`
+- `BenchmarkPredictTextInfergoBasicSST2`: `1575 ns/op`, `1616 B/op`,
+  `57 allocs/op`
+- `BenchmarkLoadTokenPackInfergoBasicFrenchNER`: `614218 ns/op`,
+  `260469 B/op`, `2927 allocs/op`
+- `BenchmarkPredictTextInfergoBasicFrenchNER`: `7282 ns/op`, `11464 B/op`,
+  `229 allocs/op`
+- `BenchmarkPredictTokensInfergoBasicFrenchNER`: `5579 ns/op`, `9656 B/op`,
+  `191 allocs/op`
+- `BenchmarkMetadataTextPackInfergoBasicSST2`: `1620 ns/op`, `6585 B/op`,
+  `24 allocs/op`
+- `BenchmarkPredictTextInfergoBasicSST2HTTP`: `3707 ns/op`, `9614 B/op`,
+  `91 allocs/op`
+- `BenchmarkPredictTokenTextInfergoBasicFrenchNERHTTP`: `13115 ns/op`,
+  `21521 B/op`, `274 allocs/op`
+- `BenchmarkPredictTokenTokensInfergoBasicFrenchNERHTTP`: `12730 ns/op`,
+  `20303 B/op`, `250 allocs/op`
+
+These numbers are illustrative, not a compatibility promise.
+
 ## Run the benchmark suite
 
 From the repo root:
