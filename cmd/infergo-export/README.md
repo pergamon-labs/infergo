@@ -88,6 +88,54 @@ The command prints:
 - arbitrary tokenizer families
 - raw `.pt` loading
 
+## Common export failures
+
+### `uv was not found in PATH`
+
+The default exporter path uses:
+
+```bash
+uv run --with torch==2.10.0 --with transformers==5.3.0
+```
+
+Fixes:
+
+- install `uv`
+- or rerun with `-python-runner=python` and a Python environment that already
+  has the required dependencies installed
+
+### `-model-id is required when -model points to a local path`
+
+If `-model` is a local directory, also provide a stable canonical id for the
+bundle metadata:
+
+```bash
+infergo-export export \
+  -model ./local-model-dir \
+  -model-id myorg/my-model \
+  -input ./family1-inputs.json \
+  -out ./artifacts/my-model-alpha
+```
+
+### Python export step fails after the model loads
+
+The current alpha path is narrow. Check these first:
+
+- the source model is a Hugging Face Transformers-style sequence-classification
+  model
+- your input set shape matches the task
+- the tokenizer stays within the current alpha runtime subset
+
+If you need broader tokenizer or model-family support, that is likely outside
+the current alpha contract rather than a simple local setup problem.
+
+### Raw-text support is false after export
+
+That means the bundle can still be used through tokenized input, but the staged
+tokenizer assets did not match the current raw-text runtime subset.
+
+This is expected for some models in alpha.
+
 ## Related docs
 
 - [`docs/alpha-family-1-exporter-contract.md`](../../docs/alpha-family-1-exporter-contract.md)

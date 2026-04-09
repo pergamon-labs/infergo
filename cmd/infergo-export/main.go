@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"encoding/json"
 	"errors"
@@ -26,6 +27,8 @@ const (
 
 	defaultMaxLength = 128
 	defaultRunner    = "uv"
+
+	exportReadmePath = "cmd/infergo-export/README.md"
 )
 
 var (
@@ -134,6 +137,7 @@ func main() {
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "infergo-export: %v\n", err)
+		fmt.Fprintf(os.Stderr, "See %s for the supported family-1 path and troubleshooting.\n", exportReadmePath)
 		os.Exit(1)
 	}
 }
@@ -146,6 +150,12 @@ func printUsage(w io.Writer) {
 	fmt.Fprintln(w, "The export path is installable without a repo checkout, but it still needs")
 	fmt.Fprintln(w, "Python/Transformers tooling at export time. By default it uses:")
 	fmt.Fprintln(w, "  uv run --with torch==2.10.0 --with transformers==5.3.0")
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Examples:")
+	fmt.Fprintln(w, "  infergo-export template -kind single -out ./family1-inputs.json")
+	fmt.Fprintln(w, "  infergo-export export -model distilbert/distilbert-base-uncased-finetuned-sst-2-english -input ./family1-inputs.json -out ./artifacts/distilbert-sst2-alpha")
+	fmt.Fprintln(w)
+	fmt.Fprintf(w, "Docs: %s\n", exportReadmePath)
 }
 
 func runTemplate(args []string) error {
@@ -182,7 +192,7 @@ func runTemplate(args []string) error {
 			},
 		}
 	default:
-		return fmt.Errorf("template: unsupported kind %q", *kind)
+		return fmt.Errorf("template: unsupported kind %q (expected \"single\" or \"pair\")", *kind)
 	}
 
 	outputPath := filepath.Clean(*out)
@@ -342,7 +352,7 @@ func runPythonHelper(runner, pythonExec, helperScriptPath, model, inputPath, ref
 	switch runner {
 	case "uv":
 		if _, err := exec.LookPath("uv"); err != nil {
-			return errors.New("uv is required for the default export path; install uv or rerun with -python-runner=python and preinstalled dependencies")
+			return errors.New("uv was not found in PATH; install uv or rerun with -python-runner=python and a Python environment that already has torch==2.10.0 and transformers==5.3.0")
 		}
 		cmd = exec.Command(
 			"uv",
@@ -359,7 +369,7 @@ func runPythonHelper(runner, pythonExec, helperScriptPath, model, inputPath, ref
 		)
 	case "python":
 		if _, err := exec.LookPath(pythonExec); err != nil {
-			return fmt.Errorf("python executable %q not found", pythonExec)
+			return fmt.Errorf("python executable %q was not found in PATH", pythonExec)
 		}
 		cmd = exec.Command(
 			pythonExec,
@@ -371,12 +381,17 @@ func runPythonHelper(runner, pythonExec, helperScriptPath, model, inputPath, ref
 			"--max-length", fmt.Sprintf("%d", maxLength),
 		)
 	default:
-		return fmt.Errorf("unsupported python runner %q", runner)
+		return fmt.Errorf("unsupported python runner %q (expected \"uv\" or \"python\")", runner)
 	}
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = io.MultiWriter(os.Stdout, &stdout)
+	cmd.Stderr = io.MultiWriter(os.Stderr, &stderr)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%w\nhint: confirm the model is a supported Transformers sequence-classification model, the tokenizer falls within the current alpha subset, and the export-time Python dependencies are available", err)
+	}
+	return nil
 }
 
 func loadTokenizerManifest(path string) (tokenizerManifest, error) {
@@ -399,7 +414,7 @@ func resolveModelID(modelArg, modelIDOverride string) (string, error) {
 		return modelIDOverride, nil
 	}
 	if pathExists(modelArg) {
-		return "", errors.New("-model-id is required when -model points to a local path")
+		return "", errors.New("-model-id is required when -model points to a local path so the exported bundle records a stable canonical model id")
 	}
 	return modelArg, nil
 }

@@ -88,6 +88,10 @@ infergo-parity \
 For the full supported BYOM path, see
 [`alpha-family-1-walkthrough.md`](./alpha-family-1-walkthrough.md).
 
+If export fails, see
+[`../cmd/infergo-export/README.md`](../cmd/infergo-export/README.md)
+for the current supported boundary and common recovery steps.
+
 ### Path 2: Use a curated checked-in pack
 
 This is useful when you want to try the current repo fixtures quickly.
