@@ -10,9 +10,9 @@ Current prerelease:
 
 Start here:
 
-- [docs/GETTING_STARTED.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/GETTING_STARTED.md)
-- [docs/USE_CASES.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/USE_CASES.md)
-- [docs/PHILOSOPHY.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/PHILOSOPHY.md)
+- [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
+- [docs/USE_CASES.md](docs/USE_CASES.md)
+- [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md)
 
 ## What InferGo is for
 
@@ -110,7 +110,7 @@ infergo-parity \
 ```
 
 For the full supported path, see
-[docs/alpha-family-1-walkthrough.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/alpha-family-1-walkthrough.md).
+[docs/alpha-family-1-walkthrough.md](docs/alpha-family-1-walkthrough.md).
 
 ## Use in your Go app
 
@@ -146,8 +146,8 @@ if err != nil {
 
 If you want repo-based examples too, see:
 
-- [examples/exported-bundle-classifier/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/examples/exported-bundle-classifier/README.md)
-- [examples/bionet-classifier/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/examples/bionet-classifier/README.md)
+- [examples/exported-bundle-classifier/README.md](examples/exported-bundle-classifier/README.md)
+- [examples/bionet-classifier/README.md](examples/bionet-classifier/README.md)
 
 ## Serve over HTTP, if you want a standalone model process
 
@@ -246,21 +246,21 @@ Current posture:
 
 For users:
 
-- [docs/GETTING_STARTED.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/GETTING_STARTED.md)
-- [docs/USE_CASES.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/USE_CASES.md)
-- [docs/PHILOSOPHY.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/PHILOSOPHY.md)
-- [docs/alpha-family-1-walkthrough.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/docs/alpha-family-1-walkthrough.md)
-- [cmd/infergo-export/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/cmd/infergo-export/README.md)
-- [cmd/infergo-serve/README.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/cmd/infergo-serve/README.md)
+- [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
+- [docs/USE_CASES.md](docs/USE_CASES.md)
+- [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md)
+- [docs/alpha-family-1-walkthrough.md](docs/alpha-family-1-walkthrough.md)
+- [cmd/infergo-export/README.md](cmd/infergo-export/README.md)
+- [cmd/infergo-serve/README.md](cmd/infergo-serve/README.md)
 
 Reference:
 
-- [COMPATIBILITY.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/COMPATIBILITY.md)
-- [ARCHITECTURE.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/ARCHITECTURE.md)
+- [COMPATIBILITY.md](COMPATIBILITY.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md)
 - [pkg.go.dev `infer`](https://pkg.go.dev/github.com/pergamon-labs/infergo/infer)
 - [pkg.go.dev `infer/httpserver`](https://pkg.go.dev/github.com/pergamon-labs/infergo/infer/httpserver)
 
 Project:
 
-- [BENCHMARKS.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/BENCHMARKS.md)
-- [CONTRIBUTING.md](/Users/jatto/Documents/workspaces/pergamon-labs/infergo/CONTRIBUTING.md)
+- [BENCHMARKS.md](BENCHMARKS.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
