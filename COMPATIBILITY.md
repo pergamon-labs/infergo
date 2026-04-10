@@ -65,7 +65,8 @@ Supported today through checked-in packs and examples:
 - raw-text-capable curated token packs where tokenizer behavior is validated
 - sample NER extraction service via
   [`examples/ner-service/`](./examples/ner-service)
-- token-level entity spans and sample-layer BIO grouping only
+- stable token and entity spans for curated raw-text requests
+- sample-layer BIO grouping only
 
 This is **not** yet a public BYOM export/import claim.
 
@@ -96,7 +97,6 @@ Alpha NER scope today:
 - direct runtime loading from arbitrary Hugging Face repositories
 - general transformer execution in the native backend
 - token-classification BYOM export/import
-- stable character-offset spans for NER extraction
 - a first-class stable entity-extraction API in `infer/`
 - ONNX runtime support
 - gRPC serving

@@ -99,7 +99,8 @@ Alpha scope decision:
 - it is not the second public BYOM family yet
 - alpha NER scope now includes stable byte/character offsets for curated
   raw-text flows, with entity grouping kept in sample/service code
-- a first-class entity helper remains deferred
+- a first-class entity helper is not part of alpha and should be reconsidered
+  only if repeated usage patterns emerge
 - a later public token-classification export family can be evaluated after the
   current family-1 alpha hardening work is complete
 

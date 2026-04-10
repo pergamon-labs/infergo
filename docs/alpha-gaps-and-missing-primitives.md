@@ -107,34 +107,7 @@ Why this matters:
 - outside users need to know whether token classification is "supported via
   checked-in examples" or "supported via self-serve export"
 
-### 4. Alpha keeps NER grouping at the sample/service layer
-
-Current state:
-
-- [`examples/ner-service/`](../examples/ner-service) proves a real service path
-- the sample has to compose:
-  - raw-text tokenization
-  - raw-text token spans with stable byte/character offsets
-  - token prediction
-  - BIO-style entity grouping
-
-Alpha decision:
-
-- alpha keeps entity grouping at the sample/service layer
-- InferGo does not promise a first-class stable entity extraction helper in
-  `infer/` yet
-
-Deferred follow-up:
-
-- evaluate whether repeated user demand justifies a first-class helper after
-  alpha
-
-Why this matters:
-
-- this is one of the clearest places where current InferGo feels like a toolkit
-  under construction rather than a finished product surface
-
-### 6. Private internal validation must stay separate from the public story
+### 4. Private internal validation must stay separate from the public story
 
 Current state:
 
@@ -175,8 +148,9 @@ Examples:
 
 ### 4. First-class NER/entity abstraction in `infer/`
 
-The sample service proves the need, but alpha intentionally leaves this at the
-sample/service layer until the public surface is ready to stabilize it.
+The sample service proves a workable path, but alpha intentionally leaves entity
+grouping at the sample/service layer until repeated usage patterns justify a
+stable helper in `infer/` or `infer/packs`.
 
 ## Explicit non-goals for alpha
 
