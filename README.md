@@ -6,7 +6,7 @@ It is built for teams that want to export a supported model once, load it in
 Go, and run predictions without Python in production.
 
 Current prerelease:
-[`v0.2.0-alpha.2`](https://github.com/pergamon-labs/infergo/releases/tag/v0.2.0-alpha.2)
+[`v0.2.0-alpha.3`](https://github.com/pergamon-labs/infergo/releases/tag/v0.2.0-alpha.3)
 
 Start here:
 
@@ -226,7 +226,7 @@ go run ./examples/ner-service -addr 127.0.0.1:8080
 
 ## Supported today
 
-InferGo is intentionally narrow in `v0.2.0-alpha.2`.
+InferGo is intentionally narrow in `v0.2.0-alpha.3`.
 
 | Area | Status |
 | --- | --- |

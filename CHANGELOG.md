@@ -2,10 +2,42 @@
 
 All notable changes to InferGo will be documented in this file.
 
-This project is still pre-alpha, so early entries are intentionally grouped at
-the release level rather than by every internal commit.
+This project is still early, so entries are intentionally grouped at the
+release level rather than by every internal commit.
 
 ## [Unreleased]
+
+## [v0.2.0-alpha.3] - 2026-04-10
+
+Third public alpha prerelease and the latest hardened alpha baseline.
+
+### Added
+
+- validated RoBERTa-style ByteLevel BPE tokenizer-json support for exported
+  family-1 raw-text bundles
+- stable byte and character offsets for curated raw-text NER flows
+- maintainer benchmark snapshot and comparison helpers in `scripts/`
+
+### Changed
+
+- tightened family-1 tokenizer-boundary enforcement so unsupported raw-text
+  tokenizers stay tokenized-input-only
+- hardened `infergo-export` help and failure guidance for first-time users
+- documented the benchmark reporting and regression workflow for maintainers
+- pinned the current public alpha native bundle contract to
+  `infergo-native` bundle version `1.0`
+- made the exporter reject unsupported bundle versions up front instead of
+  generating bundles the alpha loader will refuse
+- clarified the alpha NER posture around offsets and sample-layer entity
+  grouping
+
+### Notes
+
+- token classification remains a curated-pack/sample-service alpha story, not a
+  public BYOM family
+- family-2 internal validation remains private and separate from the public
+  alpha contract
+- the remaining TorchScript bridge is still optional and `libtorch`-dependent
 
 ## [v0.1.0-prealpha.1] - 2026-03-30
 
