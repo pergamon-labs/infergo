@@ -37,7 +37,7 @@ InferGo is ready for alpha when all of the following are true:
 - [x] token classification is still documented as curated-pack/sample-service
       support only
 - [x] NER sample-service docs still match current behavior
-- [ ] remaining NER limitations are explicit
+- [x] remaining NER limitations are explicit
 
 ## Documentation and release readiness
 

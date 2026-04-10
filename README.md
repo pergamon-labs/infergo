@@ -231,7 +231,7 @@ InferGo is intentionally narrow in `v0.2.0-alpha.2`.
 | Exported family-1 bundles served over HTTP | Experimental |
 | Curated native text-classification packs | Supported |
 | Curated native token-classification packs | Supported |
-| Sample NER extraction service | Supported |
+| Sample NER extraction service (token-level spans, sample-layer grouping) | Supported |
 | Token-classification BYOM export/import | Not part of alpha |
 | gRPC serving surface | Not yet |
 

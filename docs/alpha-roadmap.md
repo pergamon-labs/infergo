@@ -97,6 +97,9 @@ Alpha scope decision:
 - token classification remains a curated-pack and sample-service validation path
   for alpha
 - it is not the second public BYOM family yet
+- alpha NER scope is token-level spans with entity grouping kept in
+  sample/service code
+- stable character offsets and a first-class entity helper are deferred
 - a later public token-classification export family can be evaluated after the
   current family-1 alpha hardening work is complete
 

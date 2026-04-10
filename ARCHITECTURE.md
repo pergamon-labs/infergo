@@ -29,6 +29,7 @@ Use it when you want:
 - a repo-shipped pack by key
 - curated examples
 - sample NER flows built on validated public-safe fixtures
+- token-level span extraction with service-owned entity grouping logic
 
 ### `infer/httpserver`
 

@@ -42,7 +42,8 @@ The response includes:
 Important limitation:
 
 - this sample groups entity spans by token index only
-- it does not yet expose first-class character offsets from the stable InferGo
-  API
+- it does not expose stable character offsets from the public InferGo alpha API
+- the entity grouping logic intentionally lives in this sample service, not in a
+  first-class stable helper under `infer/`
 
 That limitation is tracked in the alpha gap docs.

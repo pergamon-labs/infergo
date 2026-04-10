@@ -103,7 +103,7 @@ Why this matters:
 - outside users need to know whether token classification is "supported via
   checked-in examples" or "supported via self-serve export"
 
-### 4. Sample NER services still have to reconstruct entities themselves
+### 4. Alpha keeps NER grouping at the sample/service layer
 
 Current state:
 
@@ -113,27 +113,39 @@ Current state:
   - token prediction
   - BIO-style entity grouping
 
-Needed:
+Alpha decision:
 
-- decide whether alpha should expose a first-class entity extraction helper
-  package or keep this at the sample layer
+- alpha keeps entity grouping at the sample/service layer
+- InferGo does not promise a first-class stable entity extraction helper in
+  `infer/` yet
+
+Deferred follow-up:
+
+- evaluate whether repeated user demand justifies a first-class helper after
+  alpha
 
 Why this matters:
 
 - this is one of the clearest places where current InferGo feels like a toolkit
   under construction rather than a finished product surface
 
-### 5. Character offsets are not part of the stable NER path
+### 5. Alpha NER uses token-level spans, not stable character offsets
 
 Current state:
 
 - the sample NER service can return token-level spans
 - it cannot return stable character offsets from the current public API
 
-Needed:
+Alpha decision:
 
-- either offset-aware tokenizer/runtime support
-- or explicit documentation that token-level spans are the current limit
+- token-level spans are the current alpha limit
+- stable character offsets are explicitly deferred until offset-aware
+  tokenizer/runtime support exists
+
+Deferred follow-up:
+
+- add offset-aware tokenizer/runtime support only when the public NER surface is
+  ready to promise stable offset semantics
 
 Why this matters:
 
@@ -181,9 +193,8 @@ Examples:
 
 ### 4. First-class NER/entity abstraction in `infer/`
 
-The sample service proves the need.
-It does not need to be stabilized before alpha unless external users start
-asking for it immediately.
+The sample service proves the need, but alpha intentionally leaves this at the
+sample/service layer until the public surface is ready to stabilize it.
 
 ## Explicit non-goals for alpha
 
@@ -201,9 +212,7 @@ These should stay out of alpha planning unless the roadmap changes on purpose.
 
 Before cutting alpha, InferGo should answer these clearly:
 
-1. Are token-level spans enough for alpha NER, or do we need character offsets
-   first?
-2. Is the current tokenizer support boundary documented clearly enough that
+1. Is the current tokenizer support boundary documented clearly enough that
    users will not over-assume?
-3. Are the public docs and examples cleanly separated from private internal
+2. Are the public docs and examples cleanly separated from private internal
    validation paths?

@@ -64,8 +64,16 @@ Supported today through checked-in packs and examples:
 - raw-text-capable curated token packs where tokenizer behavior is validated
 - sample NER extraction service via
   [`examples/ner-service/`](./examples/ner-service)
+- token-level entity spans and sample-layer BIO grouping only
 
 This is **not** yet a public BYOM export/import claim.
+
+Alpha NER scope today:
+
+- use curated token packs or the sample NER service
+- expect token-level span boundaries, not stable character offsets
+- expect entity grouping logic to live in sample/service code, not in a
+  first-class stable `infer/` helper yet
 
 ## Backends
 
