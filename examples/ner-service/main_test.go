@@ -15,7 +15,7 @@ func TestGroupEntities(t *testing.T) {
 	tokens := []string{"sophie", "tremblay", "a", "parlé", "avec", "hydro", "-", "québec", "à", "montréal"}
 	labels := []string{"I-PER", "I-PER", "O", "O", "O", "I-ORG", "I-ORG", "I-ORG", "O", "I-LOC"}
 
-	entities := groupEntities(tokens, labels)
+	entities := groupEntities("", tokens, labels, nil)
 	require.Equal(t, []namedEntity{
 		{
 			Label:      "PER",
@@ -61,24 +61,54 @@ func TestNERServiceExtractText(t *testing.T) {
 	require.Equal(t, []namedEntity{
 		{
 			Label:      "PER",
-			Text:       "sophie tremblay",
+			Text:       "Sophie Tremblay",
 			Tokens:     []string{"sophie", "tremblay"},
 			StartToken: 0,
 			EndToken:   1,
+			Span: &textSpan{
+				StartByte: 0,
+				EndByte:   15,
+				StartChar: 0,
+				EndChar:   15,
+			},
 		},
 		{
 			Label:      "ORG",
-			Text:       "hydro-québec",
+			Text:       "Hydro-Québec",
 			Tokens:     []string{"hydro", "-", "québec"},
 			StartToken: 5,
 			EndToken:   7,
+			Span: &textSpan{
+				StartByte: 30,
+				EndByte:   43,
+				StartChar: 29,
+				EndChar:   41,
+			},
 		},
 		{
 			Label:      "LOC",
-			Text:       "montréal",
+			Text:       "Montréal",
 			Tokens:     []string{"montréal"},
 			StartToken: 9,
 			EndToken:   9,
+			Span: &textSpan{
+				StartByte: 47,
+				EndByte:   56,
+				StartChar: 44,
+				EndChar:   52,
+			},
 		},
 	}, payload.Entities)
+	require.Equal(t, []packs.TokenSpan{
+		{Token: "sophie", StartByte: 0, EndByte: 6, StartChar: 0, EndChar: 6},
+		{Token: "tremblay", StartByte: 7, EndByte: 15, StartChar: 7, EndChar: 15},
+		{Token: "a", StartByte: 16, EndByte: 17, StartChar: 16, EndChar: 17},
+		{Token: "parlé", StartByte: 18, EndByte: 24, StartChar: 18, EndChar: 23},
+		{Token: "avec", StartByte: 25, EndByte: 29, StartChar: 24, EndChar: 28},
+		{Token: "hydro", StartByte: 30, EndByte: 35, StartChar: 29, EndChar: 34},
+		{Token: "-", StartByte: 35, EndByte: 36, StartChar: 34, EndChar: 35},
+		{Token: "québec", StartByte: 36, EndByte: 43, StartChar: 35, EndChar: 41},
+		{Token: "à", StartByte: 44, EndByte: 46, StartChar: 42, EndChar: 43},
+		{Token: "montréal", StartByte: 47, EndByte: 56, StartChar: 44, EndChar: 52},
+	}, payload.TokenSpans)
 }

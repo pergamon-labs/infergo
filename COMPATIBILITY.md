@@ -72,7 +72,7 @@ This is **not** yet a public BYOM export/import claim.
 Alpha NER scope today:
 
 - use curated token packs or the sample NER service
-- expect token-level span boundaries, not stable character offsets
+- stable byte and character offsets are available for curated raw-text NER flows
 - expect entity grouping logic to live in sample/service code, not in a
   first-class stable `infer/` helper yet
 

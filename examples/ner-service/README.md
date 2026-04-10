@@ -8,6 +8,7 @@ It intentionally shows what a backend service can build today on top of:
 
 - `infer/packs.LoadTokenPack(...)`
 - `TokenPack.TokenizeText(...)`
+- `TokenPack.TokenizeTextWithOffsets(...)`
 - `TokenPack.PredictTokens(...)`
 
 Run it from the repo root:
@@ -36,13 +37,13 @@ The response includes:
 
 - model metadata
 - scored tokens
+- token spans with stable byte and character offsets for raw-text requests
 - token labels
-- grouped entities with token ranges
+- grouped entities with token ranges and stable byte/character offsets for
+  raw-text requests
 
 Important limitation:
 
-- this sample groups entity spans by token index only
-- it does not expose stable character offsets from the public InferGo alpha API
 - the entity grouping logic intentionally lives in this sample service, not in a
   first-class stable helper under `infer/`
 

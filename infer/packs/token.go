@@ -31,7 +31,18 @@ type TokenPack struct {
 	prefixLen        int
 	suffixLen        int
 	rawTokenizer     runtimeTokenizer.Tokenizer
+	rawSpanTokenizer func(text string, maxOutputSize int) []runtimeTokenizer.TokenSpan
 	maxContentTokens int
+}
+
+// TokenSpan describes one scored raw-text token plus its source-text span.
+// Offsets are start-inclusive and end-exclusive.
+type TokenSpan struct {
+	Token     string `json:"token"`
+	StartByte int    `json:"start_byte"`
+	EndByte   int    `json:"end_byte"`
+	StartChar int    `json:"start_char"`
+	EndChar   int    `json:"end_char"`
 }
 
 // ListTokenPacks returns the supported checked-in token packs.
@@ -122,6 +133,7 @@ func LoadTokenPack(key string) (*TokenPack, error) {
 		prefixLen:        prefixLen,
 		suffixLen:        suffixLen,
 		rawTokenizer:     rawTokenizer,
+		rawSpanTokenizer: rawSpanTokenizerFor(rawTokenizer),
 		maxContentTokens: maxContentTokens,
 	}, nil
 }
@@ -222,20 +234,46 @@ func (p *TokenPack) PredictText(text string) (infer.TokenPrediction, error) {
 // TokenizeText tokenizes one raw text input when the checked-in pack supports a
 // native tokenizer helper.
 func (p *TokenPack) TokenizeText(text string) ([]string, error) {
+	spans, err := p.TokenizeTextWithOffsets(text)
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := make([]string, len(spans))
+	for i, span := range spans {
+		tokens[i] = span.Token
+	}
+	return tokens, nil
+}
+
+// TokenizeTextWithOffsets tokenizes one raw text input and returns scored token
+// spans when the checked-in pack supports an offset-aware native tokenizer
+// helper.
+func (p *TokenPack) TokenizeTextWithOffsets(text string) ([]TokenSpan, error) {
 	if p == nil {
 		return nil, fmt.Errorf("tokenize text: token pack is not initialized")
 	}
-	if p.rawTokenizer == nil {
+	if p.rawSpanTokenizer == nil {
 		return nil, fmt.Errorf("tokenize text: pack %q does not support raw-text tokenization", p.info.Key)
 	}
 
-	tokens := p.rawTokenizer(text, p.maxContentTokens+8)
-	tokens = trimUnscoredEdgeTokens(tokens)
-	if len(tokens) == 0 {
+	rawSpans := p.rawSpanTokenizer(text, p.maxContentTokens+8)
+	rawSpans = trimUnscoredEdgeTokenSpans(rawSpans)
+	if len(rawSpans) == 0 {
 		return nil, fmt.Errorf("tokenize text: tokenizer produced no scored tokens")
 	}
 
-	return tokens, nil
+	spans := make([]TokenSpan, len(rawSpans))
+	for i, span := range rawSpans {
+		spans[i] = TokenSpan{
+			Token:     span.Token,
+			StartByte: span.StartByte,
+			EndByte:   span.EndByte,
+			StartChar: span.StartChar,
+			EndChar:   span.EndChar,
+		}
+	}
+	return spans, nil
 }
 
 // Close releases the underlying classifier.
@@ -290,9 +328,10 @@ func buildTokenEncoder(reference parity.TransformersTokenClassificationReference
 			return nil, nil, nil, 0, 0, nil, 0, fmt.Errorf("reference case %q uses inconsistent boundary tokens", item.ID)
 		}
 
-		basicTokens := trimUnscoredEdgeTokens(runtimeTokenizer.BasicTokenizer(item.Text, len(item.Tokens)+8))
-		if len(basicTokens) > maxContentTokens {
-			maxContentTokens = len(basicTokens)
+		basicSpans := trimUnscoredEdgeTokenSpans(runtimeTokenizer.BasicTokenizerWithOffsets(item.Text, len(item.Tokens)+8))
+		basicTokens := tokenTextsFromSpans(basicSpans)
+		if len(basicSpans) > maxContentTokens {
+			maxContentTokens = len(basicSpans)
 		}
 		if !slices.Equal(basicTokens, contentTokens) {
 			rawTextSupported = false
@@ -369,6 +408,35 @@ func trimUnscoredEdgeTokens(tokens []string) []string {
 	}
 
 	return append([]string(nil), tokens[start:end]...)
+}
+
+func trimUnscoredEdgeTokenSpans(tokens []runtimeTokenizer.TokenSpan) []runtimeTokenizer.TokenSpan {
+	start := 0
+	for start < len(tokens) && !shouldScoreToken(tokens[start].Token) {
+		start++
+	}
+
+	end := len(tokens)
+	for end > start && !shouldScoreToken(tokens[end-1].Token) {
+		end--
+	}
+
+	return append([]runtimeTokenizer.TokenSpan(nil), tokens[start:end]...)
+}
+
+func tokenTextsFromSpans(tokens []runtimeTokenizer.TokenSpan) []string {
+	output := make([]string, len(tokens))
+	for i, token := range tokens {
+		output[i] = token.Token
+	}
+	return output
+}
+
+func rawSpanTokenizerFor(tokenizer runtimeTokenizer.Tokenizer) func(text string, maxOutputSize int) []runtimeTokenizer.TokenSpan {
+	if tokenizer == nil {
+		return nil
+	}
+	return runtimeTokenizer.BasicTokenizerWithOffsets
 }
 
 func shouldScoreToken(token string) bool {

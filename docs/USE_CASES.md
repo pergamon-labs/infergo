@@ -76,8 +76,8 @@ Why InferGo fits:
 
 - the sample NER service already exercises that path
 - token classification is validated as a sample-service story in alpha
-- the current alpha scope is token-level spans plus service-owned entity
-  grouping, not a first-class entity-helper API
+- the current alpha scope includes stable token/entity offsets plus
+  service-owned entity grouping, not a first-class entity-helper API
 
 ## Use with caution
 

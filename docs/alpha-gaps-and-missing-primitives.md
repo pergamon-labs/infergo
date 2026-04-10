@@ -114,6 +114,7 @@ Current state:
 - [`examples/ner-service/`](../examples/ner-service) proves a real service path
 - the sample has to compose:
   - raw-text tokenization
+  - raw-text token spans with stable byte/character offsets
   - token prediction
   - BIO-style entity grouping
 
@@ -132,29 +133,6 @@ Why this matters:
 
 - this is one of the clearest places where current InferGo feels like a toolkit
   under construction rather than a finished product surface
-
-### 5. Alpha NER uses token-level spans, not stable character offsets
-
-Current state:
-
-- the sample NER service can return token-level spans
-- it cannot return stable character offsets from the current public API
-
-Alpha decision:
-
-- token-level spans are the current alpha limit
-- stable character offsets are explicitly deferred until offset-aware
-  tokenizer/runtime support exists
-
-Deferred follow-up:
-
-- add offset-aware tokenizer/runtime support only when the public NER surface is
-  ready to promise stable offset semantics
-
-Why this matters:
-
-- many real NER consumers need offsets for highlighting, linking, and downstream
-  enrichment
 
 ### 6. Private internal validation must stay separate from the public story
 

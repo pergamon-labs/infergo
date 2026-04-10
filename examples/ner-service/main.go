@@ -27,21 +27,30 @@ type metadataResponse struct {
 }
 
 type namedEntity struct {
-	Label      string   `json:"label"`
-	Text       string   `json:"text"`
-	Tokens     []string `json:"tokens"`
-	StartToken int      `json:"start_token"`
-	EndToken   int      `json:"end_token"`
+	Label      string    `json:"label"`
+	Text       string    `json:"text"`
+	Tokens     []string  `json:"tokens"`
+	StartToken int       `json:"start_token"`
+	EndToken   int       `json:"end_token"`
+	Span       *textSpan `json:"span,omitempty"`
+}
+
+type textSpan struct {
+	StartByte int `json:"start_byte"`
+	EndByte   int `json:"end_byte"`
+	StartChar int `json:"start_char"`
+	EndChar   int `json:"end_char"`
 }
 
 type extractResponse struct {
-	Backend     string        `json:"backend"`
-	ModelID     string        `json:"model_id"`
-	PackKey     string        `json:"pack_key"`
-	Text        string        `json:"text,omitempty"`
-	Tokens      []string      `json:"tokens"`
-	TokenLabels []string      `json:"token_labels"`
-	Entities    []namedEntity `json:"entities"`
+	Backend     string            `json:"backend"`
+	ModelID     string            `json:"model_id"`
+	PackKey     string            `json:"pack_key"`
+	Text        string            `json:"text,omitempty"`
+	Tokens      []string          `json:"tokens"`
+	TokenSpans  []packs.TokenSpan `json:"token_spans,omitempty"`
+	TokenLabels []string          `json:"token_labels"`
+	Entities    []namedEntity     `json:"entities"`
 }
 
 type service struct {
@@ -109,6 +118,7 @@ func (s *service) newMux() *http.ServeMux {
 
 		var text string
 		var tokens []string
+		var tokenSpans []packs.TokenSpan
 		switch {
 		case req.Text != "" && len(req.Tokens) == 0:
 			if !s.pack.SupportsRawText() {
@@ -117,11 +127,12 @@ func (s *service) newMux() *http.ServeMux {
 			}
 			text = req.Text
 			var err error
-			tokens, err = s.pack.TokenizeText(req.Text)
+			tokenSpans, err = s.pack.TokenizeTextWithOffsets(req.Text)
 			if err != nil {
 				writeError(w, http.StatusBadRequest, "invalid_request", err.Error())
 				return
 			}
+			tokens = tokenTexts(tokenSpans)
 		case req.Text == "" && len(req.Tokens) > 0:
 			tokens = append([]string(nil), req.Tokens...)
 		default:
@@ -145,8 +156,9 @@ func (s *service) newMux() *http.ServeMux {
 			PackKey:     s.pack.Key(),
 			Text:        text,
 			Tokens:      append([]string(nil), tokens...),
+			TokenSpans:  append([]packs.TokenSpan(nil), tokenSpans...),
 			TokenLabels: append([]string(nil), prediction.TokenLabels...),
-			Entities:    groupEntities(tokens, prediction.TokenLabels),
+			Entities:    groupEntities(text, tokens, prediction.TokenLabels, tokenSpans),
 		})
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -155,14 +167,19 @@ func (s *service) newMux() *http.ServeMux {
 	return mux
 }
 
-func groupEntities(tokens, labels []string) []namedEntity {
+func groupEntities(text string, tokens, labels []string, spans []packs.TokenSpan) []namedEntity {
 	raw := make([]namedEntity, 0, len(tokens)/2)
+	useSpans := len(spans) == len(tokens) && len(tokens) > 0
 
 	flush := func(current *namedEntity) {
 		if current == nil || current.Label == "" || len(current.Tokens) == 0 {
 			return
 		}
-		current.Text = joinEntityTokens(current.Tokens)
+		if current.Span != nil && text != "" {
+			current.Text = substringByBytes(text, current.Span.StartByte, current.Span.EndByte)
+		} else {
+			current.Text = joinEntityTokens(current.Tokens)
+		}
 		raw = append(raw, *current)
 	}
 
@@ -182,10 +199,22 @@ func groupEntities(tokens, labels []string) []namedEntity {
 				Label:      entityLabel,
 				StartToken: idx,
 			}
+			if useSpans {
+				current.Span = &textSpan{
+					StartByte: spans[idx].StartByte,
+					EndByte:   spans[idx].EndByte,
+					StartChar: spans[idx].StartChar,
+					EndChar:   spans[idx].EndChar,
+				}
+			}
 		}
 
 		current.EndToken = idx
 		current.Tokens = append(current.Tokens, tokens[idx])
+		if current.Span != nil {
+			current.Span.EndByte = spans[idx].EndByte
+			current.Span.EndChar = spans[idx].EndChar
+		}
 	}
 
 	flush(current)
@@ -203,7 +232,13 @@ func groupEntities(tokens, labels []string) []namedEntity {
 			last.Tokens = append(last.Tokens, tokens[gapStart:item.StartToken]...)
 			last.Tokens = append(last.Tokens, item.Tokens...)
 			last.EndToken = item.EndToken
-			last.Text = joinEntityTokens(last.Tokens)
+			if last.Span != nil && item.Span != nil {
+				last.Span.EndByte = item.Span.EndByte
+				last.Span.EndChar = item.Span.EndChar
+				last.Text = substringByBytes(text, last.Span.StartByte, last.Span.EndByte)
+			} else {
+				last.Text = joinEntityTokens(last.Tokens)
+			}
 			continue
 		}
 
@@ -267,6 +302,27 @@ func punctOnlyGap(tokens, labels []string) bool {
 		}
 	}
 	return true
+}
+
+func tokenTexts(tokens []packs.TokenSpan) []string {
+	output := make([]string, len(tokens))
+	for i, token := range tokens {
+		output[i] = token.Token
+	}
+	return output
+}
+
+func substringByBytes(text string, start, end int) string {
+	if start < 0 {
+		start = 0
+	}
+	if end < start {
+		end = start
+	}
+	if end > len(text) {
+		end = len(text)
+	}
+	return text[start:end]
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {

@@ -100,6 +100,27 @@ func TestLoadTokenPackTokenizeText(t *testing.T) {
 	require.Equal(t, []string{"sophie", "tremblay", "a", "parlé", "avec", "hydro", "-", "québec", "à", "montréal"}, tokens)
 }
 
+func TestLoadTokenPackTokenizeTextWithOffsets(t *testing.T) {
+	pack, err := packs.LoadTokenPack("infergo-basic-french-ner")
+	require.NoError(t, err)
+	defer pack.Close()
+
+	spans, err := pack.TokenizeTextWithOffsets("Sophie Tremblay a parlé avec Hydro-Québec à Montréal.")
+	require.NoError(t, err)
+	require.Equal(t, []packs.TokenSpan{
+		{Token: "sophie", StartByte: 0, EndByte: 6, StartChar: 0, EndChar: 6},
+		{Token: "tremblay", StartByte: 7, EndByte: 15, StartChar: 7, EndChar: 15},
+		{Token: "a", StartByte: 16, EndByte: 17, StartChar: 16, EndChar: 17},
+		{Token: "parlé", StartByte: 18, EndByte: 24, StartChar: 18, EndChar: 23},
+		{Token: "avec", StartByte: 25, EndByte: 29, StartChar: 24, EndChar: 28},
+		{Token: "hydro", StartByte: 30, EndByte: 35, StartChar: 29, EndChar: 34},
+		{Token: "-", StartByte: 35, EndByte: 36, StartChar: 34, EndChar: 35},
+		{Token: "québec", StartByte: 36, EndByte: 43, StartChar: 35, EndChar: 41},
+		{Token: "à", StartByte: 44, EndByte: 46, StartChar: 42, EndChar: 43},
+		{Token: "montréal", StartByte: 47, EndByte: 56, StartChar: 44, EndChar: 52},
+	}, spans)
+}
+
 func TestLegacyTokenPackDoesNotOverclaimRawText(t *testing.T) {
 	pack, err := packs.LoadTokenPack("distilcamembert-french-ner")
 	require.NoError(t, err)
