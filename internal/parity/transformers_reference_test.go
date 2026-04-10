@@ -21,6 +21,22 @@ func TestLoadTransformersTextClassificationInputSet(t *testing.T) {
 	}
 }
 
+func TestLoadTransformersTextClassificationInputSetPairCases(t *testing.T) {
+	t.Parallel()
+
+	inputSet, err := LoadTransformersTextClassificationInputSet("../../testdata/reference/text-classification/mrpc-pairs-inputs.json")
+	if err != nil {
+		t.Fatalf("LoadTransformersTextClassificationInputSet() error = %v", err)
+	}
+
+	if len(inputSet.Cases) < 8 {
+		t.Fatalf("expected a public-safe pair input set, got %d cases", len(inputSet.Cases))
+	}
+	if inputSet.Cases[0].TextPair == "" {
+		t.Fatal("expected first pair input set case to include text_pair")
+	}
+}
+
 func TestLoadTextClassificationManifest(t *testing.T) {
 	t.Parallel()
 

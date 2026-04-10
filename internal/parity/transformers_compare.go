@@ -37,6 +37,7 @@ type TextClassificationCandidate struct {
 type TextClassificationCandidateCase struct {
 	ID                    string    `json:"id"`
 	Text                  string    `json:"text"`
+	TextPair              string    `json:"text_pair,omitempty"`
 	InputIDs              []int     `json:"input_ids"`
 	AttentionMask         []int     `json:"attention_mask"`
 	ObservedLogits        []float64 `json:"observed_logits"`
@@ -242,6 +243,7 @@ func BuildTextClassificationCandidate(reference TransformersTextClassificationRe
 		candidate.Cases = append(candidate.Cases, TextClassificationCandidateCase{
 			ID:                    item.ID,
 			Text:                  item.Text,
+			TextPair:              item.TextPair,
 			InputIDs:              append([]int(nil), item.InputIDs...),
 			AttentionMask:         append([]int(nil), item.AttentionMask...),
 			ObservedLogits:        logits,

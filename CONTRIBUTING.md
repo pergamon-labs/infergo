@@ -2,9 +2,8 @@
 
 This scaffold is intentionally small and extraction-oriented.
 
-InferGo is currently preparing for a first public pre-alpha release. Please
-keep contributions aligned with the narrow, explicitly documented support
-surface.
+InferGo is currently in alpha. Please keep contributions aligned with the
+narrow, explicitly documented support surface.
 
 Current contribution priorities:
 
@@ -12,6 +11,8 @@ Current contribution priorities:
 2. avoid broad compatibility claims without parity coverage
 3. prefer public-safe fixtures and examples
 4. keep backend-specific code behind backend boundaries
+5. open an issue before broadening support surface beyond the documented alpha
+   contract
 
 ## Community norms
 
@@ -26,6 +27,10 @@ Before opening a pull request:
 - update `README.md` if the public workflow changed
 - update `COMPATIBILITY.md` if support claims changed
 - keep examples, bundles, and fixtures public-safe and reproducible
+
+If you want to propose support for a new model family, tokenizer, runtime, or
+format bridge, open an issue first so the support boundary can be discussed
+before implementation.
 
 ## Before adding support for a backend
 

@@ -49,6 +49,18 @@ type TextClassificationBundleMetadata struct {
 	FeatureTokenIDs   []int    `json:"feature_token_ids"`
 }
 
+// TextClassificationBundleInfo describes the input/runtime capabilities
+// exposed by a loaded text-classification bundle.
+type TextClassificationBundleInfo struct {
+	ModelID                string
+	Task                   string
+	Labels                 []string
+	BundleFormat           string
+	SupportsRawText        bool
+	SupportsPairText       bool
+	SupportsTokenizedInput bool
+}
+
 // TextClassificationBundle loads a BIOnet-native text classification artifact
 // plus the feature metadata needed to project input token ids into model
 // features.
@@ -85,12 +97,18 @@ func LoadTextClassificationBundle(bundleDir string) (*TextClassificationBundle, 
 		featureIndexByID[tokenID] = idx
 	}
 
-	return &TextClassificationBundle{
+	bundle := &TextClassificationBundle{
 		metadata:         metadata,
 		model:            model,
 		embeddingMatrix:  embeddingMatrix,
 		featureIndexByID: featureIndexByID,
-	}, nil
+	}
+
+	if err := bundle.validateLabelDimension(); err != nil {
+		return nil, err
+	}
+
+	return bundle, nil
 }
 
 // LoadTextClassificationBundleMetadata loads bundle metadata from disk.
@@ -99,6 +117,33 @@ func LoadTextClassificationBundleMetadata(bundleDir string) (TextClassificationB
 	raw, err := os.ReadFile(metadataPath)
 	if err != nil {
 		return TextClassificationBundleMetadata{}, fmt.Errorf("read bionet text classification metadata: %w", err)
+	}
+
+	var probe textClassificationBundleFormatProbe
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		return TextClassificationBundleMetadata{}, fmt.Errorf("decode bionet text classification metadata probe: %w", err)
+	}
+
+	if probe.BundleFormat == alphaNativeBundleFormat {
+		contract, err := loadAlphaTextClassificationBundleContract(bundleDir, raw)
+		if err != nil {
+			return TextClassificationBundleMetadata{}, err
+		}
+
+		metadata := TextClassificationBundleMetadata{
+			Name:              contract.Metadata.ModelID,
+			Source:            contract.Metadata.Source.Framework,
+			ModelID:           contract.Metadata.ModelID,
+			Task:              contract.Metadata.Task,
+			GeneratedAt:       contract.Metadata.CreatedAt,
+			Artifact:          contract.Metadata.BackendArtifact,
+			EmbeddingArtifact: contract.Metadata.BackendConfig.EmbeddingArtifact,
+			Labels:            contract.Labels,
+			FeatureMode:       contract.Metadata.BackendConfig.FeatureMode,
+			FeatureTokenIDs:   append([]int(nil), contract.Metadata.BackendConfig.FeatureTokenIDs...),
+		}
+
+		return metadata, nil
 	}
 
 	var metadata TextClassificationBundleMetadata
@@ -143,6 +188,53 @@ func LoadTextClassificationBundleMetadata(bundleDir string) (TextClassificationB
 	}
 
 	return metadata, nil
+}
+
+// InspectTextClassificationBundle reads the bundle metadata and reports the
+// supported input modes without loading the full runtime artifact.
+func InspectTextClassificationBundle(bundleDir string) (TextClassificationBundleInfo, error) {
+	metadataPath := filepath.Join(bundleDir, "metadata.json")
+	raw, err := os.ReadFile(metadataPath)
+	if err != nil {
+		return TextClassificationBundleInfo{}, fmt.Errorf("read bionet text classification metadata: %w", err)
+	}
+
+	var probe textClassificationBundleFormatProbe
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		return TextClassificationBundleInfo{}, fmt.Errorf("decode bionet text classification metadata probe: %w", err)
+	}
+
+	if probe.BundleFormat == alphaNativeBundleFormat {
+		contract, err := loadAlphaTextClassificationBundleContract(bundleDir, raw)
+		if err != nil {
+			return TextClassificationBundleInfo{}, err
+		}
+
+		return TextClassificationBundleInfo{
+			ModelID:                contract.Metadata.ModelID,
+			Task:                   contract.Metadata.Task,
+			Labels:                 append([]string(nil), contract.Labels...),
+			BundleFormat:           contract.Metadata.BundleFormat,
+			SupportsRawText:        contract.Metadata.Inputs.RawTextSupported,
+			SupportsPairText:       contract.Metadata.Inputs.PairTextSupported,
+			SupportsTokenizedInput: contract.Metadata.Inputs.TokenizedInputSupported,
+		}, nil
+	}
+
+	metadata, err := LoadTextClassificationBundleMetadata(bundleDir)
+	if err != nil {
+		return TextClassificationBundleInfo{}, err
+	}
+
+	return TextClassificationBundleInfo{
+		ModelID:                metadata.ModelID,
+		Task:                   metadata.Task,
+		Labels:                 append([]string(nil), metadata.Labels...),
+		BundleFormat:           "legacy",
+		SupportsRawText:        false,
+		SupportsPairText:       false,
+		SupportsTokenizedInput: true,
+	}, nil
 }
 
 // PredictBatch projects token ids into the configured feature vector and runs
@@ -310,6 +402,46 @@ func (b *TextClassificationBundle) embeddingMaskedAvgPoolFeaturesFor(inputIDs, a
 func usesEmbeddingArtifact(featureMode string) bool {
 	return featureMode == TextClassificationFeatureModeEmbeddingAvgPool ||
 		featureMode == TextClassificationFeatureModeEmbeddingMaskedAvgPool
+}
+
+func (b *TextClassificationBundle) validateLabelDimension() error {
+	if b == nil || b.model == nil {
+		return fmt.Errorf("validate label dimension: bundle is not initialized")
+	}
+
+	featureDim, err := b.featureDimension()
+	if err != nil {
+		return fmt.Errorf("validate label dimension: %w", err)
+	}
+
+	logits, err := b.model.PredictVector(make([]float64, featureDim))
+	if err != nil {
+		return fmt.Errorf("validate label dimension: %w", err)
+	}
+
+	if len(logits) != len(b.metadata.Labels) {
+		return fmt.Errorf("load bionet text classification bundle: labels count %d does not match model output dimension %d", len(b.metadata.Labels), len(logits))
+	}
+
+	return nil
+}
+
+func (b *TextClassificationBundle) featureDimension() (int, error) {
+	switch b.metadata.FeatureMode {
+	case TextClassificationFeatureModeTokenIDBag:
+		if len(b.metadata.FeatureTokenIDs) == 0 {
+			return 0, fmt.Errorf("feature token ids must not be empty")
+		}
+		return len(b.metadata.FeatureTokenIDs), nil
+	case TextClassificationFeatureModeEmbeddingAvgPool, TextClassificationFeatureModeEmbeddingMaskedAvgPool:
+		shape := b.embeddingMatrix.Shape()
+		if len(shape) != 2 || shape[1] <= 0 {
+			return 0, fmt.Errorf("embedding matrix shape must be [n, d], got %v", shape)
+		}
+		return shape[1], nil
+	default:
+		return 0, fmt.Errorf("unsupported feature mode %q", b.metadata.FeatureMode)
+	}
 }
 
 // SaveTensorToFile writes a BIOnet tensor artifact to disk.

@@ -1,12 +1,21 @@
 # Token Classification HTTP Server Example
 
-This example demonstrates the curated `infer/packs` API for serving a checked-in
-native token-classification pack behind a tiny HTTP endpoint.
+This example demonstrates the stable `infer/httpserver` package for serving a
+checked-in native token-classification pack.
+
+If you want an entity-oriented sample service instead of raw token-label JSON,
+see [`examples/ner-service/`](../ner-service).
+
+For the supported CLI entrypoint, prefer:
+
+```bash
+go run ./cmd/infergo-serve -task token
+```
 
 It will:
 
 - load a checked-in InferGo-native token-classification pack through `infer/packs`
-- expose a `/predict` HTTP endpoint
+- expose `/healthz`, `/metadata`, and `/predict`
 - accept raw text for packs that support native tokenization
 - accept either a known `case_id` from a checked-in reference file or explicit
   tokens that match the chosen pack

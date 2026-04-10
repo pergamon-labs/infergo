@@ -73,6 +73,10 @@ func projectReference(source parity.TransformersTextClassificationReference, mod
 
 	projectedCases := make([]parity.TransformersTextClassificationReferenceCase, 0, len(source.Cases))
 	for _, item := range source.Cases {
+		if item.TextPair != "" {
+			return parity.TransformersTextClassificationReference{}, fmt.Errorf("source case %q uses text_pair; basic tokenizer projection only supports single-text references", item.ID)
+		}
+
 		tokens := runtimeTokenizer.BasicTokenizer(item.Text, 0)
 		if len(tokens) == 0 {
 			return parity.TransformersTextClassificationReference{}, fmt.Errorf("source case %q tokenized to zero tokens", item.ID)

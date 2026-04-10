@@ -24,6 +24,7 @@ DEFAULT_OUTPUT_PATH = Path("testdata/reference/text-classification/distilbert-ss
 class InputCase:
     id: str
     text: str
+    text_pair: str | None = None
 
 
 def parse_args() -> argparse.Namespace:
@@ -42,7 +43,14 @@ def softmax(logits: list[float]) -> list[float]:
 
 def load_inputs(path: Path) -> tuple[str, list[InputCase]]:
     payload = json.loads(path.read_text())
-    cases = [InputCase(id=item["id"], text=item["text"]) for item in payload["cases"]]
+    cases = [
+        InputCase(
+            id=item["id"],
+            text=item["text"],
+            text_pair=item.get("text_pair"),
+        )
+        for item in payload["cases"]
+    ]
     return payload["name"], cases
 
 
@@ -56,7 +64,13 @@ def build_reference(model_id: str, input_name: str, cases: list[InputCase], max_
 
     with torch.no_grad():
         for case in cases:
-            encoded = tokenizer(case.text, return_tensors="pt", truncation=True, max_length=max_length)
+            encoded = tokenizer(
+                case.text,
+                case.text_pair,
+                return_tensors="pt",
+                truncation=True,
+                max_length=max_length,
+            )
             result = model(**encoded)
             logits = result.logits[0].detach().cpu().tolist()
             probabilities = softmax(logits)
@@ -66,6 +80,7 @@ def build_reference(model_id: str, input_name: str, cases: list[InputCase], max_
                 {
                     "id": case.id,
                     "text": case.text,
+                    "text_pair": case.text_pair,
                     "tokens": tokenizer.convert_ids_to_tokens(encoded["input_ids"][0].tolist()),
                     "input_ids": encoded["input_ids"][0].tolist(),
                     "attention_mask": encoded["attention_mask"][0].tolist(),

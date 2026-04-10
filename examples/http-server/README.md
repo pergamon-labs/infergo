@@ -1,13 +1,18 @@
 # HTTP Server Example
 
-This example demonstrates the curated `infer/packs` API for serving a checked-in
-native text-classification pack without overclaiming raw-text tokenization
-support.
+This example demonstrates the stable `infer/httpserver` package for serving a
+checked-in native text-classification pack.
+
+For the supported CLI entrypoint, prefer:
+
+```bash
+go run ./cmd/infergo-serve -task text
+```
 
 It will:
 
 - load a checked-in InferGo-native text-classification pack
-- expose a tiny `/predict` HTTP endpoint
+- expose `/healthz`, `/metadata`, and `/predict`
 - accept either a known `case_id`, a token-piece array, or raw text when the
   chosen pack honestly supports a checked-in tokenizer helper
 

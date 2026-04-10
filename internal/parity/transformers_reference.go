@@ -16,8 +16,9 @@ type TransformersTextClassificationInputSet struct {
 // TransformersTextClassificationInputCase is a single text input in the public
 // reference input set.
 type TransformersTextClassificationInputCase struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
+	ID       string `json:"id"`
+	Text     string `json:"text"`
+	TextPair string `json:"text_pair,omitempty"`
 }
 
 // TransformersTextClassificationReference stores the outputs produced by a
@@ -39,6 +40,7 @@ type TransformersTextClassificationReference struct {
 type TransformersTextClassificationReferenceCase struct {
 	ID                    string    `json:"id"`
 	Text                  string    `json:"text"`
+	TextPair              string    `json:"text_pair,omitempty"`
 	Tokens                []string  `json:"tokens"`
 	InputIDs              []int     `json:"input_ids"`
 	AttentionMask         []int     `json:"attention_mask"`
@@ -68,6 +70,15 @@ func LoadTransformersTextClassificationInputSet(path string) (TransformersTextCl
 		return TransformersTextClassificationInputSet{}, fmt.Errorf("decode transformers input set: no cases defined")
 	}
 
+	for _, item := range inputSet.Cases {
+		if item.ID == "" {
+			return TransformersTextClassificationInputSet{}, fmt.Errorf("decode transformers input set: case missing id")
+		}
+		if item.Text == "" {
+			return TransformersTextClassificationInputSet{}, fmt.Errorf("decode transformers input set: case %q missing text", item.ID)
+		}
+	}
+
 	return inputSet, nil
 }
 
@@ -94,6 +105,21 @@ func LoadTransformersTextClassificationReference(path string) (TransformersTextC
 
 	if len(reference.Cases) == 0 {
 		return TransformersTextClassificationReference{}, fmt.Errorf("decode transformers reference: no cases defined")
+	}
+
+	for _, item := range reference.Cases {
+		if item.ID == "" {
+			return TransformersTextClassificationReference{}, fmt.Errorf("decode transformers reference: case missing id")
+		}
+		if item.Text == "" {
+			return TransformersTextClassificationReference{}, fmt.Errorf("decode transformers reference: case %q missing text", item.ID)
+		}
+		if len(item.InputIDs) == 0 {
+			return TransformersTextClassificationReference{}, fmt.Errorf("decode transformers reference: case %q missing input ids", item.ID)
+		}
+		if len(item.InputIDs) != len(item.AttentionMask) {
+			return TransformersTextClassificationReference{}, fmt.Errorf("decode transformers reference: case %q input_ids and attention_mask length mismatch", item.ID)
+		}
 	}
 
 	return reference, nil

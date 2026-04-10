@@ -1,218 +1,265 @@
 # InferGo
 
-InferGo is a Go-native inference and model-serving toolkit for backend services.
+InferGo is a Go-native inference toolkit for backend services.
 
-InferGo is currently preparing its first public pre-alpha release.
+It is built for teams that want to export a supported model once, load it in
+Go, and run predictions without Python in production.
 
-Recommended first public tag: `v0.1.0-prealpha.1`
+Current prerelease:
+[`v0.2.0-alpha.2`](https://github.com/pergamon-labs/infergo/releases/tag/v0.2.0-alpha.2)
 
-This repository is the early public home for InferGo under the Pergamon Labs GitHub organization. The initial v1 story is intentionally narrow:
+Start here:
 
-- CPU-first inference for small models
-- a stable Go-facing serving API
-- a curated pack helper layer for checked-in public-safe bundles
-- BIOnet as the first real backend path
-- parity-driven validation against reference implementations for future exported model support
+- [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
+- [docs/USE_CASES.md](docs/USE_CASES.md)
+- [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md)
 
-What InferGo is not in v1:
+## What InferGo is for
 
+- embed small inference workloads directly in Go services
+- optionally expose those same bundles through a standalone HTTP process
+- keep support claims narrow, explicit, and parity-backed
+
+InferGo is **not**:
+
+- a blanket `.pt` loader
+- a general transformer runtime
 - a training framework
-- a blanket loader for arbitrary `.pt` files
-- an LLM platform
-- a GPU-first system
-- a model zoo; checked-in packs are curated proofs of backend and artifact support
+- a model zoo
 
-## Status
+## Installation
 
-InferGo is not trying to be a generic transformer runtime yet. The current
-public story is:
+InferGo currently targets Go `1.26.1` or newer.
 
-- CPU-first native inference in Go
-- stable public APIs in `infer` and `infer/packs`
-- curated parity-backed support, not blanket model compatibility
-- narrow raw-text support for explicitly validated packs only
-
-Release-oriented docs:
-
-- [`CHANGELOG.md`](./CHANGELOG.md)
-- [`RELEASING.md`](./RELEASING.md)
-- [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)
-- [`BENCHMARKS.md`](./BENCHMARKS.md)
-
-## Quickstart
-
-If you want the fastest path from clone to a real parity run, use the checked-in
-native token-classification assets.
-
-1. Clone the repo and enter it.
-2. Run the test suite:
+Add the library to your project:
 
 ```bash
-go test ./...
+go get github.com/pergamon-labs/infergo
 ```
 
-3. See which curated packs are checked in and which text or token packs support
-   raw text:
+Install the main CLIs:
+
+```bash
+go install github.com/pergamon-labs/infergo/cmd/infergo-export@latest
+go install github.com/pergamon-labs/infergo/cmd/infergo-serve@latest
+go install github.com/pergamon-labs/infergo/cmd/infergo-parity@latest
+```
+
+`infergo-export` still needs `uv` plus Python-side `transformers` dependencies
+at export time. That dependency does not carry into runtime serving once the
+bundle is built.
+
+## Quickstart: bring your own model
+
+This is the primary alpha path. It does **not** require cloning this repo.
+
+1. Write a starter input set:
+
+```bash
+infergo-export template -kind single -out ./family1-inputs.json
+```
+
+2. Edit `./family1-inputs.json` so it contains a few representative,
+public-safe examples from your task.
+
+3. Export a supported model:
+
+```bash
+infergo-export export \
+  -model distilbert/distilbert-base-uncased-finetuned-sst-2-english \
+  -input ./family1-inputs.json \
+  -out ./artifacts/distilbert-sst2-alpha \
+  -reference-output ./artifacts/distilbert-sst2-reference.json
+```
+
+4. Use the exported bundle from Go:
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/pergamon-labs/infergo/infer"
+)
+
+func main() {
+	bundle, err := infer.LoadTextBundle("./artifacts/distilbert-sst2-alpha")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer bundle.Close()
+
+	result, err := bundle.PredictText("This product is excellent and reliable.")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("label=%s logits=%v\n", result.Label, result.Logits)
+}
+```
+
+5. Validate parity:
+
+```bash
+infergo-parity \
+  -reference ./artifacts/distilbert-sst2-reference.json \
+  -infergo-bundle-dir ./artifacts/distilbert-sst2-alpha \
+  -tolerance 1e-4
+```
+
+For the full supported path, see
+[docs/alpha-family-1-walkthrough.md](docs/alpha-family-1-walkthrough.md).
+
+## Use in your Go app
+
+For most Go teams, this is the normal mode: load the bundle once and call it
+from your existing service code.
+
+Single-text classification:
+
+```go
+bundle, err := infer.LoadTextBundle("./artifacts/distilbert-sst2-alpha")
+if err != nil {
+	log.Fatal(err)
+}
+defer bundle.Close()
+
+result, err := bundle.PredictText("This product is excellent and reliable.")
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+Paired-text classification:
+
+```go
+result, err := bundle.PredictTextPair(
+	"The company said the deal closed.",
+	"The acquisition has been completed, the company said.",
+)
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+If you want repo-based examples too, see:
+
+- [examples/exported-bundle-classifier/README.md](examples/exported-bundle-classifier/README.md)
+- [examples/bionet-classifier/README.md](examples/bionet-classifier/README.md)
+
+## Serve over HTTP, if you want a standalone model process
+
+Most teams embedding InferGo in an existing Go service will not need this.
+
+Use `infergo-serve` when you want:
+
+- a quick smoke-test surface
+- a separate model process
+- a simple HTTP boundary for non-Go callers
+
+Installed binary:
+
+```bash
+infergo-serve -task text -bundle ./artifacts/distilbert-sst2-alpha -addr 127.0.0.1:8080
+```
+
+Repo-local alternative:
+
+```bash
+go run ./cmd/infergo-serve -task text -bundle ./artifacts/distilbert-sst2-alpha -addr 127.0.0.1:8080
+```
+
+Then call it:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"This product is excellent and reliable."}'
+```
+
+Paired-text exported bundles accept:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"The company said the deal closed.","text_pair":"The acquisition has been completed, the company said."}'
+```
+
+## Curated repo examples
+
+If you cloned the repo and want to evaluate the current checked-in fixtures:
+
+- list packs:
 
 ```bash
 go run ./cmd/infergo-packs
 ```
 
-4. Run a first parity check with the checked-in DistilBERT NER reference and
-   native bundle:
+- run a curated text example:
 
 ```bash
-go run ./cmd/infergo-parity \
-  -reference ./testdata/reference/token-classification/distilbert-ner-reference.json \
-  -infergo-bundle-dir ./testdata/native/token-classification/distilbert-ner-windowed-embedding-linear \
-  -tolerance 1e-3
+go run ./examples/bionet-classifier -text "This product is excellent and reliable."
 ```
 
-5. If you want to see more checked-in token-classification packs, list the
-   supported pack manifest:
+- run a curated token example:
 
 ```bash
-uv run python ./scripts/build_token_classification_reference_pack.py --list
+go run ./cmd/infergo-serve -task token
 ```
 
-6. If you want to regenerate every checked-in token-classification reference
-   pack from the shared public-safe NER corpus, install `uv`, then run:
+- run the sample NER extraction service:
 
 ```bash
-uv run --with torch==2.10.0 --with transformers==5.3.0 \
-  --with sentencepiece --with protobuf --with tiktoken \
-  python ./scripts/build_token_classification_reference_pack.py
+go run ./examples/ner-service -addr 127.0.0.1:8080
 ```
 
-7. If you want to regenerate just one pack, use its manifest key:
+## Supported today
 
-```bash
-uv run --with torch==2.10.0 --with transformers==5.3.0 \
-  --with sentencepiece --with protobuf --with tiktoken \
-  python ./scripts/build_token_classification_reference_pack.py \
-  --pack-key distilbert-ner
-```
+InferGo is intentionally narrow in `v0.2.0-alpha.2`.
 
-8. The text-classification parity path now uses the same contributor workflow:
-
-```bash
-uv run python ./scripts/build_text_classification_reference_pack.py --list
-
-uv run --with torch==2.10.0 --with transformers==5.3.0 \
-  --with sentencepiece --with protobuf --with tiktoken \
-  python ./scripts/build_text_classification_reference_pack.py
-```
-
-9. If you want a first benchmark pass for startup, latency, and allocations:
-
-```bash
-go test ./infer/packs -run '^$' -bench . -benchmem
-```
-
-## Benchmark snapshot
-
-Example snapshot from one local run on `darwin/arm64` with an Apple M3 Max:
-
-| Benchmark | Result |
+| Area | Status |
 | --- | --- |
-| `LoadTextPack(infergo-basic-sst2)` | about `0.34 ms/op`, `166924 B/op`, `2265 allocs/op` |
-| `PredictText(infergo-basic-sst2)` | about `1.6 µs/op`, `1616 B/op`, `57 allocs/op` |
-| `LoadTokenPack(infergo-basic-french-ner)` | about `0.61 ms/op`, `260465 B/op`, `2927 allocs/op` |
-| `PredictText(infergo-basic-french-ner)` | about `7.3 µs/op`, `11464 B/op`, `229 allocs/op` |
-| `PredictTokens(infergo-basic-french-ner)` | about `5.8 µs/op`, `9656 B/op`, `191 allocs/op` |
+| Family-1 BYOM export/import for text classification | Experimental |
+| Exported family-1 bundles loaded directly in Go | Experimental |
+| Exported family-1 bundles served over HTTP | Experimental |
+| Curated native text-classification packs | Supported |
+| Curated native token-classification packs | Supported |
+| Sample NER extraction service | Supported |
+| Token-classification BYOM export/import | Not part of alpha |
+| gRPC serving surface | Not yet |
 
-These numbers are only a point-in-time example. Use
-[`BENCHMARKS.md`](./BENCHMARKS.md) to reproduce the suite on your own hardware.
+## Project status
 
-## Supported usage paths
+InferGo is public and currently in alpha.
 
-### Run text classification
+Current posture:
 
-Use the curated pack helper layer for a checked-in text pack:
+- CPU-first native inference in Go
+- library-first usage
+- HTTP as an optional deployment mode
+- parity-backed support for documented paths only
 
-```bash
-go run ./examples/bionet-classifier
-```
+## Documentation
 
-That example now defaults to the checked-in native raw-text pack
-`infergo-basic-sst2`, so this works out of the box too:
+For users:
 
-```bash
-go run ./examples/bionet-classifier \
-  -text "This product is excellent and reliable."
-```
+- [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
+- [docs/USE_CASES.md](docs/USE_CASES.md)
+- [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md)
+- [docs/alpha-family-1-walkthrough.md](docs/alpha-family-1-walkthrough.md)
+- [cmd/infergo-export/README.md](cmd/infergo-export/README.md)
+- [cmd/infergo-serve/README.md](cmd/infergo-serve/README.md)
 
-### Run token classification
+Reference:
 
-Run a checked-in native token bundle against a checked-in public reference:
+- [COMPATIBILITY.md](COMPATIBILITY.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+- [pkg.go.dev `infer`](https://pkg.go.dev/github.com/pergamon-labs/infergo/infer)
+- [pkg.go.dev `infer/httpserver`](https://pkg.go.dev/github.com/pergamon-labs/infergo/infer/httpserver)
 
-```bash
-go run ./cmd/infergo-parity \
-  -reference ./testdata/reference/token-classification/distilcamembert-french-ner-reference.json \
-  -infergo-bundle-dir ./testdata/native/token-classification/distilcamembert-french-ner-windowed-embedding-linear \
-  -tolerance 1e-3
-```
+Project:
 
-### Serve token classification over HTTP
-
-Use the curated token pack helper behind a tiny HTTP server:
-
-```bash
-go run ./examples/token-http-server
-```
-
-If you want the text-classification HTTP example instead, use:
-
-```bash
-go run ./examples/http-server
-```
-
-That HTTP example now defaults to the checked-in raw-text-capable
-`infergo-basic-french-ner` pack, while still accepting tokens and reference
-case ids.
-
-Current scaffold highlights:
-
-- [`infer/`](./infer) is the stable public API layer
-- [`infer/packs`](./infer/packs) is the curated convenience layer for checked-in public-safe packs
-- [`backends/bionet/`](./backends/bionet) is the first implementation path
-- [`backends/bionet/runtime/`](./backends/bionet/runtime) now contains the first extracted BIOnet runtime core
-- [`backends/bionet/text_classification_bundle.go`](./backends/bionet/text_classification_bundle.go) defines the first InferGo-native bundle formats for text classification
-- [`backends/bionet/token_classification_bundle.go`](./backends/bionet/token_classification_bundle.go) defines the first InferGo-native bundle format for token classification
-- [`backends/torchscript/`](./backends/torchscript) is reserved for a narrow, parity-tested backend path
-- [`docs/parity-spike-01.md`](./docs/parity-spike-01.md) defines the first concrete parity spike
-- [`cmd/infergo-parity/`](./cmd/infergo-parity) runs the current parity harness
-- [`cmd/infergo-packs/`](./cmd/infergo-packs) lists the curated checked-in packs and highlights which text and token packs support raw text
-- [`BENCHMARKS.md`](./BENCHMARKS.md) explains the repo’s current startup/latency/allocation benchmark suite
-- [`testdata/parity/text-classification/`](./testdata/parity/text-classification) contains the first public-safe artifact fixture
-- [`scripts/transformers_text_classification_reference.py`](./scripts/transformers_text_classification_reference.py) generates the first external Transformers reference file
-- [`scripts/build_text_classification_reference_pack.py`](./scripts/build_text_classification_reference_pack.py) regenerates checked-in text-classification reference packs from the manifest
-- [`scripts/transformers_token_classification_reference.py`](./scripts/transformers_token_classification_reference.py) generates a single external Transformers token-classification reference file
-- [`scripts/build_token_classification_reference_pack.py`](./scripts/build_token_classification_reference_pack.py) regenerates checked-in token-classification reference packs from the manifest
-- [`scripts/export_transformers_torchscript.py`](./scripts/export_transformers_torchscript.py) plus the native `torchscript` backend define the first TorchScript export/run path
-- [`internal/tools/nativebundlegen/`](./internal/tools/nativebundlegen) generates InferGo-native text-classification bundles from the public reference set, including compact dense token embeddings for the default native path
-- [`internal/tools/nativetokenbundlegen/`](./internal/tools/nativetokenbundlegen) generates InferGo-native token-classification bundles from the public NER reference set
-- [`testdata/native/text-classification/`](./testdata/native/text-classification) contains checked-in native bundles used by the Go-only parity path
-- [`testdata/native/token-classification/`](./testdata/native/token-classification) contains checked-in native token-classification bundles, including the current windowed local-context path
-- [`testdata/reference/text-classification/model-packs.json`](./testdata/reference/text-classification/model-packs.json) and [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json) are the contributor-facing source of truth for supported public packs
-- [`scripts/setup_libtorch_local.sh`](./scripts/setup_libtorch_local.sh) prepares a local libtorch install and exports the native build flags
-- [`COMPATIBILITY.md`](./COMPATIBILITY.md) keeps public support claims narrow and explicit
-- the public text-classification packs are now validated against an English DistilBERT SST-2 path, an English RoBERTa sentiment path, and a first non-English multilingual sentiment path
-- the public text-classification packs now also include a first truly native raw-text-capable pack, `infergo-basic-sst2`, derived from a public-safe BasicTokenizer projection of the SST-2 proof set
-- the public token-classification packs now also include a first truly native raw-text-capable pack, `infergo-basic-french-ner`, derived from a public-safe BasicTokenizer projection of the French NER proof set
-- the native `bionet` path now includes both a widened multilingual token-classification pack through `Davlan/xlm-roberta-base-ner-hrl` and a French-specific token pack through `cmarkea/distilcamembert-base-ner`
-- the native `bionet` path is now validated on the supported token-classification model packs listed in [`testdata/reference/token-classification/model-packs.json`](./testdata/reference/token-classification/model-packs.json), without `libtorch`
-- the text-classification parity path now follows the same manifest-backed contributor workflow as token classification
-- [`examples/bionet-classifier`](./examples/bionet-classifier), [`examples/http-server`](./examples/http-server), and [`examples/token-http-server`](./examples/token-http-server) now show honest, runnable usage through the stable public `infer` and curated `infer/packs` packages
-- the curated `infer/packs` layer now lets callers list/load checked-in packs, predict checked-in reference cases, and submit either raw text or explicit tokens when a pack validates that path
-- `cmd/infergo-packs` now gives developers a first-class discovery path before they pick a pack or try raw text
-- raw-text prediction is intentionally narrow; InferGo currently exposes it only for the checked-in `infergo-basic-sst2` and `infergo-basic-french-ner` packs whose tokenizer behavior is fully native and validated from public-safe pack data
-- the repo now includes a small benchmark story around the public `infer/packs` surface so backend teams can measure startup, steady-state latency, and allocations on their own hardware
-- the current native token-classification path uses a tiny local-context window rather than pretending to support transformer attention
-- layer normalization is now available as a BIOnet runtime activation and can be explored through the native bundle generator without changing the supported default parity path
-
-Next milestone:
-
-1. decide whether the next curated pack pass should add a second raw-text-capable native text pack or keep raw-text support intentionally narrow
-2. decide whether the next language-specific proof should stay in French-adjacent workflows or add another language-specific pack
-3. keep the optional TorchScript bridge healthy without letting it drive the core roadmap
+- [BENCHMARKS.md](BENCHMARKS.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)

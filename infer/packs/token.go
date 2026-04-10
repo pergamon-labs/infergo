@@ -211,20 +211,31 @@ func (p *TokenPack) PredictTokens(tokens []string) (infer.TokenPrediction, error
 // PredictText tokenizes and predicts one raw text input when the checked-in
 // pack supports a native tokenizer helper.
 func (p *TokenPack) PredictText(text string) (infer.TokenPrediction, error) {
+	tokens, err := p.TokenizeText(text)
+	if err != nil {
+		return infer.TokenPrediction{}, err
+	}
+
+	return p.PredictTokens(tokens)
+}
+
+// TokenizeText tokenizes one raw text input when the checked-in pack supports a
+// native tokenizer helper.
+func (p *TokenPack) TokenizeText(text string) ([]string, error) {
 	if p == nil {
-		return infer.TokenPrediction{}, fmt.Errorf("predict text: token pack is not initialized")
+		return nil, fmt.Errorf("tokenize text: token pack is not initialized")
 	}
 	if p.rawTokenizer == nil {
-		return infer.TokenPrediction{}, fmt.Errorf("predict text: pack %q does not support raw-text tokenization", p.info.Key)
+		return nil, fmt.Errorf("tokenize text: pack %q does not support raw-text tokenization", p.info.Key)
 	}
 
 	tokens := p.rawTokenizer(text, p.maxContentTokens+8)
 	tokens = trimUnscoredEdgeTokens(tokens)
 	if len(tokens) == 0 {
-		return infer.TokenPrediction{}, fmt.Errorf("predict text: tokenizer produced no scored tokens")
+		return nil, fmt.Errorf("tokenize text: tokenizer produced no scored tokens")
 	}
 
-	return p.PredictTokens(tokens)
+	return tokens, nil
 }
 
 // Close releases the underlying classifier.
