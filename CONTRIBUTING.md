@@ -28,6 +28,17 @@ Before opening a pull request:
 - update `COMPATIBILITY.md` if support claims changed
 - keep examples, bundles, and fixtures public-safe and reproducible
 
+If your change is expected to affect load cost, inference latency, HTTP
+overhead, or allocations in the public `infer/packs` or `infer/httpserver`
+paths:
+
+- capture a local before/after snapshot with `./scripts/benchmark_snapshot.sh`
+- compare the runs with `./scripts/benchmark_compare.sh`
+- summarize only the meaningful local delta in the PR or issue discussion
+- do not commit raw machine-specific benchmark output
+
+For the current benchmark workflow, see [`BENCHMARKS.md`](./BENCHMARKS.md).
+
 If you want to propose support for a new model family, tokenizer, runtime, or
 format bridge, open an issue first so the support boundary can be discussed
 before implementation.

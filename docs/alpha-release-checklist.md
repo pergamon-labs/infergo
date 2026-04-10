@@ -23,8 +23,8 @@ InferGo is ready for alpha when all of the following are true:
 - [x] an exported bundle loads in a small Go app
 - [x] an exported bundle serves through `infergo-serve`
 - [x] `infergo-parity` passes against the exported source reference
-- [ ] exporter failure messages are clear enough for a stranger
-- [ ] tokenizer boundary is documented clearly enough that users will not
+- [x] exporter failure messages are clear enough for a stranger
+- [x] tokenizer boundary is documented clearly enough that users will not
       over-assume support
 
 ## Private validation boundary

@@ -6,3 +6,4 @@ coverage.out
 .cache/
 AGENTS.local.md
 testdata/native/**/candidate*.json
+benchmarks/local/

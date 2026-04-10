@@ -1,21 +1,18 @@
 # Releasing InferGo
 
-This repo is still in a narrow pre-alpha stage. Releases should optimize for
+This repo is still in a narrow alpha stage. Releases should optimize for
 honesty and reproducibility over breadth.
 
-## First public tag
+## Current release posture
 
-Recommended first public tag:
+InferGo should keep using explicit prerelease tags until the support boundary
+widens meaningfully and repeated outside usage validates the workflow.
+
+Current alpha line:
 
 ```text
-v0.1.0-prealpha.1
+v0.2.0-alpha.N
 ```
-
-Why this tag:
-
-- it signals that InferGo is public but still early
-- it avoids implying broad compatibility
-- it leaves room for more pre-alpha and alpha milestones before a stable `v1`
 
 ## Release checklist
 
@@ -27,19 +24,28 @@ Run these from the repo root:
 go test ./...
 ```
 
-2. Validate the benchmark suite:
+2. Capture a fresh local benchmark snapshot:
 
 ```bash
-go test ./infer/packs -run '^$' -bench . -benchmem
+./scripts/benchmark_snapshot.sh -count 5 -out ./benchmarks/local/release-candidate.txt
 ```
 
-3. Validate pack discovery:
+3. Compare the snapshot with your previous local release snapshot:
+
+```bash
+./scripts/benchmark_compare.sh ./benchmarks/local/previous-release.txt ./benchmarks/local/release-candidate.txt
+```
+
+Do not commit those raw output files. Summarize only the notable local deltas
+in the release notes when something materially changed.
+
+4. Validate pack discovery:
 
 ```bash
 go run ./cmd/infergo-packs
 ```
 
-4. Validate at least one parity path:
+5. Validate at least one parity path:
 
 ```bash
 go run ./cmd/infergo-parity \
@@ -48,40 +54,41 @@ go run ./cmd/infergo-parity \
   -tolerance 1e-3
 ```
 
-5. Confirm the public docs are aligned:
+6. Confirm the public docs are aligned:
 
 - `README.md`
 - `COMPATIBILITY.md`
 - `ARCHITECTURE.md`
+- `BENCHMARKS.md`
 - `CHANGELOG.md`
 
-6. Confirm no proprietary or machine-specific artifacts were introduced.
+7. Confirm no proprietary or machine-specific artifacts were introduced.
 
-7. Create the annotated tag:
+8. Create the annotated tag:
 
 ```bash
-git tag -a v0.1.0-prealpha.1 -m "InferGo v0.1.0-prealpha.1"
+git tag -a v0.2.0-alpha.N -m "InferGo v0.2.0-alpha.N"
 ```
 
-8. Publish the GitHub release using:
+9. Publish the GitHub release using:
 
 - [`CHANGELOG.md`](./CHANGELOG.md)
-- [`docs/releases/v0.1.0-prealpha.1.md`](./docs/releases/v0.1.0-prealpha.1.md)
+- the matching file under [`docs/releases/`](./docs/releases/)
 
 ## Release guidance
 
 The GitHub release title should stay explicit:
 
 ```text
-InferGo v0.1.0-prealpha.1
+InferGo v0.2.0-alpha.N
 ```
 
 The release description should emphasize:
 
 - Go-native inference for backend services
-- CPU-first native bundles
-- curated parity-backed pack support
-- raw-text support is intentionally narrow
+- family-1 BYOM export/import for the documented supported family
+- library-first usage with optional HTTP serving
+- benchmark deltas as illustrative local measurements, not guarantees
 
 The release description should not imply:
 

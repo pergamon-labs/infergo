@@ -16,6 +16,56 @@ These benchmarks are meant to answer the first backend-team questions:
 InferGo does not check machine-specific benchmark numbers into the repo. Run the
 suite on your own hardware and compare deltas over time.
 
+## Reporting policy
+
+InferGo keeps three benchmark artifacts, each with a different purpose:
+
+- benchmark code in-repo under `infer/packs` and `infer/httpserver`
+- one human-written reference snapshot in this file
+- short benchmark callouts in release notes when a release materially changes
+  startup cost, prediction latency, or allocations
+
+InferGo does **not** check raw machine-specific benchmark output into git.
+Maintainers should keep those files local under `./benchmarks/local/` or in a
+temp path and compare them on the same machine.
+
+## When to run benchmarks
+
+Benchmarks are currently a maintainer workflow, not a CI gate.
+
+Run the suite:
+
+- before alpha or prerelease tags
+- when changing `infer/packs`, `infer/httpserver`, or hot runtime paths
+- when a change is expected to affect startup cost, latency, or allocations
+
+Do not treat small cross-machine differences as regressions. InferGo is still
+CPU-first and narrow, so the goal is to catch large local deltas and keep the
+public story honest.
+
+## Capture a local snapshot
+
+From the repo root:
+
+```bash
+./scripts/benchmark_snapshot.sh
+```
+
+That writes a raw benchmark file and a small metadata sidecar under
+`./benchmarks/local/`.
+
+For faster local iteration:
+
+```bash
+./scripts/benchmark_snapshot.sh -count 3 -out /tmp/infergo-before.txt
+```
+
+For release-quality local reads:
+
+```bash
+./scripts/benchmark_snapshot.sh -count 5 -out /tmp/infergo-release.txt
+```
+
 ## Current reference snapshot
 
 Latest local snapshot on `Darwin arm64` with an `Apple M3 Max`:
@@ -41,7 +91,7 @@ Latest local snapshot on `Darwin arm64` with an `Apple M3 Max`:
 
 These numbers are illustrative, not a compatibility promise.
 
-## Run the benchmark suite
+## Run the benchmark suite directly
 
 From the repo root:
 
@@ -66,6 +116,24 @@ If you want a more stable local read, run several passes:
 ```bash
 go test ./infer/packs ./infer/httpserver -run '^$' -bench . -benchmem -count=5
 ```
+
+## Compare two local snapshots
+
+Use the helper script:
+
+```bash
+./scripts/benchmark_compare.sh /tmp/infergo-before.txt /tmp/infergo-after.txt
+```
+
+If `benchstat` is already installed, you can also run it directly:
+
+```bash
+benchstat /tmp/infergo-before.txt /tmp/infergo-after.txt
+```
+
+The comparison should be done on the same machine, with the same Go version,
+and ideally with similar background load. Use the result to decide whether a
+delta is worth calling out in release notes or investigating further.
 
 ## What is covered today
 
@@ -96,3 +164,16 @@ already loaded.
 
 The HTTP benchmarks add JSON decode/encode and route handling on top of that
 same curated pack surface.
+
+## Release workflow
+
+For alpha releases:
+
+1. capture a fresh local snapshot with `./scripts/benchmark_snapshot.sh -count 5`
+2. compare it with the previous local release snapshot
+3. update this file only if the current reference snapshot is stale enough to
+   mislead readers
+4. summarize only the notable deltas in the release notes
+
+That keeps the repo honest without pretending that one machine's raw benchmark
+output is a compatibility contract.
