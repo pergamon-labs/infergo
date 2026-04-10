@@ -152,7 +152,8 @@ The exported InferGo-native bundle should include at minimum:
 
 - versioned bundle metadata
 - model weights in InferGo-native form
-- tokenizer metadata and tokenizer assets needed for serving
+- tokenizer metadata and tokenizer assets when the exported bundle supports the
+  current raw-text runtime subset
 - label metadata or score metadata
 - enough task metadata for Go loading and REST serving
 

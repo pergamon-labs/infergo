@@ -83,6 +83,6 @@ func LoadTextClassificationRawTextEncoder(bundleDir string) (*TextClassification
 			encoder:           encoder,
 		}, nil
 	default:
-		return nil, fmt.Errorf("load text raw encoder: unsupported tokenizer kind %q", contract.TokenizerManifest.Kind)
+		return nil, fmt.Errorf("load text raw encoder: unsupported tokenizer kind %q (alpha supports only %q manifests)", contract.TokenizerManifest.Kind, "hf-tokenizer-json")
 	}
 }

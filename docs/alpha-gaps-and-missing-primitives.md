@@ -77,9 +77,8 @@ Current state:
 
 Needed:
 
-- either broader tokenizer support for the first family
-- or tighter documentation and examples so the current boundary is impossible
-  to misunderstand
+- broader tokenizer support for the first family beyond the now-explicit
+  `hf-tokenizer-json` WordPiece subset
 
 Why this matters:
 

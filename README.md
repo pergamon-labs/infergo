@@ -49,6 +49,11 @@ go install github.com/pergamon-labs/infergo/cmd/infergo-parity@latest
 at export time. That dependency does not carry into runtime serving once the
 bundle is built.
 
+Current family-1 raw-text support is intentionally narrow: InferGo only embeds
+tokenizer metadata for the validated BERT-style `hf-tokenizer-json` WordPiece
+subset. If a model falls outside that subset, export still succeeds, but the
+bundle stays tokenized-input-only.
+
 ## Quickstart: bring your own model
 
 This is the primary alpha path. It does **not** require cloning this repo.

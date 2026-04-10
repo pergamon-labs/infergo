@@ -304,28 +304,7 @@ The tokenizer contract should be explicit and file-backed.
 
 ### `tokenizer/manifest.json`
 
-This file should define:
-
-```json
-{
-  "kind": "wordpiece",
-  "raw_text_supported": true,
-  "pair_text_supported": true,
-  "special_tokens": {
-    "cls_token": "[CLS]",
-    "sep_token": "[SEP]",
-    "pad_token": "[PAD]",
-    "unk_token": "[UNK]"
-  },
-  "files": {
-    "vocab": "vocab.txt",
-    "tokenizer_config": "tokenizer_config.json",
-    "special_tokens_map": "special_tokens_map.json"
-  }
-}
-```
-
-or, for tokenizers that support it:
+For the current alpha runtime subset, this file should define:
 
 ```json
 {
@@ -348,11 +327,11 @@ For alpha:
 - no Python-only hidden tokenizer behavior should be required at runtime
 - tokenizer support should stay limited to the families required by the first
   supported model family
-
-The most likely alpha tokenizer targets are:
-
-- WordPiece-style tokenizers
-- BPE-style Hugging Face tokenizers used by common encoder-only models
+- the current raw-text runtime subset supports only `hf-tokenizer-json`
+  manifests that describe a BERT-style WordPiece tokenizer with Template
+  Processing
+- if a model falls outside that subset, the alpha exporter may still produce a
+  tokenized-input bundle, but it should not embed `tokenizer.manifest`
 
 ## Prediction semantics
 

@@ -265,6 +265,8 @@ This walkthrough does **not** mean:
 - InferGo supports arbitrary Hugging Face models
 - InferGo is a general transformer runtime
 - InferGo supports every tokenizer family
+- every exported bundle supports raw text; models outside the current
+  `hf-tokenizer-json` WordPiece subset remain tokenized-input-only
 - InferGo loads raw `.pt` files directly
 
 The supported family and contract still live here:

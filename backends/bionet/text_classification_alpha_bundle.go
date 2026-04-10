@@ -283,10 +283,8 @@ func loadAlphaTextClassificationTokenizerManifest(bundleDir string, metadata Alp
 		return nil, fmt.Errorf("decode alpha text classification tokenizer manifest: %w", err)
 	}
 
-	switch manifest.Kind {
-	case "hf-tokenizer-json", "wordpiece":
-	default:
-		return nil, fmt.Errorf("decode alpha text classification tokenizer manifest: unsupported tokenizer kind %q", manifest.Kind)
+	if manifest.Kind != "hf-tokenizer-json" {
+		return nil, fmt.Errorf("decode alpha text classification tokenizer manifest: unsupported tokenizer kind %q (alpha supports only %q manifests)", manifest.Kind, "hf-tokenizer-json")
 	}
 
 	if metadata.Inputs.RawTextSupported && !manifest.RawTextSupported {

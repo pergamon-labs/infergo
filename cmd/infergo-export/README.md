@@ -79,7 +79,8 @@ The command prints:
 - single-text classification
 - paired-text classification
 - tokenized input always
-- raw-text serving only for the current supported tokenizer subset
+- raw-text serving only for the current supported `hf-tokenizer-json`
+  WordPiece subset
 
 ## What it does not support
 
@@ -131,8 +132,9 @@ the current alpha contract rather than a simple local setup problem.
 
 ### Raw-text support is false after export
 
-That means the bundle can still be used through tokenized input, but the staged
-tokenizer assets did not match the current raw-text runtime subset.
+That means the bundle can still be used through tokenized input, but InferGo
+did not embed tokenizer metadata into the bundle because the staged tokenizer
+assets fell outside the current raw-text runtime subset.
 
 This is expected for some models in alpha.
 

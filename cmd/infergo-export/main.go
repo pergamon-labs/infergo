@@ -28,7 +28,8 @@ const (
 	defaultMaxLength = 128
 	defaultRunner    = "uv"
 
-	exportReadmePath = "cmd/infergo-export/README.md"
+	exportReadmePath          = "cmd/infergo-export/README.md"
+	alphaTokenizerRuntimeKind = "hf-tokenizer-json"
 )
 
 var (
@@ -54,7 +55,7 @@ type alphaMetadata struct {
 	ModelID         string             `json:"model_id"`
 	Source          alphaSource        `json:"source"`
 	Inputs          alphaInputs        `json:"inputs"`
-	Tokenizer       alphaTokenizer     `json:"tokenizer"`
+	Tokenizer       alphaTokenizer     `json:"tokenizer,omitempty"`
 	Outputs         alphaOutputs       `json:"outputs"`
 	BackendConfig   alphaBackendConfig `json:"backend_config"`
 	CreatedAt       string             `json:"created_at"`
@@ -312,18 +313,22 @@ func runExport(args []string) error {
 		return fmt.Errorf("export: inspect embedding artifact: %w", embeddingErr)
 	}
 
+	bundleManifest, bundleTokenizerSupported, tokenizerNote := manifestForAlphaBundle(manifest)
+
 	if err := os.RemoveAll(filepath.Join(outputDir, "tokenizer")); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("export: reset tokenizer dir: %w", err)
 	}
-	if err := copyDir(tokenizerDir, filepath.Join(outputDir, "tokenizer")); err != nil {
-		return fmt.Errorf("export: copy tokenizer assets: %w", err)
+	if bundleTokenizerSupported {
+		if err := copyDir(tokenizerDir, filepath.Join(outputDir, "tokenizer")); err != nil {
+			return fmt.Errorf("export: copy tokenizer assets: %w", err)
+		}
 	}
 
 	if err := writeJSON(filepath.Join(outputDir, "labels.json"), map[string]any{"labels": reference.Labels}); err != nil {
 		return fmt.Errorf("export: write labels.json: %w", err)
 	}
 
-	metadata := buildAlphaMetadata(modelID, *model, *bundleVersion, *maxLength, legacyMetadata, manifest, positive, negative)
+	metadata := buildAlphaMetadata(modelID, *model, *bundleVersion, *maxLength, legacyMetadata, bundleManifest, positive, negative)
 	if err := writeJSON(filepath.Join(outputDir, "metadata.json"), metadata); err != nil {
 		return fmt.Errorf("export: write metadata.json: %w", err)
 	}
@@ -335,7 +340,7 @@ func runExport(args []string) error {
 		}
 	}
 
-	printExportSummary(outputDir, manifest, withPairs, *referenceOutputFlag)
+	printExportSummary(outputDir, manifest, bundleManifest, bundleTokenizerSupported, withPairs, *referenceOutputFlag, tokenizerNote)
 	return nil
 }
 
@@ -406,7 +411,25 @@ func loadTokenizerManifest(path string) (tokenizerManifest, error) {
 	if manifest.Kind == "" {
 		return tokenizerManifest{}, errors.New("tokenizer manifest: missing kind")
 	}
+	if manifest.Kind == alphaTokenizerRuntimeKind {
+		if manifest.Files["tokenizer_json"] == "" {
+			return tokenizerManifest{}, errors.New("tokenizer manifest: hf-tokenizer-json requires files.tokenizer_json")
+		}
+	}
 	return manifest, nil
+}
+
+func manifestForAlphaBundle(manifest tokenizerManifest) (tokenizerManifest, bool, string) {
+	if manifest.Kind != alphaTokenizerRuntimeKind {
+		return tokenizerManifest{}, false, fmt.Sprintf(
+			"note: detected tokenizer kind %q is outside the current alpha raw-text boundary; this bundle will support tokenized input only",
+			manifest.Kind,
+		)
+	}
+	if !manifest.RawTextSupported {
+		return tokenizerManifest{}, false, "note: staged tokenizer assets did not match the current alpha raw-text boundary; this bundle will support tokenized input only"
+	}
+	return manifest, true, ""
 }
 
 func resolveModelID(modelArg, modelIDOverride string) (string, error) {
@@ -489,7 +512,7 @@ func buildAlphaMetadata(modelID, modelArg, bundleVersion string, maxLength int, 
 		outputs.Threshold = &threshold
 	}
 
-	return alphaMetadata{
+	metadata := alphaMetadata{
 		BundleFormat:    "infergo-native",
 		BundleVersion:   bundleVersion,
 		Family:          "encoder-text-classification",
@@ -504,9 +527,6 @@ func buildAlphaMetadata(modelID, modelArg, bundleVersion string, maxLength int, 
 			TokenizedInputSupported: true,
 			MaxSequenceLength:       maxLength,
 		},
-		Tokenizer: alphaTokenizer{
-			Manifest: "tokenizer/manifest.json",
-		},
 		Outputs: outputs,
 		BackendConfig: alphaBackendConfig{
 			FeatureMode:       legacy.FeatureMode,
@@ -519,6 +539,12 @@ func buildAlphaMetadata(modelID, modelArg, bundleVersion string, maxLength int, 
 			Version: exportToolVersion,
 		},
 	}
+	if manifest.RawTextSupported {
+		metadata.Tokenizer = alphaTokenizer{
+			Manifest: "tokenizer/manifest.json",
+		}
+	}
+	return metadata
 }
 
 func detectRepoURL(modelArg string) string {
@@ -576,24 +602,28 @@ func pathExists(path string) bool {
 	return err == nil
 }
 
-func printExportSummary(outputDir string, manifest tokenizerManifest, withPairs bool, referenceOutput string) {
+func printExportSummary(outputDir string, detectedManifest, bundleManifest tokenizerManifest, bundleTokenizerSupported, withPairs bool, referenceOutput, tokenizerNote string) {
 	supportedInputs := []string{"input_ids"}
-	if manifest.RawTextSupported {
+	if bundleManifest.RawTextSupported {
 		supportedInputs = append([]string{"text"}, supportedInputs...)
 	}
-	if manifest.PairTextSupported {
+	if bundleManifest.PairTextSupported {
 		supportedInputs = append(supportedInputs, "text+text_pair")
 	}
 
 	fmt.Printf("wrote family-1 alpha bundle to %s\n", outputDir)
-	fmt.Printf("tokenizer kind: %s\n", manifest.Kind)
-	fmt.Printf("supports raw text: %t\n", manifest.RawTextSupported)
-	fmt.Printf("supports pair text: %t\n", manifest.PairTextSupported)
+	fmt.Printf("detected tokenizer kind: %s\n", detectedManifest.Kind)
+	fmt.Printf("bundle embeds tokenizer metadata: %t\n", bundleTokenizerSupported)
+	fmt.Printf("supports raw text: %t\n", bundleManifest.RawTextSupported)
+	fmt.Printf("supports pair text: %t\n", bundleManifest.PairTextSupported)
 	fmt.Printf("supported inputs: %s\n", strings.Join(supportedInputs, ", "))
 	if strings.TrimSpace(referenceOutput) != "" {
 		fmt.Printf("saved source reference to %s\n", filepath.Clean(referenceOutput))
 	}
-	if withPairs && !manifest.PairTextSupported {
+	if tokenizerNote != "" {
+		fmt.Println(tokenizerNote)
+	}
+	if withPairs && !bundleManifest.PairTextSupported {
 		fmt.Println("note: the input set uses text pairs, but the exported tokenizer assets only support tokenized paired input in the current runtime boundary")
 	}
 }

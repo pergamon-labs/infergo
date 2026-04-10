@@ -236,6 +236,8 @@ So the first exporter currently writes:
   supported runtime subset
 - `inputs.pair_text_supported = true` when the input set and tokenizer assets
   both support paired text
+- `tokenizer.manifest` only when the staged tokenizer assets stay inside the
+  supported runtime subset; otherwise the bundle remains tokenized-input-only
 
 This is intentional. It keeps the first milestone honest while enabling a real
 raw-text serving path only for the tokenizer subset we actually support today.

@@ -69,6 +69,20 @@ func TestLoadTextClassificationBundleAlphaContractMissingTokenizerManifestForRaw
 	}
 }
 
+func TestLoadTextClassificationBundleAlphaContractRejectsUnsupportedTokenizerKind(t *testing.T) {
+	t.Parallel()
+
+	bundleDir := writeAlphaTextClassificationBundleFixture(t, alphaTextBundleFixtureOptions{
+		rawTextSupported: true,
+		tokenizerKind:    "wordpiece",
+	})
+
+	_, err := bionet.LoadTextClassificationBundle(bundleDir)
+	if err == nil || !strings.Contains(err.Error(), `alpha supports only "hf-tokenizer-json" manifests`) {
+		t.Fatalf("LoadTextClassificationBundle() error = %v, want unsupported tokenizer kind failure", err)
+	}
+}
+
 func TestLoadTextClassificationBundleAlphaContractRejectsUnsupportedMajor(t *testing.T) {
 	t.Parallel()
 
@@ -130,6 +144,7 @@ type alphaTextBundleFixtureOptions struct {
 	bundleVersion         string
 	labels                []string
 	rawTextSupported      bool
+	tokenizerKind         string
 	skipLabelsArtifact    bool
 	skipTokenizerManifest bool
 }
@@ -175,9 +190,12 @@ func writeAlphaTextClassificationBundleFixture(t *testing.T, opts alphaTextBundl
 		if err := os.MkdirAll(tokenizerDir, 0o755); err != nil {
 			t.Fatalf("MkdirAll(tokenizer) error = %v", err)
 		}
+		if opts.tokenizerKind == "" {
+			opts.tokenizerKind = "hf-tokenizer-json"
+		}
 
 		writeJSONForTest(t, filepath.Join(tokenizerDir, "manifest.json"), map[string]any{
-			"kind":                "hf-tokenizer-json",
+			"kind":                opts.tokenizerKind,
 			"raw_text_supported":  true,
 			"pair_text_supported": false,
 			"files": map[string]string{

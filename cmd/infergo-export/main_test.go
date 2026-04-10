@@ -93,6 +93,60 @@ func TestBuildAlphaMetadata(t *testing.T) {
 	if metadata.Outputs.Threshold == nil {
 		t.Fatal("expected binary threshold to be set")
 	}
+	if metadata.Tokenizer.Manifest == "" {
+		t.Fatal("expected tokenizer manifest to be embedded for raw-text-capable bundle")
+	}
+}
+
+func TestManifestForAlphaBundleRejectsUnsupportedKind(t *testing.T) {
+	t.Parallel()
+
+	detected := tokenizerManifest{
+		Kind: "wordpiece",
+	}
+
+	bundleManifest, include, note := manifestForAlphaBundle(detected)
+	if include {
+		t.Fatal("expected unsupported tokenizer kind to stay outside the alpha bundle contract")
+	}
+	if bundleManifest.RawTextSupported {
+		t.Fatal("unexpected raw-text support for unsupported tokenizer kind")
+	}
+	if note == "" {
+		t.Fatal("expected note for unsupported tokenizer kind")
+	}
+}
+
+func TestBuildAlphaMetadataOmitsTokenizerForTokenizedOnlyBundle(t *testing.T) {
+	t.Parallel()
+
+	legacy := bionet.TextClassificationBundleMetadata{
+		ModelID:           "local/model",
+		Task:              "text-classification",
+		Artifact:          nativebundlegen.DefaultArtifactName,
+		EmbeddingArtifact: nativebundlegen.DefaultEmbeddingName,
+		Labels:            []string{"negative", "positive"},
+		FeatureMode:       bionet.TextClassificationFeatureModeEmbeddingMaskedAvgPool,
+		FeatureTokenIDs:   []int{101, 102, 2009},
+	}
+
+	metadata := buildAlphaMetadata(
+		"local/model",
+		"./local-model",
+		"1.0",
+		128,
+		legacy,
+		tokenizerManifest{},
+		"positive",
+		"negative",
+	)
+
+	if metadata.Inputs.RawTextSupported {
+		t.Fatal("expected raw_text_supported=false")
+	}
+	if metadata.Tokenizer.Manifest != "" {
+		t.Fatal("expected tokenizer manifest to be omitted for tokenized-only bundle")
+	}
 }
 
 func readFileForTest(t *testing.T, path string) []byte {
