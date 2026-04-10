@@ -73,7 +73,7 @@ func LoadTextClassificationRawTextEncoder(bundleDir string) (*TextClassification
 		if !ok || tokenizerJSON == "" {
 			return nil, fmt.Errorf("load text raw encoder: tokenizer_json is required for hf-tokenizer-json bundles")
 		}
-		encoder, err := runtimeTokenizer.LoadHFWordPieceEncoder(filepath.Join(manifestDir, tokenizerJSON))
+		encoder, err := runtimeTokenizer.LoadHFTokenizerJSONEncoder(filepath.Join(manifestDir, tokenizerJSON))
 		if err != nil {
 			return nil, err
 		}

@@ -24,6 +24,13 @@ go install github.com/pergamon-labs/infergo/cmd/infergo-parity@latest
 You only need Python-side tooling at export time. You do not need Python in
 production after the bundle is built.
 
+Current raw-text bundle support is intentionally narrow: exported family-1
+bundles can embed runtime tokenizer metadata today only for two validated
+`hf-tokenizer-json` subsets:
+
+- BERT-style WordPiece with `TemplateProcessing`
+- RoBERTa-style ByteLevel BPE with `RobertaProcessing`
+
 ## Choose your path
 
 ### Path 1: Bring your own supported model

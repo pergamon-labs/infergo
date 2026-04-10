@@ -184,7 +184,7 @@ Current implementation note:
 - it emits alpha-format bundles that load and parity-check in Go
 - exported text bundles can now be served through `cmd/infergo-serve -bundle`
   using tokenizer-backed raw text when the staged tokenizer assets match the
-  currently supported BERT-style tokenizer-json subset
+  currently validated tokenizer-json runtime subsets
 
 Adjacent NER validation is now covered in a realistic sample Go service via
 [`examples/ner-service/`](../examples/ner-service). The remaining public alpha

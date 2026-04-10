@@ -52,20 +52,32 @@ def load_inputs(path: Path) -> tuple[str, list[InputCase]]:
 
 def tokenizer_runtime_capabilities(tokenizer_json_path: Path) -> tuple[bool, bool]:
     spec = json.loads(tokenizer_json_path.read_text())
-    normalizer = spec.get("normalizer", {})
-    pre_tokenizer = spec.get("pre_tokenizer", {})
-    post_processor = spec.get("post_processor", {})
-    model = spec.get("model", {})
+    normalizer = spec.get("normalizer") if isinstance(spec.get("normalizer"), dict) else {}
+    pre_tokenizer = spec.get("pre_tokenizer") if isinstance(spec.get("pre_tokenizer"), dict) else {}
+    post_processor = spec.get("post_processor") if isinstance(spec.get("post_processor"), dict) else {}
+    model = spec.get("model") if isinstance(spec.get("model"), dict) else {}
 
-    raw_supported = (
+    wordpiece_supported = (
         normalizer.get("type") == "BertNormalizer"
         and pre_tokenizer.get("type") == "BertPreTokenizer"
         and post_processor.get("type") == "TemplateProcessing"
         and model.get("type") == "WordPiece"
         and isinstance(model.get("vocab"), dict)
     )
-    pair_supported = raw_supported and bool(post_processor.get("pair"))
-    return raw_supported, pair_supported
+    if wordpiece_supported:
+        return True, bool(post_processor.get("pair"))
+
+    roberta_bpe_supported = (
+        pre_tokenizer.get("type") == "ByteLevel"
+        and post_processor.get("type") == "RobertaProcessing"
+        and model.get("type") == "BPE"
+        and isinstance(model.get("vocab"), dict)
+        and isinstance(model.get("merges"), list)
+    )
+    if roberta_bpe_supported:
+        return True, True
+
+    return False, False
 
 
 def save_tokenizer_assets(model_id: str, target_dir: Path, *, pair_text_requested: bool) -> None:

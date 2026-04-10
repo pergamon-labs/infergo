@@ -63,7 +63,7 @@ It does **not yet** implement:
 
 - direct transformer-weight execution in the native runtime
 - tokenizer-backed serving for arbitrary tokenizer families beyond the current
-  BERT-style WordPiece tokenizer-json subset
+  validated tokenizer-json runtime subsets
 
 Pair-scoring is supported in this milestone only when the source model can be
 represented as a paired-text sequence-classification head with ordered label
@@ -222,12 +222,13 @@ The first implementation keeps one boundary explicit:
 
 - exported bundles remain **tokenized-input capable**
 - exported bundles can now also support tokenizer-backed raw text when the
-  staged tokenizer assets match the current supported runtime subset
+  staged tokenizer assets match the current supported runtime subsets
 - paired-text export is supported and exported bundles can now accept paired
   HTTP requests through `text` + `text_pair`
 - the first runtime-backed raw-text path is intentionally narrow:
   BERT-style `hf-tokenizer-json` assets with a WordPiece model and Template
-  Processing layout
+  Processing layout, or RoBERTa-style `hf-tokenizer-json` assets with a
+  ByteLevel BPE model and `RobertaProcessing` layout
 
 So the first exporter currently writes:
 
@@ -240,7 +241,8 @@ So the first exporter currently writes:
   supported runtime subset; otherwise the bundle remains tokenized-input-only
 
 This is intentional. It keeps the first milestone honest while enabling a real
-raw-text serving path only for the tokenizer subset we actually support today.
+raw-text serving path only for the validated tokenizer subsets we actually
+support today.
 
 ## Loader and parity expectations
 
@@ -275,11 +277,13 @@ The first real targets validated with this exporter are:
 
 - `distilbert/distilbert-base-uncased-finetuned-sst-2-english`
 - `textattack/bert-base-uncased-MRPC`
+- `cardiffnlp/twitter-roberta-base-sentiment-latest`
 
 Why these first:
 
 - stable and widely used sequence-classification models
 - cover both single-text and paired-text branches
+- cover both validated tokenizer-json runtime subsets
 - good fit for the first projection-based exporter milestone
 
 ## What comes next
@@ -290,7 +294,7 @@ should be:
 1. pair-scoring export for entity-resolution-style family-1 models with
    clearer output semantics
 2. expand tokenizer-backed raw-text loading/serving beyond the current
-   BERT-style tokenizer-json subset
+   validated tokenizer-json runtime subsets
 3. tighten the exported-bundle library path so raw-text serving is not only an
    HTTP concern
 4. move from a script-first exporter toward a more polished public CLI

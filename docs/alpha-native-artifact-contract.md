@@ -304,7 +304,7 @@ The tokenizer contract should be explicit and file-backed.
 
 ### `tokenizer/manifest.json`
 
-For the current alpha runtime subset, this file should define:
+For the current alpha runtime subsets, this file should define:
 
 ```json
 {
@@ -327,9 +327,10 @@ For alpha:
 - no Python-only hidden tokenizer behavior should be required at runtime
 - tokenizer support should stay limited to the families required by the first
   supported model family
-- the current raw-text runtime subset supports only `hf-tokenizer-json`
-  manifests that describe a BERT-style WordPiece tokenizer with Template
-  Processing
+- the current raw-text runtime supports only these `hf-tokenizer-json`
+  subsets:
+  - BERT-style WordPiece with `TemplateProcessing`
+  - RoBERTa-style ByteLevel BPE with `RobertaProcessing`
 - if a model falls outside that subset, the alpha exporter may still produce a
   tokenized-input bundle, but it should not embed `tokenizer.manifest`
 
@@ -452,7 +453,7 @@ Current implementation note:
 - it writes tokenizer assets into the bundle today
 - exported bundles can now serve through tokenizer-backed raw text on the
   generic family-1 HTTP path when the staged tokenizer assets match the
-  currently supported BERT-style tokenizer-json subset
+  currently validated tokenizer-json runtime subsets
 
 ## Relation to current checked-in bundles
 

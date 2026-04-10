@@ -173,8 +173,10 @@ Current implementation note:
 - pair-scoring remains part of family 1 when it can be represented by the same
   sequence-classification style output contract
 - exported family-1 bundles can now serve through tokenizer-backed raw text
-  when the staged tokenizer assets match the current supported BERT-style
-  WordPiece tokenizer-json subset
+  when the staged tokenizer assets match one of the current validated
+  tokenizer-json subsets:
+  - BERT-style WordPiece + `TemplateProcessing`
+  - RoBERTa-style ByteLevel BPE + `RobertaProcessing`
 
 ## Runtime assumptions for alpha
 

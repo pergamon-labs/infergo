@@ -18,7 +18,9 @@ It shows how to:
 This walkthrough is intentionally narrow and honest:
 
 - it uses the current projection-based family-1 exporter
-- it targets the current supported BERT-style tokenizer-json subset
+- it targets the current validated tokenizer-json runtime subsets:
+  - BERT-style WordPiece + `TemplateProcessing`
+  - RoBERTa-style ByteLevel BPE + `RobertaProcessing`
 - it proves the supported alpha path without claiming general transformer
   execution in Go
 
@@ -266,7 +268,7 @@ This walkthrough does **not** mean:
 - InferGo is a general transformer runtime
 - InferGo supports every tokenizer family
 - every exported bundle supports raw text; models outside the current
-  `hf-tokenizer-json` WordPiece subset remain tokenized-input-only
+  validated tokenizer-json subsets remain tokenized-input-only
 - InferGo loads raw `.pt` files directly
 
 The supported family and contract still live here:

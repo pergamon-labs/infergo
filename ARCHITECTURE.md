@@ -87,7 +87,8 @@ For the public family-1 path, a bundle contains:
 - `labels.json`
 - BIOnet runtime artifacts such as `model.gob`
 - tokenizer assets only when the exported model stays inside the current
-  `hf-tokenizer-json` WordPiece raw-text subset
+  validated `hf-tokenizer-json` raw-text subsets (BERT-style WordPiece or
+  RoBERTa-style ByteLevel BPE)
 
 The relevant user story is:
 

@@ -27,8 +27,10 @@ The following are already true:
 - family-1 export can start from a generated single-text or paired-text input
   template instead of repo-local fixture files
 - family-1 exported bundles can load in Go
-- family-1 exported bundles can serve raw text for the currently supported
-  BERT-style WordPiece tokenizer-json subset
+- family-1 exported bundles can serve raw text for the current validated
+  tokenizer-json subsets:
+  - BERT-style WordPiece + `TemplateProcessing`
+  - RoBERTa-style ByteLevel BPE + `RobertaProcessing`
 - family-1 export, load, serve, and parity are documented in
   [`alpha-family-1-walkthrough.md`](./alpha-family-1-walkthrough.md)
 - token classification is now validated in a realistic sample Go service via
@@ -72,13 +74,15 @@ Why this matters:
 
 Current state:
 
-- exported family-1 raw-text serving only supports the validated BERT-style
-  tokenizer-json WordPiece subset
+- exported family-1 raw-text serving currently supports two validated
+  tokenizer-json subsets:
+  - BERT-style WordPiece + `TemplateProcessing`
+  - RoBERTa-style ByteLevel BPE + `RobertaProcessing`
 
 Needed:
 
-- broader tokenizer support for the first family beyond the now-explicit
-  `hf-tokenizer-json` WordPiece subset
+- broader tokenizer support for the first family beyond those explicit
+  tokenizer-json subsets
 
 Why this matters:
 

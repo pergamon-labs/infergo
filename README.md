@@ -50,9 +50,13 @@ at export time. That dependency does not carry into runtime serving once the
 bundle is built.
 
 Current family-1 raw-text support is intentionally narrow: InferGo only embeds
-tokenizer metadata for the validated BERT-style `hf-tokenizer-json` WordPiece
-subset. If a model falls outside that subset, export still succeeds, but the
-bundle stays tokenized-input-only.
+tokenizer metadata for two validated `hf-tokenizer-json` subsets:
+
+- BERT-style WordPiece with `TemplateProcessing`
+- RoBERTa-style ByteLevel BPE with `RobertaProcessing`
+
+If a model falls outside those subsets, export still succeeds, but the bundle
+stays tokenized-input-only.
 
 ## Quickstart: bring your own model
 

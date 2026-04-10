@@ -52,7 +52,8 @@ Public BYOM family:
 
 Current raw-text runtime boundary:
 
-- validated BERT-style `hf-tokenizer-json` WordPiece subset only
+- validated BERT-style `hf-tokenizer-json` WordPiece subset
+- validated RoBERTa-style `hf-tokenizer-json` ByteLevel BPE subset
 - if a model falls outside that tokenizer subset, export can still produce a
   tokenized-input bundle, but it will not embed raw-text tokenizer metadata
 
