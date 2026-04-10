@@ -96,6 +96,19 @@ func TestLoadTextClassificationBundleAlphaContractRejectsUnsupportedMajor(t *tes
 	}
 }
 
+func TestLoadTextClassificationBundleAlphaContractRejectsUnsupportedMinor(t *testing.T) {
+	t.Parallel()
+
+	bundleDir := writeAlphaTextClassificationBundleFixture(t, alphaTextBundleFixtureOptions{
+		bundleVersion: "1.1",
+	})
+
+	_, err := bionet.LoadTextClassificationBundle(bundleDir)
+	if err == nil || !strings.Contains(err.Error(), "current alpha supports only 1.0 bundles") {
+		t.Fatalf("LoadTextClassificationBundle() error = %v, want unsupported minor version failure", err)
+	}
+}
+
 func TestLoadTextClassificationBundleAlphaContractRejectsLabelDimensionMismatch(t *testing.T) {
 	t.Parallel()
 

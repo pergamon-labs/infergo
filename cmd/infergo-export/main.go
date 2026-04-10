@@ -27,6 +27,7 @@ const (
 
 	defaultMaxLength = 128
 	defaultRunner    = "uv"
+	defaultBundleVer = "1.0"
 
 	exportReadmePath          = "cmd/infergo-export/README.md"
 	alphaTokenizerRuntimeKind = "hf-tokenizer-json"
@@ -273,7 +274,7 @@ func runExport(args []string) error {
 	referenceOutputFlag := fs.String("reference-output", "", "optional path to persist the generated source reference json")
 	featureMode := fs.String("feature-mode", bionet.TextClassificationFeatureModeEmbeddingMaskedAvgPool, "native BIOnet feature mode")
 	maxLength := fs.Int("max-length", defaultMaxLength, "max tokenizer length passed to the source reference generator")
-	bundleVersion := fs.String("bundle-version", "1.0", "alpha bundle version written into metadata.json")
+	bundleVersion := fs.String("bundle-version", defaultBundleVer, "alpha bundle version written into metadata.json")
 	positiveLabel := fs.String("positive-label", "", "optional positive label override for binary bundles")
 	negativeLabel := fs.String("negative-label", "", "optional negative label override for binary bundles")
 	runner := fs.String("python-runner", defaultRunner, "Python dependency runner: uv or python")
@@ -290,6 +291,9 @@ func runExport(args []string) error {
 	}
 	if strings.TrimSpace(*outputDirFlag) == "" {
 		return errors.New("export: -out is required\nnext step: choose an output directory such as ./artifacts/my-bundle")
+	}
+	if err := validateSupportedBundleVersion(*bundleVersion); err != nil {
+		return fmt.Errorf("export: %w", err)
 	}
 
 	inputPath := filepath.Clean(*inputPathFlag)
@@ -398,6 +402,13 @@ func runExport(args []string) error {
 	}
 
 	printExportSummary(outputDir, manifest, bundleManifest, bundleTokenizerSupported, withPairs, *referenceOutputFlag, tokenizerNote)
+	return nil
+}
+
+func validateSupportedBundleVersion(value string) error {
+	if strings.TrimSpace(value) != defaultBundleVer {
+		return fmt.Errorf("unsupported -bundle-version %q (current alpha exporter supports only %s)\nnext step: omit -bundle-version or set it to %s", value, defaultBundleVer, defaultBundleVer)
+	}
 	return nil
 }
 

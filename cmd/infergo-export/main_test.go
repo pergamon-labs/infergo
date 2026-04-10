@@ -84,6 +84,23 @@ func TestRunExportMissingModelHasNextStep(t *testing.T) {
 	}
 }
 
+func TestRunExportRejectsUnsupportedBundleVersion(t *testing.T) {
+	t.Parallel()
+
+	err := runExport([]string{
+		"-model", "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+		"-input", filepath.Join("testdata-does-not-matter.json"),
+		"-out", filepath.Join(t.TempDir(), "bundle"),
+		"-bundle-version", "1.1",
+	})
+	if err == nil {
+		t.Fatal("runExport(...) error = nil, want unsupported bundle version error")
+	}
+	if !strings.Contains(err.Error(), "current alpha exporter supports only 1.0") {
+		t.Fatalf("runExport(...) error = %q, want supported bundle version guidance", err.Error())
+	}
+}
+
 func TestBuildAlphaMetadata(t *testing.T) {
 	t.Parallel()
 

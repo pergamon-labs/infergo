@@ -183,8 +183,10 @@ Rules:
 
 - `bundle_format` must equal `infergo-native`
 - `bundle_version` must use `major.minor`
-- alpha loaders may accept newer minor versions within the same major version
+- current alpha loaders support only `bundle_version == 1.0`
 - alpha loaders must reject unsupported major versions
+- alpha loaders must reject unsupported minor versions until forward minor
+  compatibility is explicitly designed and tested
 
 ### Source metadata
 
@@ -367,6 +369,13 @@ Rules:
   - accept exact supported major versions
   - reject unsupported major versions with a clear error
   - allow newer minor versions only when compatibility is explicitly designed
+    and implemented
+
+Current implementation note:
+
+- the public alpha line currently supports only `infergo-native` bundle version
+  `1.0`
+- `1.1`, `1.2`, or any other newer minor version will fail fast today
 
 ### Artifact compatibility
 
@@ -387,7 +396,7 @@ When loading a bundle, InferGo should validate at minimum:
 
 1. `metadata.json` exists and parses
 2. `bundle_format == infergo-native`
-3. `bundle_version` major is supported
+3. `bundle_version == 1.0` for the current public alpha line
 4. `family == encoder-text-classification`
 5. `task == text-classification`
 6. `backend == bionet` for the alpha native path
@@ -420,6 +429,7 @@ Good examples:
 
 - `load bundle: unsupported bundle format "infergo-beta"`
 - `load bundle: unsupported bundle version major 2`
+- `load bundle: unsupported bundle version minor 1 for major 1 (current alpha supports only 1.0 bundles)`
 - `load bundle: missing tokenizer manifest for raw-text-capable bundle`
 - `load bundle: labels count does not match model output dimension`
 

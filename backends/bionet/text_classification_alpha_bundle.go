@@ -11,6 +11,8 @@ import (
 
 const (
 	alphaNativeBundleFormat                     = "infergo-native"
+	alphaNativeBundleVersionMajor               = 1
+	alphaNativeBundleVersionMinor               = 0
 	alphaTextClassificationBundleFamily         = "encoder-text-classification"
 	alphaTextClassificationTask                 = "text-classification"
 	alphaTextClassificationOutputKindLabelLogit = "label_logits"
@@ -118,7 +120,7 @@ func loadAlphaTextClassificationBundleContract(bundleDir string, raw []byte) (al
 		return alphaTextClassificationBundleContract{}, fmt.Errorf("decode alpha text classification metadata: unsupported bundle format %q", metadata.BundleFormat)
 	}
 
-	if _, _, err := parseAlphaBundleVersion(metadata.BundleVersion); err != nil {
+	if err := validateAlphaBundleVersion(metadata.BundleVersion); err != nil {
 		return alphaTextClassificationBundleContract{}, fmt.Errorf("decode alpha text classification metadata: %w", err)
 	}
 
@@ -220,11 +222,31 @@ func parseAlphaBundleVersion(value string) (int, int, error) {
 	if major != 1 {
 		return 0, 0, fmt.Errorf("unsupported bundle version major %d", major)
 	}
-	if minor < 0 {
-		return 0, 0, fmt.Errorf("invalid bundle version %q", value)
-	}
 
 	return major, minor, nil
+}
+
+func validateAlphaBundleVersion(value string) error {
+	major, minor, err := parseAlphaBundleVersion(value)
+	if err != nil {
+		return err
+	}
+
+	if major != alphaNativeBundleVersionMajor {
+		return fmt.Errorf("unsupported bundle version major %d", major)
+	}
+
+	if minor != alphaNativeBundleVersionMinor {
+		return fmt.Errorf(
+			"unsupported bundle version minor %d for major %d (current alpha supports only %d.%d bundles)",
+			minor,
+			major,
+			alphaNativeBundleVersionMajor,
+			alphaNativeBundleVersionMinor,
+		)
+	}
+
+	return nil
 }
 
 func loadAlphaTextClassificationLabels(bundleDir, relPath string) ([]string, error) {

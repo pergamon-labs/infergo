@@ -72,6 +72,13 @@ The command prints:
 - whether paired text is supported
 - the supported request/input modes
 
+Current alpha bundle compatibility:
+
+- exported family-1 bundles currently target `infergo-native` bundle version
+  `1.0`
+- newer bundle versions are not generated yet because the alpha loader does not
+  promise forward minor compatibility
+
 ## What it supports today
 
 - family 1 only

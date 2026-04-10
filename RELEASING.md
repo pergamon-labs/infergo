@@ -61,6 +61,7 @@ go run ./cmd/infergo-parity \
 - `ARCHITECTURE.md`
 - `BENCHMARKS.md`
 - `CHANGELOG.md`
+- bundle-version compatibility notes still match the enforced loader/exporter behavior
 
 7. Confirm no proprietary or machine-specific artifacts were introduced.
 

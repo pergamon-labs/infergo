@@ -39,6 +39,13 @@ InferGo does **not** claim blanket support for:
 | Exported family-1 bundles served over HTTP | Experimental |
 | Token-classification BYOM export/import | Not part of alpha |
 
+Current native bundle compatibility promise:
+
+- public alpha family-1 bundles use `bundle_format=infergo-native`
+- the current loader/exporter contract supports `bundle_version=1.0` only
+- newer major or minor bundle versions fail fast until compatibility is widened
+  explicitly
+
 ## Supported task shape
 
 ### Family 1

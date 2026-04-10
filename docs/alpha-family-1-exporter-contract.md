@@ -165,6 +165,7 @@ Important flags:
   - max tokenizer length passed to the source reference generator
 - `-bundle-version`
   - alpha bundle version written into `metadata.json`
+  - current public alpha supports only `1.0`
 - `-python-runner`
   - `uv` by default, or `python` if the caller wants to manage Python deps
     themselves
@@ -181,6 +182,12 @@ The current exporter does the following:
 6. write `labels.json`
 7. write alpha-format `metadata.json`
 8. print the supported input modes for the exported bundle
+
+Current compatibility note:
+
+- the exporter currently writes only `infergo-native` bundle version `1.0`
+- passing a newer bundle version is rejected up front instead of generating a
+  bundle the current alpha loader will refuse
 
 Internally, it uses:
 
