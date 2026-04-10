@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"flag"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/pergamon-labs/infergo/backends/bionet"
@@ -48,6 +51,36 @@ func TestRunTemplatePair(t *testing.T) {
 
 	if payload.Cases[0].TextPair == "" {
 		t.Fatal("pair template should include text_pair")
+	}
+}
+
+func TestRunTemplateHelp(t *testing.T) {
+	t.Parallel()
+
+	err := runTemplate([]string{"-h"})
+	if !errors.Is(err, flag.ErrHelp) {
+		t.Fatalf("runTemplate(-h) error = %v, want flag.ErrHelp", err)
+	}
+}
+
+func TestRunExportHelp(t *testing.T) {
+	t.Parallel()
+
+	err := runExport([]string{"-h"})
+	if !errors.Is(err, flag.ErrHelp) {
+		t.Fatalf("runExport(-h) error = %v, want flag.ErrHelp", err)
+	}
+}
+
+func TestRunExportMissingModelHasNextStep(t *testing.T) {
+	t.Parallel()
+
+	err := runExport(nil)
+	if err == nil {
+		t.Fatal("runExport(nil) error = nil, want missing model error")
+	}
+	if !strings.Contains(err.Error(), "next step: infergo-export export -model") {
+		t.Fatalf("runExport(nil) error = %q, want next-step guidance", err.Error())
 	}
 }
 
@@ -115,6 +148,9 @@ func TestManifestForAlphaBundleRejectsUnsupportedKind(t *testing.T) {
 	if note == "" {
 		t.Fatal("expected note for unsupported tokenizer kind")
 	}
+	if !strings.Contains(note, "BERT-style WordPiece") || !strings.Contains(note, "RoBERTa-style ByteLevel BPE") {
+		t.Fatalf("unsupported tokenizer note = %q, want explicit validated subset guidance", note)
+	}
 }
 
 func TestBuildAlphaMetadataOmitsTokenizerForTokenizedOnlyBundle(t *testing.T) {
@@ -146,6 +182,19 @@ func TestBuildAlphaMetadataOmitsTokenizerForTokenizedOnlyBundle(t *testing.T) {
 	}
 	if metadata.Tokenizer.Manifest != "" {
 		t.Fatal("expected tokenizer manifest to be omitted for tokenized-only bundle")
+	}
+}
+
+func TestResolveModelIDLocalPathNeedsOverride(t *testing.T) {
+	t.Parallel()
+
+	modelDir := t.TempDir()
+	_, err := resolveModelID(modelDir, "")
+	if err == nil {
+		t.Fatal("resolveModelID(local path) error = nil, want override requirement")
+	}
+	if !strings.Contains(err.Error(), "-model-id") || !strings.Contains(err.Error(), "myorg/my-model") {
+		t.Fatalf("resolveModelID(local path) error = %q, want actionable local model guidance", err.Error())
 	}
 }
 

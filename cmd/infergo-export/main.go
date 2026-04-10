@@ -130,15 +130,30 @@ func main() {
 	case "export":
 		err = runExport(args)
 	case "help":
-		printUsage(os.Stdout)
+		if len(args) == 0 {
+			printUsage(os.Stdout)
+			return
+		}
+		switch args[0] {
+		case "template":
+			printTemplateUsage(os.Stdout)
+		case "export":
+			printExportUsage(os.Stdout)
+		default:
+			err = fmt.Errorf("unknown help topic %q", args[0])
+		}
 		return
 	default:
 		err = fmt.Errorf("unknown subcommand %q", command)
 	}
 
 	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return
+		}
 		fmt.Fprintf(os.Stderr, "infergo-export: %v\n", err)
-		fmt.Fprintf(os.Stderr, "See %s for the supported family-1 path and troubleshooting.\n", exportReadmePath)
+		fmt.Fprintf(os.Stderr, "Next help: infergo-export help export\n")
+		fmt.Fprintf(os.Stderr, "Docs: %s\n", exportReadmePath)
 		os.Exit(1)
 	}
 }
@@ -155,6 +170,46 @@ func printUsage(w io.Writer) {
 	fmt.Fprintln(w, "Examples:")
 	fmt.Fprintln(w, "  infergo-export template -kind single -out ./family1-inputs.json")
 	fmt.Fprintln(w, "  infergo-export export -model distilbert/distilbert-base-uncased-finetuned-sst-2-english -input ./family1-inputs.json -out ./artifacts/distilbert-sst2-alpha")
+	fmt.Fprintln(w, "  infergo-export help export")
+	fmt.Fprintln(w)
+	fmt.Fprintf(w, "Docs: %s\n", exportReadmePath)
+}
+
+func printTemplateUsage(w io.Writer) {
+	fmt.Fprintln(w, "Usage:")
+	fmt.Fprintln(w, "  infergo-export template -kind single|pair -out <path> [-force]")
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Use this first when you do not already have a public-safe input file.")
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Examples:")
+	fmt.Fprintln(w, "  infergo-export template -kind single -out ./family1-inputs.json")
+	fmt.Fprintln(w, "  infergo-export template -kind pair -out ./family1-pairs.json")
+	fmt.Fprintln(w)
+	fmt.Fprintf(w, "Docs: %s\n", exportReadmePath)
+}
+
+func printExportUsage(w io.Writer) {
+	fmt.Fprintln(w, "Usage:")
+	fmt.Fprintln(w, "  infergo-export export -model <hf-id-or-local-dir> -input <input.json> -out <bundle-dir> [flags]")
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "This is the no-repo-checkout family-1 BYOM path.")
+	fmt.Fprintln(w, "It still needs Python/Transformers tooling at export time.")
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Most users want:")
+	fmt.Fprintln(w, "  1. infergo-export template -kind single -out ./family1-inputs.json")
+	fmt.Fprintln(w, "  2. edit that file with public-safe representative examples")
+	fmt.Fprintln(w, "  3. infergo-export export -model <model-id> -input ./family1-inputs.json -out ./artifacts/my-bundle")
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Examples:")
+	fmt.Fprintln(w, "  infergo-export export -model distilbert/distilbert-base-uncased-finetuned-sst-2-english -input ./family1-inputs.json -out ./artifacts/distilbert-sst2-alpha")
+	fmt.Fprintln(w, "  infergo-export export -model textattack/bert-base-uncased-MRPC -input ./family1-pairs.json -out ./artifacts/mrpc-alpha")
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Important flags:")
+	fmt.Fprintln(w, "  -model       Hugging Face model id or local model directory")
+	fmt.Fprintln(w, "  -model-id    required when -model points to a local directory")
+	fmt.Fprintln(w, "  -input       public-safe validation/parity input set")
+	fmt.Fprintln(w, "  -out         output bundle directory")
+	fmt.Fprintln(w, "  -python-runner uv (default) or python")
 	fmt.Fprintln(w)
 	fmt.Fprintf(w, "Docs: %s\n", exportReadmePath)
 }
@@ -162,6 +217,7 @@ func printUsage(w io.Writer) {
 func runTemplate(args []string) error {
 	fs := flag.NewFlagSet("template", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
+	fs.Usage = func() { printTemplateUsage(fs.Output()) }
 	kind := fs.String("kind", "single", "template kind: single or pair")
 	out := fs.String("out", "", "path to write the example input json")
 	force := fs.Bool("force", false, "overwrite the output file if it already exists")
@@ -169,7 +225,7 @@ func runTemplate(args []string) error {
 		return err
 	}
 	if strings.TrimSpace(*out) == "" {
-		return errors.New("template: -out is required")
+		return errors.New("template: -out is required\nnext step: infergo-export template -kind single -out ./family1-inputs.json")
 	}
 
 	var template inputTemplate
@@ -193,7 +249,7 @@ func runTemplate(args []string) error {
 			},
 		}
 	default:
-		return fmt.Errorf("template: unsupported kind %q (expected \"single\" or \"pair\")", *kind)
+		return fmt.Errorf("template: unsupported kind %q (expected \"single\" or \"pair\")\nnext step: use -kind single for one-text inputs or -kind pair for text-pair inputs", *kind)
 	}
 
 	outputPath := filepath.Clean(*out)
@@ -208,6 +264,7 @@ func runTemplate(args []string) error {
 func runExport(args []string) error {
 	fs := flag.NewFlagSet("export", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
+	fs.Usage = func() { printExportUsage(fs.Output()) }
 
 	model := fs.String("model", "", "Hugging Face model id or local model directory")
 	modelIDOverride := fs.String("model-id", "", "canonical model id to record in metadata; required when -model is a local path")
@@ -226,18 +283,18 @@ func runExport(args []string) error {
 	}
 
 	if strings.TrimSpace(*model) == "" {
-		return errors.New("export: -model is required")
+		return errors.New("export: -model is required\nnext step: infergo-export export -model distilbert/distilbert-base-uncased-finetuned-sst-2-english -input ./family1-inputs.json -out ./artifacts/my-bundle")
 	}
 	if strings.TrimSpace(*inputPathFlag) == "" {
-		return errors.New("export: -input is required")
+		return errors.New("export: -input is required\nnext step: start with infergo-export template -kind single -out ./family1-inputs.json")
 	}
 	if strings.TrimSpace(*outputDirFlag) == "" {
-		return errors.New("export: -out is required")
+		return errors.New("export: -out is required\nnext step: choose an output directory such as ./artifacts/my-bundle")
 	}
 
 	inputPath := filepath.Clean(*inputPathFlag)
 	if _, err := parity.LoadTransformersTextClassificationInputSet(inputPath); err != nil {
-		return fmt.Errorf("export: validate input set: %w", err)
+		return fmt.Errorf("export: validate input set: %w\nnext step: confirm the file exists and matches the template written by infergo-export template", err)
 	}
 
 	modelID, err := resolveModelID(*model, *modelIDOverride)
@@ -357,7 +414,7 @@ func runPythonHelper(runner, pythonExec, helperScriptPath, model, inputPath, ref
 	switch runner {
 	case "uv":
 		if _, err := exec.LookPath("uv"); err != nil {
-			return errors.New("uv was not found in PATH; install uv or rerun with -python-runner=python and a Python environment that already has torch==2.10.0 and transformers==5.3.0")
+			return errors.New("uv was not found in PATH\nnext step: install uv, or rerun with -python-runner=python and a Python environment that already has torch==2.10.0 and transformers==5.3.0")
 		}
 		cmd = exec.Command(
 			"uv",
@@ -374,7 +431,7 @@ func runPythonHelper(runner, pythonExec, helperScriptPath, model, inputPath, ref
 		)
 	case "python":
 		if _, err := exec.LookPath(pythonExec); err != nil {
-			return fmt.Errorf("python executable %q was not found in PATH", pythonExec)
+			return fmt.Errorf("python executable %q was not found in PATH\nnext step: install Python, change -python-exec, or rerun with the default -python-runner=uv", pythonExec)
 		}
 		cmd = exec.Command(
 			pythonExec,
@@ -386,7 +443,7 @@ func runPythonHelper(runner, pythonExec, helperScriptPath, model, inputPath, ref
 			"--max-length", fmt.Sprintf("%d", maxLength),
 		)
 	default:
-		return fmt.Errorf("unsupported python runner %q (expected \"uv\" or \"python\")", runner)
+		return fmt.Errorf("unsupported python runner %q (expected \"uv\" or \"python\")\nnext step: use -python-runner=uv or -python-runner=python", runner)
 	}
 
 	var stdout bytes.Buffer
@@ -394,7 +451,7 @@ func runPythonHelper(runner, pythonExec, helperScriptPath, model, inputPath, ref
 	cmd.Stdout = io.MultiWriter(os.Stdout, &stdout)
 	cmd.Stderr = io.MultiWriter(os.Stderr, &stderr)
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%w\nhint: confirm the model is a supported Transformers sequence-classification model, the tokenizer falls within the current alpha subset, and the export-time Python dependencies are available", err)
+		return fmt.Errorf("python export step failed: %w\nnext step: confirm the model is a supported Transformers sequence-classification model, local model directories include config/tokenizer/weights files, and export-time Python dependencies are available", err)
 	}
 	return nil
 }
@@ -422,12 +479,12 @@ func loadTokenizerManifest(path string) (tokenizerManifest, error) {
 func manifestForAlphaBundle(manifest tokenizerManifest) (tokenizerManifest, bool, string) {
 	if manifest.Kind != alphaTokenizerRuntimeKind {
 		return tokenizerManifest{}, false, fmt.Sprintf(
-			"note: detected tokenizer kind %q is outside the current alpha raw-text boundary; this bundle will support tokenized input only",
+			"note: detected tokenizer kind %q is outside the current alpha raw-text boundary; this bundle will support tokenized input only (validated raw-text subsets are BERT-style WordPiece and RoBERTa-style ByteLevel BPE tokenizer.json bundles)",
 			manifest.Kind,
 		)
 	}
 	if !manifest.RawTextSupported {
-		return tokenizerManifest{}, false, "note: staged tokenizer assets did not match the current alpha raw-text boundary; this bundle will support tokenized input only"
+		return tokenizerManifest{}, false, "note: staged tokenizer assets did not match the current alpha raw-text boundary; this bundle will support tokenized input only (validated raw-text subsets are BERT-style WordPiece and RoBERTa-style ByteLevel BPE tokenizer.json bundles)"
 	}
 	return manifest, true, ""
 }
@@ -437,7 +494,7 @@ func resolveModelID(modelArg, modelIDOverride string) (string, error) {
 		return modelIDOverride, nil
 	}
 	if pathExists(modelArg) {
-		return "", errors.New("-model-id is required when -model points to a local path so the exported bundle records a stable canonical model id")
+		return "", errors.New("-model-id is required when -model points to a local path so the exported bundle records a stable canonical model id\nnext step: rerun with -model-id myorg/my-model")
 	}
 	return modelArg, nil
 }
